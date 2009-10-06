@@ -1,3 +1,7 @@
+To run directly from source:
+
+    PYTHONPATH=~/src/rho/src bin/rho
+
 To run all tests, install the python-nose package and from the root of the 
 project:
 
