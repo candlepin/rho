@@ -16,9 +16,9 @@
 import sys
 import os
 import rho.clicommands
-import gettext
 
-_ = gettext.gettext
+
+
 
 class CLI:
     def __init__(self):
