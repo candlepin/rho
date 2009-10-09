@@ -40,11 +40,19 @@ class BuildLangs(Command):
         self._gen_pot_file()
 
     def _gen_pot_file(self):
-        pyfiles = glob.glob("src/rho/*.py")
-	args = ["xgettext", "-o", "locale/rho.pot", "-d", "rho"] + pyfiles
+	py_dirs = ["src/rho/"]
+	py_files = ['bin/rho']
+	for py_dir in py_dirs:
+            py_files = py_files + glob.glob("%s/*.py" % py_dir)
+        print py_files
+	args = ["xgettext", "-L", "python", "-o", "locale/rho.pot", "-d", "rho"] + py_files
 	subprocess.Popen(args, stdout=subprocess.PIPE).communicate()
 	# we develop in en_US, so make the default pot a en_Us
-	shutil.copyfile("locale/rho.pot", "locale/en_US.po")
+
+    def _gen_po_file(self):
+        # generate the en_US.po file, this is for dist maintainers only
+        args = ["msginit","--no-translator", "-i", "locale/rho.pot", "-o", "locale/en_US.po"]
+        subprocess.Popen(args, stdout=subprocess.PIPE).communicate()
 
 
 # should probably use intltool instead, but we dont have any translations
@@ -52,22 +60,33 @@ class BuildLangs(Command):
 
 
 def gen_mo_files():
-	po_files = glob.glob("locale/*.po")
-	mo_files = []
-	for po_file in po_files:
-		locale = po_file[:-3]
-		mo_file_dir = "%s/LC_MESSAGES/" % locale
-		try:
-			os.makedirs(mo_file_dir)
-		except OSError:
-			pass
-		mo_file = "%s/rho.mo" % mo_file_dir
-		subprocess.Popen(["msgfmt", "-o", mo_file, po_file])
-		mo_files.append(mo_file)
-	return mo_files
+    po_files = glob.glob("locale/*.po")
+    mo_files = []
+    for po_file in po_files:
+        locale = po_file[:-3]
+        mo_file_dir = "%s/LC_MESSAGES/" % locale
+        try:
+            os.makedirs(mo_file_dir)
+        except OSError:
+            pass
+        mo_file = "%s/rho.mo" % mo_file_dir
+        subprocess.Popen(["msgfmt", "-o", mo_file, po_file])
+        mo_files.append(mo_file)
+    return mo_files
 
+localepath = "share"
+def get_locale_paths():
+    mo_files = glob.glob("locale/*/LC_MESSAGES/*.mo")
+    data = []
+    data_paths = []
+    for mo_file in mo_files:
+        data_dir = "%s/%s" % (localepath, os.path.split(mo_file)[0])
+        data_paths.append((data_dir,[mo_file]))
+    return data_paths
 
-localepath = "share/"
+def get_data_files():
+    gen_mo_files()
+    return get_locale_paths()
 
 setup(
     name="rho",
@@ -89,7 +108,7 @@ setup(
         'bin/rho',
     ],
 
-    data_files = [(localepath, gen_mo_files())],  
+    data_files = get_data_files(),  
 
     classifiers = [
         'License :: OSI Approved :: GNU General Public License (GPL)',
