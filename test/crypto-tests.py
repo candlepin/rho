@@ -11,6 +11,7 @@
 
 """ Tests for the crypto module """
 
+import os
 import unittest
 
 import rho.crypto
@@ -70,4 +71,54 @@ class CryptoTests(unittest.TestCase):
         decrypted = rho.crypto.decrypt(ciphertext, key)
         self.assertEquals(plaintext, decrypted)
 
+    def test_encryption_no_padding_required(self):
+        plaintext = "hey look at my text $"
+        key = "sekurity is alsome"
+        ciphertext = rho.crypto.encrypt(plaintext, key)
+        decrypted = rho.crypto.decrypt(ciphertext, key)
+        self.assertEquals(plaintext, decrypted)
+
+    def test_encryption_big_key(self):
+        plaintext = "hey look at my text $"
+        key = """asldhaslkjdhaslkdhliufdygd87gy35kjhnflksjdhfsodjkfhlskhf
+                lkasjdhlkajsdhlakshdlkajsdhlakhdlakjsdhalkjsdhalkjsdhlaks
+                klajsdhakjsdhlakjsdhalksjdhalkjsdhlkasjhdlkajshdlkajsdhla
+                alskdhalksjdlakdhlakjsdhlakjsdhlkajshdlkjasdhlkjafhiouryg
+                """
+        ciphertext = rho.crypto.encrypt(plaintext, key)
+        decrypted = rho.crypto.decrypt(ciphertext, key)
+        self.assertEquals(plaintext, decrypted)
+
+    def test_decryption_bad_key(self):
+        plaintext = "hey look at my text $"
+        key = "sekurity is alsome"
+        ciphertext = rho.crypto.encrypt(plaintext, key)
+        self.assertRaises(rho.crypto.BadKeyException, 
+                rho.crypto.decrypt, ciphertext, 'badkey')
+
+
+class FileCryptoTests(unittest.TestCase):
+
+    # NOTE: Not a true unit test, does write a temp file, comment out?
+    def test_encrypt_file(self):
+        """ Test file encryption/decryption. """
+        plaintext = "i'm going into a file!"
+        key = "sekurity!"
+        temp_file = '/tmp/rho-crypto-test.txt'
+        try:
+            rho.crypto.write_file(temp_file, plaintext, key)
+            result = rho.crypto.read_file(temp_file, key)
+            self.assertEquals(plaintext, result)
+        finally:
+            try:
+                os.remove(temp_file)
+            except:
+                pass
+
+    def test_bad_file_location(self):
+        self.assertRaises(IOError, rho.crypto.write_file,
+                "/nosuchdir/nosuchfile.txt", 'blah', 'blah')
+        self.assertRaises(rho.crypto.NoSuchFileException, 
+                rho.crypto.read_file,
+                "/nosuchfile.txt", 'blah')
 

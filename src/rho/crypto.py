@@ -11,8 +11,19 @@
 
 """ Configuration Encryption Module """
 
+import os.path
+
 # From the python-crypto package
 from Crypto.Cipher import Blowfish
+
+
+class BadKeyException(Exception):
+    pass
+
+
+class NoSuchFileException(Exception):
+    pass
+
 
 def pad(plaintext):
     """
@@ -36,6 +47,7 @@ def pad(plaintext):
         return_me = return_me + str(padding_needed) * padding_needed
 
     return return_me
+
 
 def unpad(plaintext):
     """
@@ -75,6 +87,7 @@ def unpad(plaintext):
 
         return return_me
 
+
 def encrypt(plaintext, key):
     """
     Encrypt the plaintext using the given key. 
@@ -87,6 +100,7 @@ def encrypt(plaintext, key):
     ciphertext = obj.encrypt(plaintext)
     return ciphertext
 
+
 def decrypt(ciphertext, key):
     """
     Decrypt the ciphertext with the given key. 
@@ -96,4 +110,35 @@ def decrypt(ciphertext, key):
     obj = Blowfish.new(key, Blowfish.MODE_CBC)
     decrypted_plaintext = obj.decrypt(ciphertext)
     return_me = unpad(decrypted_plaintext)
+    if return_me is None:
+        # Looks like decryption failed, probably a bad key:
+        raise BadKeyException
     return return_me
+
+
+def write_file(filename, plaintext, key):
+    """ 
+    Encrypt plaintext with the given key and write to file. 
+    
+    Existing file will be overwritten so be careful. 
+    """
+    f = open(filename, 'w')
+    f.write(encrypt(plaintext, key))
+    f.close()
+
+
+def read_file(filename, key):
+    """
+    Decrypt contents of file with the given key, and return as a string.
+
+    Assume that we're reading files that we encrypted. (i.e. we're not trying
+    to read files encrypted manually with gpg)
+    """
+    if not os.path.exists(filename):
+        raise NoSuchFileException()
+
+    f = open(filename, 'r')
+    return_me = decrypt(f.read(), key)
+    f.close()
+    return return_me
+
