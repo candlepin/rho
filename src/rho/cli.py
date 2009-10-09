@@ -16,6 +16,9 @@
 import sys
 import os
 import rho.clicommands
+import gettext
+
+_ = gettext.gettext
 
 class CLI:
     def __init__(self):
@@ -33,9 +36,9 @@ class CLI:
         self.cli_commands[cmd.name] = cmd
         
     def _usage(self):
-        print("\nUsage: %s [options] MODULENAME --help\n" %
+        print _("\nUsage: %s [options] MODULENAME --help\n" %
             (os.path.basename(sys.argv[0])))
-        print("Supported modules:\n")
+        print _("Supported modules:\n")
         for (name, cmd) in self.cli_commands.items():
             print("\t%-14s %-25s" % (name, cmd.shortdesc))
         print("")
