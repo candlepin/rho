@@ -10,10 +10,13 @@
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 #
 
-import sys
+import gettext
 import os.path
+import sys
 
 from rho.cli import CLI
+
+gettext.install('rho')
 
 if __name__ == "__main__":
     CLI().main()
