@@ -15,35 +15,48 @@ Rho Setup Script
 """
 
 from setuptools import setup, find_packages
+from setuptools import Command
 #from distutils import install_data
 
 import glob
 import os
+import shutil
 import string
 import subprocess
 #class InstallData(install_data):
 	
+class BuildLangs(Command):
+    description = "generate pot/po/mo translation files"
+    user_options = [("gen-messages", None, "generate message catalog from strings")]
+    boolean_options = ["gen-messages"]
+    
+    def initialize_options(self):
+        self.gen_messages = False
+	    
+    def finalize_options(self):
+        pass
 
-def gen_pot_file():
-	pyfiles = glob.glob("src/rho/*.py")
-	#pyfile_arg = string.join(pyfiles)		
+    def run(self):
+        self._gen_pot_file()
+
+    def _gen_pot_file(self):
+        pyfiles = glob.glob("src/rho/*.py")
 	args = ["xgettext", "-o", "locale/rho.pot", "-d", "rho"] + pyfiles
-	print args
 	subprocess.Popen(args, stdout=subprocess.PIPE).communicate()
-	
 	# we develop in en_US, so make the default pot a en_Us
 	shutil.copyfile("locale/rho.pot", "locale/en_US.po")
 
 
 # should probably use intltool instead, but we dont have any translations
 # yet so doesnt really matter
+
+
 def gen_mo_files():
 	po_files = glob.glob("locale/*.po")
 	mo_files = []
 	for po_file in po_files:
 		locale = po_file[:-3]
 		mo_file_dir = "%s/LC_MESSAGES/" % locale
-		print mo_file_dir
 		try:
 			os.makedirs(mo_file_dir)
 		except OSError:
@@ -53,13 +66,8 @@ def gen_mo_files():
 		mo_files.append(mo_file)
 	return mo_files
 
-def get_mo_files_paths():
-	mo_files = glob.glob("locale/*/LC_MESSAGES/*.mo")
-	return mo_files
-	
 
 localepath = "share/"
-print [(localepath, gen_mo_files())]
 
 setup(
     name="rho",
@@ -91,6 +99,8 @@ setup(
         'Intended Audience :: Information Technology',
         'Programming Language :: Python'
     ],
+
+    cmdclass = { 'build_langs': BuildLangs }
 #    test_suite = 'nose.collector',
 )
 
