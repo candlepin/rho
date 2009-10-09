@@ -46,7 +46,8 @@ SAMPLE_CONFIG1 = """
                     "192.168.1.1-192.168.1.10",
                     "192.168.5.0"
                 ],
-                "credentials": ["bobskey", "bobslogin"]
+                "credentials": ["bobskey", "bobslogin"],
+                "ports": [22, 2222]
             },
 
             {
