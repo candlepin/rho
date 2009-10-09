@@ -11,6 +11,7 @@
 
 """ Tests for the crypto module """
 
+import os
 import unittest
 
 import rho.crypto
@@ -70,4 +71,27 @@ class CryptoTests(unittest.TestCase):
         decrypted = rho.crypto.decrypt(ciphertext, key)
         self.assertEquals(plaintext, decrypted)
 
+
+class FileCryptoTests(unittest.TestCase):
+
+    def test_encrypt_file(self):
+        """ Test file encryption/decryption. """
+        plaintext = "i'm going into a file!"
+        key = "sekurity!"
+        temp_file = '/tmp/rho-crypto-test.txt'
+        try:
+            rho.crypto.write_file(temp_file, plaintext, key)
+            result = rho.crypto.read_file(temp_file, key)
+            self.assertEquals(plaintext, result)
+        finally:
+            try:
+                os.remove(temp_file)
+            except:
+                pass
+
+    def test_bad_file_location(self):
+        self.assertRaises(IOError, rho.crypto.write_file,
+                "/nosuchdir/nosuchfile.txt", 'blah', 'blah')
+        self.assertRaises(IOError, rho.crypto.read_file,
+                "/nosuchdir/nosuchfile.txt", 'blah')
 

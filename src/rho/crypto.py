@@ -97,3 +97,23 @@ def decrypt(ciphertext, key):
     decrypted_plaintext = obj.decrypt(ciphertext)
     return_me = unpad(decrypted_plaintext)
     return return_me
+
+def write_file(filename, plaintext, key):
+    """ 
+    Encrypt plaintext with the given key and write to file. 
+    
+    Existing file will be overwritten so be careful. 
+    """
+    f = open(filename, 'w')
+    f.write(encrypt(plaintext, key))
+    f.close()
+
+def read_file(filename, key):
+    """
+    Decrypt contents of file with the given key, and return as a string.
+    """
+    f = open(filename, 'r')
+    return_me = decrypt(f.read(), key)
+    f.close()
+    return return_me
+
