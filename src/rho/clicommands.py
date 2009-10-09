@@ -59,14 +59,83 @@ class CliCommand(object):
             print(parser.error(_("Please enter at least 2 args")))
             sys.edit(1)
 
+        # do the work
+        self._do_command()
 
-class CreateCommand(CliCommand):
+class ScanCommand(CliCommand):
     def __init__(self):
-        usage = _("usage: %prog lulz [options]")
-        shortdesc = _("this is not a real command kekekeke")
-        desc = _("totally a fake command!")
+        usage = _("usage: %prog scan [ip|ip_range|ip_range_profile|hostname]")
+        shortdesc = _("scan given machines")
+        desc = _("scans the given machines")
 
-        CliCommand.__init__(self, "lulz", usage, shortdesc, desc)
+        CliCommand.__init__(self, "scan", usage, shortdesc, desc)
+
+    def _do_command(self):
+        print("scan called")
+
+class ProfileShowCommand(CliCommand):
+    def __init__(self):
+        usage = "usage: %prog profile show [options]"
+        shortdesc = "show the network profiles"
+        desc = "show the network profiles"
+
+        CliCommand.__init__(self, "profile show", usage, shortdesc, desc)
+
+    def _validate_options(self):
+        pass
+
+class ProfileAddCommand(CliCommand):
+    def __init__(self):
+        usage = "usage: %prog profile add [options]"
+        shortdesc = "add a network profile"
+        desc = "add a network profile"
+
+        CliCommand.__init__(self, "profile add", usage, shortdesc, desc)
+
+        self.parser.add_option("--name", dest="name", metavar="NAME",
+                help="profile name")
+        self.parser.add_option("--ip_start", dest="ipstart", metavar="IPSTART",
+                help="beginning of ip range")
+        self.parser.add_option("--ip_end", dest="ipend", metavar="IPEND",
+                help="end of ip range")
+
+    def _validate_options(self):
+        pass
+
+# TODO not sure if we want to have separate classes for sub/subcommands
+class AuthShowCommand(CliCommand):
+    def __init__(self):
+        usage = "usage: %prog auth show [options]"
+        shortdesc = "show auth credentials"
+        desc = "show authentication crendentials"
+
+        CliCommand.__init__(self, "auth show", usage, shortdesc, desc)
+
+        self.parser.add_option("--keys", dest="keys", action="store_true",
+                help="shows auth keys")
+        self.parser.add_option("--usernames", dest="usernames",
+                action="store_true", help="shows auth keys")
+
+    def _validate_options(self):
+        pass
+
+# TODO not sure if we want to have separate classes for sub/subcommands
+class AuthAddCommand(CliCommand):
+    def __init__(self):
+        usage = "usage: %prog auth [add|show] [options]"
+        shortdesc = "auth short desc"
+        desc = "auth long desc"
+
+        CliCommand.__init__(self, "auth add", usage, shortdesc, desc)
+
+        self.parser.add_option("--name", dest="name", metavar="NAME",
+                help="auth credential name")
+        self.parser.add_option("--file", dest="filename", metavar="FILENAME",
+                help="file containing SSH key")
+        self.parser.add_option("--username", dest="username", metavar="USERNAME",
+                help="user name for authenticating against target machine")
+        self.parser.add_option("--password", dest="password", metavar="PASSWORD",
+                help="password for authenticating against target machine")
 
     def _validate_options(self):
         pass
