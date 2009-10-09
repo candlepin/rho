@@ -15,6 +15,12 @@ import sys
 import os
 import re
 
+import gettext
+t = gettext.translation('rho', 'locale', fallback=True)
+_ = t.ugettext
+
+
+
 from optparse import OptionParser
 
 class CliCommand(object):
@@ -33,7 +39,7 @@ class CliCommand(object):
     def _add_common_options(self):
         """ Add options that apply to all sub-commands. """
         self.parser.add_option("--debug", dest="debug",
-                help="enable debug output")
+                help=_("enable debug output"))
 
     def _validate_options(self):
         """ 
@@ -50,15 +56,15 @@ class CliCommand(object):
         self._validate_options()
 
         if len(sys.argv) < 2:
-            print(parser.error("Please enter at least 2 args"))
+            print(parser.error(_("Please enter at least 2 args")))
             sys.edit(1)
 
 
 class CreateCommand(CliCommand):
     def __init__(self):
-        usage = "usage: %prog lulz [options]"
-        shortdesc = "this is not a real command kekekeke"
-        desc = "totally a fake command!"
+        usage = _("usage: %prog lulz [options]")
+        shortdesc = _("this is not a real command kekekeke")
+        desc = _("totally a fake command!")
 
         CliCommand.__init__(self, "lulz", usage, shortdesc, desc)
 
