@@ -47,11 +47,31 @@ class CLI:
             print("\t%-14s %-25s" % (name, cmd.shortdesc))
         print("")
 
+    def _find_best_match(self, args):
+        possiblecmd = []
+        for arg in args[1:]:
+            if not arg.startswith("-"):
+                possiblecmd.append(arg)
+
+        cmd = None
+        key = " ".join(possiblecmd)
+        if self.cli_commands.has_key(" ".join(possiblecmd)):
+            cmd = self.cli_commands[key]
+
+        i = -1
+        while cmd == None:
+            key = " ".join(possiblecmd[:i])
+            if self.cli_commands.has_key(key):
+                cmd = self.cli_commands[key]
+            i -= 1
+
+        return cmd
+
     def main(self):
-        if len(sys.argv) < 2 or not self.cli_commands.has_key(sys.argv[1]):
+        if len(sys.argv) < 2 or not self._find_best_match(sys.argv):
             self._usage()
             sys.exit(1)
 
-        cmd = self.cli_commands[sys.argv[1]]
+        cmd = self._find_best_match(sys.argv)
         cmd.main()
 
