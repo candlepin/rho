@@ -12,7 +12,8 @@
 """ Tests for the config module """
 
 import unittest
-import simplejson as json
+
+from rho.config import *
 
 SAMPLE_CONFIG1 = """
 {
@@ -67,6 +68,41 @@ SAMPLE_CONFIG1 = """
 
 class ConfigParsingTests(unittest.TestCase):
 
-    def test_config1(self):
-        config = json.loads(SAMPLE_CONFIG1)
-        #print config
+    def setUp(self):
+        self.builder = ConfigBuilder()
+
+    def test_bad_json_string(self):
+        bad_json = "does this look valid to you?"
+        self.assertRaises(BadJsonException, self.builder.parse, bad_json)
+
+    def test_json_config_key(self):
+        """ Verify top level of JSON hash is just a config key. """
+        self.assertRaises(ConfigurationException, self.builder.parse, 
+                "{}")
+        self.assertRaises(ConfigurationException, self.builder.parse, 
+                "{}")
+
+
+    def test_parse_sample_config(self):
+        self.builder.parse(SAMPLE_CONFIG1)
+
+
+class MiscTests(unittest.TestCase):
+
+    def test_verify_keys(self):
+        verify_keys({'a': 1, 'b': 2}, required=['a'], optional=['b'])
+
+    def test_verify_keys_all_optional(self):
+        verify_keys({'a': 1, 'b': 2}, optional=['a', 'b'])
+
+    def test_verify_keys_all_required(self):
+        verify_keys({'a': 1, 'b': 2}, required=['a', 'b'])
+
+    def test_verify_keys_missing_required(self):
+        self.assertRaises(ConfigurationException,
+                verify_keys, {'b': 2}, required=['a'], optional=['b'])
+
+    def test_extraneous_keys(self):
+        self.assertRaises(ConfigurationException, verify_keys, 
+                {'a': 1, 'b': 2}, required=['a'])
+
