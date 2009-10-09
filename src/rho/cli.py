@@ -39,7 +39,11 @@ class CLI:
         print _("\nUsage: %s [options] MODULENAME --help\n" %
             (os.path.basename(sys.argv[0])))
         print _("Supported modules:\n")
-        for (name, cmd) in self.cli_commands.items():
+
+        # want the output sorted
+        items = self.cli_commands.items()
+        items.sort()
+        for (name, cmd) in items:
             print("\t%-14s %-25s" % (name, cmd.shortdesc))
         print("")
 
