@@ -56,7 +56,7 @@ class CliCommand(object):
         self._validate_options()
 
         if len(sys.argv) < 2:
-            print(parser.error(_("Please enter at least 2 args")))
+            print(self.parser.error(_("Please enter at least 2 args")))
             sys.edit(1)
 
         # do the work
