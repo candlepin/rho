@@ -14,14 +14,15 @@
 import sys
 import os
 import re
+import simplejson as json
 
 import gettext
 t = gettext.translation('rho', 'locale', fallback=True)
 _ = t.ugettext
 
-
-
 from optparse import OptionParser
+
+from rho.config import *
 
 class CliCommand(object):
     """ Base class for all sub-commands. """
@@ -101,6 +102,16 @@ class ProfileAddCommand(CliCommand):
 
     def _validate_options(self):
         pass
+
+    def _do_command(self):
+        c = Config()
+        cred = {} 
+        cred['name'] = self.options.name
+        cred['range'] = [self.options.ipstart]
+        c.credentials.append(cred)
+
+        #print(json.dumps(c))
+        print(c.credentials)
 
 # TODO not sure if we want to have separate classes for sub/subcommands
 class AuthShowCommand(CliCommand):

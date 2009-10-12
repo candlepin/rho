@@ -28,7 +28,8 @@ class CliCommandsTests(unittest.TestCase):
         self._run_test(ProfileShowCommand(), ["bin/rho", "profile", "show"])
 
     def test_profile_add(self):
-        self._run_test(ProfileAddCommand(), ["bin/rho", "profile", "add"])
+        self._run_test(ProfileAddCommand(), ["bin/rho", "profile", "add", "--name", "profilename"])
+
 
     def test_auth_show(self):
         self._run_test(AuthShowCommand(), ["bin/rho", "auth", "show"])
