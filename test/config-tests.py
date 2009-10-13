@@ -71,6 +71,25 @@ class ConfigParsingTests(unittest.TestCase):
     def setUp(self):
         self.builder = ConfigBuilder()
 
+    def test_bad_json_string(self):
+        bad_json = "does this look valid to you?"
+        self.assertRaises(BadJsonException, self.builder.build_config, bad_json)
+
+    def test_json_config_key(self):
+        """ Verify top level of JSON hash is just a config key. """
+        self.assertRaises(ConfigurationException, self.builder.build_config,
+                "{}")
+        self.assertRaises(ConfigurationException, self.builder.build_config,
+                "{}")
+
+    def test_build_sample_config(self):
+        config = self.builder.build_config(SAMPLE_CONFIG1)
+        self.assertEquals(2, len(config.credentials))
+
+class ConfigParsingTests(unittest.TestCase):
+
+    def setUp(self):
+        self.builder = ConfigBuilder()
         self.credentials_hash = [
                 {
                     "name": "ansshlogin",
@@ -87,17 +106,6 @@ class ConfigParsingTests(unittest.TestCase):
                 },
         ]
 
-    def test_bad_json_string(self):
-        bad_json = "does this look valid to you?"
-        self.assertRaises(BadJsonException, self.builder.build_config, bad_json)
-
-    def test_json_config_key(self):
-        """ Verify top level of JSON hash is just a config key. """
-        self.assertRaises(ConfigurationException, self.builder.build_config,
-                "{}")
-        self.assertRaises(ConfigurationException, self.builder.build_config,
-                "{}")
-
     def test_build_credentials(self):
         creds = self.builder.build_credentials(self.credentials_hash)
         self.assertEquals(2, len(creds))
@@ -112,6 +120,11 @@ class ConfigParsingTests(unittest.TestCase):
         self.assertRaises(ConfigurationException,
                 self.builder.build_credentials, self.credentials_hash)
 
+    def test_build_credentials_missing_type(self):
+        self.credentials_hash[0].pop("type")
+        self.assertRaises(ConfigurationException,
+                self.builder.build_credentials, self.credentials_hash)
+
     def test_build_credentials_missing_username(self):
         self.credentials_hash[0].pop("username")
         self.assertRaises(ConfigurationException,
@@ -121,10 +134,6 @@ class ConfigParsingTests(unittest.TestCase):
         # I think we're going to support a passphraseless key for now:
         self.credentials_hash[1].pop("password")
         self.builder.build_credentials(self.credentials_hash)
-
-    def test_build_sample_config(self):
-        config = self.builder.build_config(SAMPLE_CONFIG1)
-        self.assertEquals(2, len(config.credentials))
 
 
 class MiscTests(unittest.TestCase):
