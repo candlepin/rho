@@ -13,6 +13,7 @@
 
 import simplejson as json
 
+# Keys used in the configuration JSON:
 CONFIG_KEY = "config"
 CREDENTIALS_KEY = "credentials"
 GROUPS_KEY = "groups"
@@ -157,13 +158,8 @@ class ConfigBuilder(object):
                 raise ConfigurationException("Unsupported credential type: %s",
                         credentials_hash[TYPE_KEY])
 
-            creds_obj = None
-
-            creds_class = CREDENTIAL_TYPES[type_key]
-            if type_key == SSH_TYPE:
-                creds.append(SshCredentials(credentials_hash))
-            if type_key == SSH_KEY_TYPE:
-                creds.append(SshKeyCredentials(credentials_hash))
+            creds_obj = CREDENTIAL_TYPES[type_key](credentials_hash)
+            creds.append(creds_obj)
 
         return creds
 
