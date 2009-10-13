@@ -92,17 +92,17 @@ class ConfigParsingTests(unittest.TestCase):
         self.builder = ConfigBuilder()
         self.credentials_hash = [
                 {
-                    "name": "ansshlogin",
-                    "type": "ssh",
-                    "username": "bob",
-                    "password": "password"
+                    NAME_KEY: "ansshlogin",
+                    TYPE_KEY: "ssh",
+                    USERNAME_KEY: "bob",
+                    PASSWORD_KEY: "password"
                 },
                 {
-                    "name": "ansshkey",
-                    "type": "ssh_key",
-                    "key": "whatever",
-                    "username": "bob",
-                    "password": "password"
+                    NAME_KEY: "ansshkey",
+                    TYPE_KEY: "ssh_key",
+                    SSHKEY_KEY: "whatever",
+                    USERNAME_KEY: "bob",
+                    PASSWORD_KEY: "password"
                 },
         ]
 
@@ -116,23 +116,23 @@ class ConfigParsingTests(unittest.TestCase):
         self.assertEquals(SshKeyCredentials, type(creds[1]))
 
     def test_build_credentials_bad_type(self):
-        self.credentials_hash[0]["type"] = "badtype"
+        self.credentials_hash[0][TYPE_KEY] = "badtype"
         self.assertRaises(ConfigurationException,
                 self.builder.build_credentials, self.credentials_hash)
 
     def test_build_credentials_missing_type(self):
-        self.credentials_hash[0].pop("type")
+        self.credentials_hash[0].pop(TYPE_KEY)
         self.assertRaises(ConfigurationException,
                 self.builder.build_credentials, self.credentials_hash)
 
     def test_build_credentials_missing_username(self):
-        self.credentials_hash[0].pop("username")
+        self.credentials_hash[0].pop(USERNAME_KEY)
         self.assertRaises(ConfigurationException,
                 self.builder.build_credentials, self.credentials_hash)
 
     def test_build_credentials_key_no_passphrase(self):
         # I think we're going to support a passphraseless key for now:
-        self.credentials_hash[1].pop("password")
+        self.credentials_hash[1].pop(PASSWORD_KEY)
         self.builder.build_credentials(self.credentials_hash)
 
 

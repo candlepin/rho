@@ -16,6 +16,11 @@ import simplejson as json
 CONFIG_KEY = "config"
 CREDENTIALS_KEY = "credentials"
 GROUPS_KEY = "groups"
+NAME_KEY = "name"
+TYPE_KEY = "type"
+USERNAME_KEY = "username"
+PASSWORD_KEY = "password"
+SSHKEY_KEY = "key"
 
 SSH_TYPE = "ssh"
 SSH_KEY_TYPE = "ssh_key"
@@ -74,28 +79,28 @@ class Credentials(object):
 class SshCredentials(Credentials):
     def __init__(self, json_hash):
 
-        verify_keys(json_hash, required=["name", "type",
-                'username', 'password'], optional=[])
+        verify_keys(json_hash, required=[NAME_KEY, TYPE_KEY,
+                USERNAME_KEY, PASSWORD_KEY], optional=[])
 
-        self.name = json_hash['name']
-        self.username = json_hash['username']
-        self.password = json_hash['password']
+        self.name = json_hash[NAME_KEY]
+        self.username = json_hash[USERNAME_KEY]
+        self.password = json_hash[PASSWORD_KEY]
 
 
 class SshKeyCredentials(Credentials):
     def __init__(self, json_hash):
 
-        verify_keys(json_hash, required=["name", "type",
-                'username', 'key'], optional=['password'])
+        verify_keys(json_hash, required=[NAME_KEY, TYPE_KEY,
+                USERNAME_KEY, SSHKEY_KEY], optional=[PASSWORD_KEY])
 
-        self.name = json_hash['name']
-        self.username = json_hash['username']
-        self.key = json_hash['key']
+        self.name = json_hash[NAME_KEY]
+        self.username = json_hash[USERNAME_KEY]
+        self.key = json_hash[SSHKEY_KEY]
 
         # Password is optional for ssh keys.
         self.password = ''
-        if 'password' in json_hash:
-            self.password = json_hash['password']
+        if PASSWORD_KEY in json_hash:
+            self.password = json_hash[PASSWORD_KEY]
 
 
 class Group(object):
@@ -144,18 +149,17 @@ class ConfigBuilder(object):
         for credentials_hash in all_credentials_hash:
             # Omit optional, will verify these once we know what class to
             # instantiate.
-            verify_keys(credentials_hash, required=["name", "type"])
+            verify_keys(credentials_hash, required=[NAME_KEY, TYPE_KEY])
 
-            type_key = credentials_hash["type"]
+            type_key = credentials_hash[TYPE_KEY]
 
             if type_key not in CREDENTIAL_TYPES:
                 raise ConfigurationException("Unsupported credential type: %s",
-                        credentials_hash["type"])
+                        credentials_hash[TYPE_KEY])
 
             creds_obj = None
 
             creds_class = CREDENTIAL_TYPES[type_key]
-            # TODO: Could use some cleanup, move some logic to the actual objects.
             if type_key == SSH_TYPE:
                 creds.append(SshCredentials(credentials_hash))
             if type_key == SSH_KEY_TYPE:
