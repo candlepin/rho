@@ -30,9 +30,9 @@ SAMPLE_CONFIG1 = """
 
             {
                 "name": "bobskey",
-                "type": "sshkey",
+                "type": "ssh_key",
                 "username": "bob",
-                "sshkey": "-----BEGIN RSA PRIVATE KEY-----\\nProc-Type: 4,ENCRYPTED\\nDEK-Info:\\nBLHABLAHBLAHBLAH\\n-----END RSA PRIVATE KEY-----",
+                "key": "-----BEGIN RSA PRIVATE KEY-----\\nProc-Type: 4,ENCRYPTED\\nDEK-Info:\\nBLHABLAHBLAHBLAH\\n-----END RSA PRIVATE KEY-----",
                 "password": "sekurity"
             }
 
@@ -71,20 +71,60 @@ class ConfigParsingTests(unittest.TestCase):
     def setUp(self):
         self.builder = ConfigBuilder()
 
+        self.credentials_hash = [
+                {
+                    "name": "ansshlogin",
+                    "type": "ssh",
+                    "username": "bob",
+                    "password": "password"
+                },
+                {
+                    "name": "ansshkey",
+                    "type": "ssh_key",
+                    "key": "whatever",
+                    "username": "bob",
+                    "password": "password"
+                },
+        ]
+
     def test_bad_json_string(self):
         bad_json = "does this look valid to you?"
-        self.assertRaises(BadJsonException, self.builder.parse, bad_json)
+        self.assertRaises(BadJsonException, self.builder.build_config, bad_json)
 
     def test_json_config_key(self):
         """ Verify top level of JSON hash is just a config key. """
-        self.assertRaises(ConfigurationException, self.builder.parse, 
+        self.assertRaises(ConfigurationException, self.builder.build_config,
                 "{}")
-        self.assertRaises(ConfigurationException, self.builder.parse, 
+        self.assertRaises(ConfigurationException, self.builder.build_config,
                 "{}")
 
+    def test_build_credentials(self):
+        creds = self.builder.build_credentials(self.credentials_hash)
+        self.assertEquals(2, len(creds))
+        self.assertEquals("ansshlogin", creds[0].name)
+        self.assertEquals(SshCredentials, type(creds[0]))
 
-    def test_parse_sample_config(self):
-        self.builder.parse(SAMPLE_CONFIG1)
+        self.assertEquals("ansshkey", creds[1].name)
+        self.assertEquals(SshKeyCredentials, type(creds[1]))
+
+    def test_build_credentials_bad_type(self):
+        self.credentials_hash[0]["type"] = "badtype"
+        self.assertRaises(ConfigurationException,
+                self.builder.build_credentials, self.credentials_hash)
+
+    def test_build_credentials_missing_username(self):
+        self.credentials_hash[0].pop("username")
+        self.assertRaises(ConfigurationException,
+                self.builder.build_credentials, self.credentials_hash)
+
+    def test_build_credentials_key_no_passphrase(self):
+        # I think we're going to support a passphraseless key for now:
+        self.credentials_hash[1].pop("password")
+        self.builder.build_credentials(self.credentials_hash)
+
+    def test_build_sample_config(self):
+        config = self.builder.build_config(SAMPLE_CONFIG1)
+        self.assertEquals(2, len(config.credentials))
 
 
 class MiscTests(unittest.TestCase):
@@ -104,5 +144,9 @@ class MiscTests(unittest.TestCase):
 
     def test_extraneous_keys(self):
         self.assertRaises(ConfigurationException, verify_keys, 
-                {'a': 1, 'b': 2}, required=['a'])
+                {'a': 1, 'b': 2}, required=['a'], optional=[])
+
+    def test_only_check_required(self):
+        # b is ignored because we didn't specify optional keys.
+        verify_keys({'a': 1, 'b': 2}, required=['a'])
 
