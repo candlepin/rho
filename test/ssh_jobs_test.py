@@ -55,7 +55,7 @@ class TestSshJobsNoHost(_TestSshJobs):
     auth = auth_good
     ip = bad_hostname
 
-class TestSshJobsF11(_TestSshJobs):
-    auth = auth_test
-    ip = "f11-virt-1.usersys.redhat.com"
+#class TestSshJobsF11(_TestSshJobs):
+#    auth = auth_test
+#    ip = "f11-virt-1.usersys.redhat.com"
 
