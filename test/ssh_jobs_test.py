@@ -91,6 +91,8 @@ class _TestSshJobs(unittest.TestCase):
         self._run_cmds(["sleep 1"], 47)
     test_sleep_short_lots_of_threads.slow = 1
 
+    def test_multiple_commands(self):
+        self._run_cmds(["uname -a", "rpm -q redhat-relase", "hostname", "ls /tmp", "/sbin/ifconfig"])
 
     def test_uname(self):
         self._run_cmds(["uname -a"])
