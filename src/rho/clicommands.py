@@ -85,6 +85,23 @@ class ProfileShowCommand(CliCommand):
     def _validate_options(self):
         pass
 
+class ProfileClearCommand(CliCommand):
+    def __init__(self):
+        usage = _("usage: %prog profile clear [options]")
+        shortdesc = _("clears profile list")
+        desc = _("add a network profile")
+
+        CliCommand.__init__(self, "profile clear", usage, shortdesc, desc)
+
+        self.parser.add_option("--name", dest="name", metavar="NAME",
+                help=_("profile name"))
+
+    def _validate_options(self):
+        pass
+
+    def _do_command(self):
+        pass
+
 class ProfileAddCommand(CliCommand):
     def __init__(self):
         usage = _("usage: %prog profile add [options]")
@@ -99,14 +116,16 @@ class ProfileAddCommand(CliCommand):
                 help=_("beginning of ip range"))
         self.parser.add_option("--ip_end", dest="ipend", metavar="IPEND",
                 help=_("end of ip range"))
+        self.parser.add_option("--ports", dest="ports", metavar="PORTS",
+                help=_("ssh ports to try i.e. '22, 2222, 5402'"))
 
     def _validate_options(self):
         pass
 
     def _do_command(self):
-        pass
         # TODO: not quite ready for this yet
-        #c = Config()
+        conf = {}
+        c = Config()
         #cred = {} 
         #cred['name'] = self.options.name
         #cred['range'] = [self.options.ipstart]
@@ -114,6 +133,14 @@ class ProfileAddCommand(CliCommand):
 
         ##print(json.dumps(c))
         #print(c.credentials)
+
+class AuthClearCommand(CliCommand):
+    def __init__(self):
+        usage = _("usage: %prog auth clear")
+        shortdesc = _("clears out the credentials")
+        desc = _("clears out the crendentials")
+
+        CliCommand.__init__(self, "auth clear", usage, shortdesc, desc)
 
 # TODO not sure if we want to have separate classes for sub/subcommands
 class AuthShowCommand(CliCommand):

@@ -48,10 +48,22 @@ class CLI:
         print("")
 
     def _find_best_match(self, args):
+        """
+        Returns the subcommand class that best matches the subcommand specified
+        in the argument list. For example, if you have two commands that start
+        with auth, 'auth show' and 'auth'. Passing in auth show will match
+        'auth show' not auth. If there is no 'auth show', it tries to find
+        'auth'.
+
+        This function ignores the arguments which begin with --
+        """
         possiblecmd = []
         for arg in args[1:]:
             if not arg.startswith("-"):
                 possiblecmd.append(arg)
+
+        if not possiblecmd:
+            return None
 
         cmd = None
         key = " ".join(possiblecmd)
@@ -61,6 +73,9 @@ class CLI:
         i = -1
         while cmd == None:
             key = " ".join(possiblecmd[:i])
+            if key is None or key == "":
+                break;
+
             if self.cli_commands.has_key(key):
                 cmd = self.cli_commands[key]
             i -= 1
@@ -73,5 +88,9 @@ class CLI:
             sys.exit(1)
 
         cmd = self._find_best_match(sys.argv)
+        if not cmd:
+            self._usage()
+            sys.exit(1)
+
         cmd.main()
 
