@@ -59,9 +59,26 @@ class SshJobs():
         # cmdSrc is some sort of list/iterator thing
         self.cmds_to_run = cmdSrc
 
+        self.verbose = True
+        self.outfile = None
+        self.max_threads = 10  
+
+    def run_cmds(self, callback=None):
+        self.output_queue = my_sshpt.startOutputThread(self.verbose, self.outfile)
+        self.ssh_connect_queue = my_sshpt.startSSHQueue(self.output_queue, self.max_threads)
+
+        while self.cmds_to_run:
+            for cmd in self.cmds_to_run:
+                if self.ssh_connect_queue.qsize()  self.max_threads:
+                    my_sshpt.queueSSHConnection(self.ssh_connect_queue, cmd)
+                    self.cmds_to_run.remove(cmd)
+            time.sleep(1)
+        self.ssh_connect_queue.join()
+        return self.output_queue
+
     # this is a lame one at a time, single threaded, blocking, sync approah
     # will replce with something better 
-    def run_cmds(self, callback=None):
+    def run_cmds_old(self, callback=None):
         while self.cmds_to_run:
             job = self.cmds_to_run.pop()
             job.run()
