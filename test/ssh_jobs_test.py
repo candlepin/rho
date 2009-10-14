@@ -27,6 +27,7 @@ try:
     from local_auth import *
 except ImportError:
     pass
+
 # this api is going to change...
 class _TestSshJobs(unittest.TestCase):
     auth = None
@@ -71,6 +72,12 @@ class _TestSshJobs(unittest.TestCase):
         self._run_cmds(["sleep 30"], 37)
     test_sleep_long_lots.slow = 1
 
+    # note, by default sshd only will allow 10 clients to backlog in
+    # the auth step, so this can make ssh start refusing new connections
+    # and new ssh attempts to issue the very descriptive and helpfule error
+    # "Error reading SSH protocol banner". You can either pause a little before
+    # each connection attempt to let sshd sort itself out, increase "MaxStartups" in
+    # /etc/ssh/sshd_config, or just don't use as many threads
     def test_sleep_long_lots_of_threads(self):
         self.jobs.max_threads = 53
         self._run_cmds(["sleep 30"], 37)
