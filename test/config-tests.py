@@ -88,11 +88,15 @@ class ConfigParsingTests(unittest.TestCase):
     def test_build_config(self):
         config = self.builder.build_config(SAMPLE_CONFIG1)
         self.assertEquals(2, len(config.credentials))
+        self.assertEquals(2, len(config.credential_keys))
         self.assertEquals(2, len(config.groups))
 
     def test_group_references_invalid_credentials(self):
         # Hack config to reference a credentials name that doesn't exist:
-        pass
+        self.json_dict[CONFIG_KEY][GROUPS_KEY][1][CREDENTIALS_KEY] = \
+            ["nosuchcredentials"]
+        self.assertRaises(ConfigurationException, Config,
+                self.json_dict[CONFIG_KEY])
 
 
 class CredentialParsingTests(unittest.TestCase):

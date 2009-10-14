@@ -74,22 +74,21 @@ class Config(object):
 
         self.credentials = []
         self.groups = []
+        # Will map credential key name to the credentials object:
+        self.credential_keys = {}
 
         # Credentials needs to be parsed first so we can check that the groups
         # reference valid credential keys.
         if CREDENTIALS_KEY in config_dict:
             credentials_dict = config_dict[CREDENTIALS_KEY]
-            for creds in self._build_credentials(credentials_dict):
-                self.credentials.append(creds)
+            self._build_credentials(credentials_dict)
 
         if GROUPS_KEY in config_dict:
             groups_dict = config_dict[GROUPS_KEY]
-            for g in self._build_groups(groups_dict):
-                self.groups.append(g)
+            self._build_groups(groups_dict)
 
     def _build_credentials(self, creds_list):
         """ Create a list of Credentials object. """
-        creds = []
 
         for credentials_dict in creds_list:
             # Omit optional, will verify these once we know what class to
@@ -103,20 +102,21 @@ class Config(object):
                         credentials_dict[TYPE_KEY])
 
             creds_obj = CREDENTIAL_TYPES[type_key](credentials_dict)
-            creds.append(creds_obj)
-
-        return creds
+            self.credentials.append(creds_obj)
+            self.credential_keys[creds_obj.name] = creds_obj
 
     def _build_groups(self, groups_list):
         """ Create a list of Credentials object. """
-        groups = []
 
         for group_dict in groups_list:
 
             group_obj = Group(group_dict)
-            groups.append(group_obj)
-
-        return groups
+            # Make sure none of the groups reference invalid credential keys:
+            for c in group_obj.credentials:
+                if c not in self.credential_keys:
+                    raise ConfigurationException("No such credentials: %s" %
+                            c)
+            self.groups.append(group_obj)
 
 
 class Credentials(object):
