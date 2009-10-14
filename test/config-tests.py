@@ -14,6 +14,7 @@
 import unittest
 
 from rho.config import *
+import simplejson as json
 
 SAMPLE_CONFIG1 = """
 {
@@ -70,28 +71,32 @@ class ConfigParsingTests(unittest.TestCase):
 
     def setUp(self):
         self.builder = ConfigBuilder()
+        self.json_dict = json.loads(SAMPLE_CONFIG1)
 
     def test_bad_json_string(self):
         bad_json = "does this look valid to you?"
         self.assertRaises(BadJsonException, self.builder.build_config, bad_json)
 
     def test_json_config_key(self):
-        """ Verify top level of JSON hash is just a config key. """
+        """ Verify top level of JSON dict is just a config key. """
         self.assertRaises(ConfigurationException, self.builder.build_config,
                 "{}")
         self.assertRaises(ConfigurationException, self.builder.build_config,
                 "{}")
 
-    def test_build_sample_config(self):
+    def test_build_config(self):
         config = self.builder.build_config(SAMPLE_CONFIG1)
         self.assertEquals(2, len(config.credentials))
+
+    def test_group_references_invalid_credentials(self):
+        # Hack config to reference a credentials name that doesn't exist:
+        pass
 
 
 class CredentialParsingTests(unittest.TestCase):
 
     def setUp(self):
-        self.builder = ConfigBuilder()
-        self.credentials_hash = [
+        self.credentials_dict = [
                 {
                     NAME_KEY: "ansshlogin",
                     TYPE_KEY: "ssh",
@@ -106,10 +111,10 @@ class CredentialParsingTests(unittest.TestCase):
                     PASSWORD_KEY: "password"
                 },
         ]
-        self.config_hash = {'credentials': self.credentials_hash}
+        self.config_dict = {'credentials': self.credentials_dict}
 
     def test_build_credentials(self):
-        creds = Config(self.config_hash).credentials
+        creds = Config(self.config_dict).credentials
         self.assertEquals(2, len(creds))
         self.assertEquals("ansshlogin", creds[0].name)
         self.assertEquals(SshCredentials, type(creds[0]))
@@ -118,24 +123,63 @@ class CredentialParsingTests(unittest.TestCase):
         self.assertEquals(SshKeyCredentials, type(creds[1]))
 
     def test_build_credentials_bad_type(self):
-        self.credentials_hash[0][TYPE_KEY] = "badtype"
+        self.credentials_dict[0][TYPE_KEY] = "badtype"
         self.assertRaises(ConfigurationException,
-            Config, self.config_hash)
+            Config, self.config_dict)
 
     def test_build_credentials_missing_type(self):
-        self.credentials_hash[0].pop(TYPE_KEY)
+        self.credentials_dict[0].pop(TYPE_KEY)
         self.assertRaises(ConfigurationException,
-            Config, self.config_hash)
+            Config, self.config_dict)
 
     def test_build_credentials_missing_username(self):
-        self.credentials_hash[0].pop(USERNAME_KEY)
+        self.credentials_dict[0].pop(USERNAME_KEY)
         self.assertRaises(ConfigurationException,
-            Config, self.config_hash)
+            Config, self.config_dict)
 
     def test_build_credentials_key_no_passphrase(self):
         # I think we're going to support a passphraseless key for now:
-        self.credentials_hash[1].pop(PASSWORD_KEY)
-        creds = Config(self.config_hash).credentials
+        self.credentials_dict[1].pop(PASSWORD_KEY)
+        creds = Config(self.config_dict).credentials
+
+
+class GroupParsingTests(unittest.TestCase):
+
+    def setUp(self):
+        self.builder = ConfigBuilder()
+        self.group_dict = {
+                "name": "accounting",
+                "range": [
+                    "192.168.0.0/24",
+                    "192.168.1.1-192.168.1.10",
+                    "192.168.5.0"
+                    ],
+                "credentials": ["bobskey", "bobslogin"],
+                "ports": [22, 2222]
+            }
+
+    def test_create_group(self):
+        g = Group(self.group_dict)
+        self.assertEquals("accounting", g.name)
+        self.assertEquals(2, len(g.credentials))
+        self.assertEquals(2, len(g.ports))
+        self.assertEquals(22, g.ports[0])
+        self.assertEquals(2222, g.ports[1])
+
+    def test_empty_range(self):
+        pass
+
+    def test_range_formats(self):
+        pass
+
+    def test_no_ports(self):
+        pass
+
+    def test_invalid_ports(self):
+        pass
+
+    def test_name_required(self):
+        pass
 
 
 class MiscTests(unittest.TestCase):

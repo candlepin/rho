@@ -22,9 +22,12 @@ TYPE_KEY = "type"
 USERNAME_KEY = "username"
 PASSWORD_KEY = "password"
 SSHKEY_KEY = "key"
+RANGE_KEY = "range"
+PORTS_KEY = "ports"
 
 SSH_TYPE = "ssh"
 SSH_KEY_TYPE = "ssh_key"
+
 
 class BadJsonException(Exception):
     pass
@@ -72,13 +75,14 @@ class Config(object):
         self.credentials = []
         self.groups = []
 
-        #  Should this move into the Config constructor?
+        # Credentials needs to be parsed first so we can check that the groups
+        # reference valid credential keys.
         if CREDENTIALS_KEY in config_dict:
             credentials_dict = config_dict[CREDENTIALS_KEY]
-            for creds in self.build_credentials(credentials_dict):
+            for creds in self._build_credentials(credentials_dict):
                 self.credentials.append(creds)
 
-    def build_credentials(self, all_credentials_dict):
+    def _build_credentials(self, all_credentials_dict):
         """ Create a list of Credentials object. """
         creds = []
 
@@ -104,6 +108,7 @@ class Credentials(object):
 
 
 class SshCredentials(Credentials):
+
     def __init__(self, json_dict):
 
         verify_keys(json_dict, required=[NAME_KEY, TYPE_KEY,
@@ -115,6 +120,7 @@ class SshCredentials(Credentials):
 
 
 class SshKeyCredentials(Credentials):
+
     def __init__(self, json_dict):
 
         verify_keys(json_dict, required=[NAME_KEY, TYPE_KEY,
@@ -131,7 +137,17 @@ class SshKeyCredentials(Credentials):
 
 
 class Group(object):
-    pass
+
+    def __init__(self, group_dict):
+        """
+        Create a group object from the given dict. 
+        """
+        verify_keys(group_dict, required=[NAME_KEY, RANGE_KEY, CREDENTIALS_KEY,
+                PORTS_KEY], optional=[])
+        self.name = group_dict[NAME_KEY]
+        self.range = group_dict[RANGE_KEY]
+        self.credentials = group_dict[CREDENTIALS_KEY]
+        self.ports = group_dict[PORTS_KEY]
 
 
 # Needs to follow the class definitions:
