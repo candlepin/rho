@@ -82,11 +82,16 @@ class Config(object):
             for creds in self._build_credentials(credentials_dict):
                 self.credentials.append(creds)
 
-    def _build_credentials(self, all_credentials_dict):
+        if GROUPS_KEY in config_dict:
+            groups_dict = config_dict[GROUPS_KEY]
+            for g in self._build_groups(groups_dict):
+                self.groups.append(g)
+
+    def _build_credentials(self, creds_list):
         """ Create a list of Credentials object. """
         creds = []
 
-        for credentials_dict in all_credentials_dict:
+        for credentials_dict in creds_list:
             # Omit optional, will verify these once we know what class to
             # instantiate.
             verify_keys(credentials_dict, required=[NAME_KEY, TYPE_KEY])
@@ -101,6 +106,17 @@ class Config(object):
             creds.append(creds_obj)
 
         return creds
+
+    def _build_groups(self, groups_list):
+        """ Create a list of Credentials object. """
+        groups = []
+
+        for group_dict in groups_list:
+
+            group_obj = Group(group_dict)
+            groups.append(group_obj)
+
+        return groups
 
 
 class Credentials(object):
@@ -147,7 +163,14 @@ class Group(object):
         self.name = group_dict[NAME_KEY]
         self.range = group_dict[RANGE_KEY]
         self.credentials = group_dict[CREDENTIALS_KEY]
-        self.ports = group_dict[PORTS_KEY]
+
+        self.ports = []
+        for p in group_dict[PORTS_KEY]:
+            # Make sure we can cast to integers:
+            try:
+                self.ports.append(int(p))
+            except ValueError:
+                raise ConfigurationException("Invalid ssh port: %s" % p)
 
 
 # Needs to follow the class definitions:
@@ -165,6 +188,7 @@ class ConfigBuilder(object):
     objects.
     """
 
+    # TODO: This does almost nothing, bump it down to just a function.
     def build_config(self, json_text):
         """ Create Config object from JSON string. """
         json_dict = None

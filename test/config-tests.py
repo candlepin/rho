@@ -57,7 +57,8 @@ SAMPLE_CONFIG1 = """
                 "range": [
                     "192.168.9.0/24"
                 ],
-                "credentials": ["bobskey"]
+                "credentials": ["bobskey"],
+                "ports": []
             }
 
         ]
@@ -87,6 +88,7 @@ class ConfigParsingTests(unittest.TestCase):
     def test_build_config(self):
         config = self.builder.build_config(SAMPLE_CONFIG1)
         self.assertEquals(2, len(config.credentials))
+        self.assertEquals(2, len(config.groups))
 
     def test_group_references_invalid_credentials(self):
         # Hack config to reference a credentials name that doesn't exist:
@@ -148,14 +150,14 @@ class GroupParsingTests(unittest.TestCase):
     def setUp(self):
         self.builder = ConfigBuilder()
         self.group_dict = {
-                "name": "accounting",
-                "range": [
+                NAME_KEY: "accounting",
+                RANGE_KEY: [
                     "192.168.0.0/24",
                     "192.168.1.1-192.168.1.10",
                     "192.168.5.0"
                     ],
-                "credentials": ["bobskey", "bobslogin"],
-                "ports": [22, 2222]
+                CREDENTIALS_KEY: ["bobskey", "bobslogin"],
+                PORTS_KEY: [22, 2222]
             }
 
     def test_create_group(self):
@@ -167,19 +169,22 @@ class GroupParsingTests(unittest.TestCase):
         self.assertEquals(2222, g.ports[1])
 
     def test_empty_range(self):
-        pass
-
-    def test_range_formats(self):
-        pass
+        self.group_dict[RANGE_KEY] = []
+        # Just don't want to see an error:
+        g = Group(self.group_dict)
 
     def test_no_ports(self):
-        pass
+        self.group_dict[PORTS_KEY] = []
+        # Just don't want to see an error:
+        g = Group(self.group_dict)
 
     def test_invalid_ports(self):
-        pass
+        self.group_dict[PORTS_KEY] = ["aslkjdh"]
+        self.assertRaises(ConfigurationException, Group, self.group_dict)
 
     def test_name_required(self):
-        pass
+        self.group_dict.pop(NAME_KEY)
+        self.assertRaises(ConfigurationException, Group, self.group_dict)
 
 
 class MiscTests(unittest.TestCase):
