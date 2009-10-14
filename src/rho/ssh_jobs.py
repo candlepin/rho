@@ -57,7 +57,9 @@ class SshJobs():
         self.outfile = None
         self.max_threads = 10  
 
-    def run_cmds(self, callback=None):
+    def run_cmds(self, cmds=None, callback=None):
+        if cmds:
+            self.cmds_to_run = cmds
         self.output_queue = my_sshpt.startOutputThread(self.verbose, self.outfile)
         self.ssh_connect_queue = my_sshpt.startSSHQueue(self.output_queue, self.max_threads)
 
@@ -66,7 +68,7 @@ class SshJobs():
                 if self.ssh_connect_queue.qsize()  <= self.max_threads:
                     my_sshpt.queueSSHConnection(self.ssh_connect_queue, cmd)
                     self.cmds_to_run.remove(cmd)
-            time.sleep(1)
+#            time.sleep(1)
         self.ssh_connect_queue.join()
         return self.output_queue
 
