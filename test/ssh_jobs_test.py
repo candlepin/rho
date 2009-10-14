@@ -2,6 +2,7 @@
 
 import unittest
 
+#from nose.plugins.attrib import attr
 
 from rho import config
 from rho import ssh_jobs
@@ -35,15 +36,59 @@ class _TestSshJobs(unittest.TestCase):
         self.output = []
         self.retcode = []
 
+
     def _callback(self, resultlist=[]):
         for result in resultlist:
             print "%s:%s %s" % (result.ip, result.returncode, result.output)
             self.output.append((result.ip, result.returncode, result.output))
 
+    def _run_cmds(self, cmds=None, number=1):
+        if cmds:
+            self.cmds = cmds
+        self.ssh_cmds = [ssh_jobs.SshJob(ip=self.ip, cmds=cmds, auth=self.auth)] * number
+        self.jobs.run_cmds(cmds=self.ssh_cmds, callback = self._callback)
+
     def test_echo_ip(self):
-        ssh_cmds = [ssh_jobs.SshJob(ip=self.ip, cmds=["echo  vvv %s" % self.ip], auth=self.auth)]
-        self.jobs.cmds_to_run = ssh_cmds
-        self.jobs.run_cmds(callback = self._callback)
+        self._run_cmds(["echo blippy %s" % self.ip])
+
+    def test_ls_tmp(self):
+        self._run_cmds(["ls -lart /tmp"])
+
+    def test_ls_tmp_lots(self):
+        self._run_cmds(["ls -lart /tmp"], 42)
+
+    def test_sleep_short_single(self):
+        self._run_cmds(["sleep 1"])
+
+    def test_sleep_short_lots(self):
+        self._run_cmds(["sleep 1"], 20)
+
+    def test_sleep_long_single(self):
+        self._run_cmds(["sleep 30"])
+    test_sleep_long_single.slow = 1
+
+    def test_sleep_long_lots(self):
+        self._run_cmds(["sleep 30"], 37)
+    test_sleep_long_lots.slow = 1
+
+    def test_sleep_long_lots_of_threads(self):
+        self.jobs.max_threads = 53
+        self._run_cmds(["sleep 30"], 37)
+    test_sleep_long_lots_of_threads.slow = 1
+
+    def test_sleep_short_lots_of_threads(self):
+        self.jobs.max_threads = 31
+        self._run_cmds(["sleep 1"], 47)
+    test_sleep_short_lots_of_threads.slow = 1
+
+
+    def test_uname(self):
+        self._run_cmds(["uname -a"])
+
+    def test_rpm_release(self):
+        self._run_cmds(["""rpm -q --queryformat "%{NAME}\n%{VERSION}\n%{RELEASE}\n" --whatprovides redhat-release"""])
+
+
 
 class TestSshJobsWorks(_TestSshJobs):
     auth = auth_good
