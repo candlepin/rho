@@ -14,14 +14,14 @@ class Auth():
         self.name = name
         self.type = type
         self.username = username
-        self.password = None
+        self.password = password
 
 class SshAuth(Auth):
     def __init__(self, name=None, type=None, username=None, password=None):
         self.name = name
         self.type = "ssh"
         self.username = username
-        self.password = None
+        self.password = password
 
 
 
