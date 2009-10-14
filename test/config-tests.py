@@ -91,18 +91,30 @@ class ConfigParsingTests(unittest.TestCase):
         self.assertEquals(2, len(config.credential_keys))
         self.assertEquals(2, len(config.groups))
 
-    def test_group_references_invalid_credentials(self):
-        # Hack config to reference a credentials name that doesn't exist:
-        self.json_dict[CONFIG_KEY][GROUPS_KEY][1][CREDENTIALS_KEY] = \
-            ["nosuchcredentials"]
-        self.assertRaises(ConfigurationException, Config,
-                self.json_dict[CONFIG_KEY])
+
+class ConfigTests(unittest.TestCase):
+
+    def setUp(self):
+        self.builder = ConfigBuilder()
+
+#    def test_group_references_invalid_credentials(self):
+#        # Hack config to reference a credentials name that doesn't exist:
+#        self.json_dict[CONFIG_KEY][GROUPS_KEY][1][CREDENTIALS_KEY] = \
+#            ["nosuchcredentials"]
+#        self.assertRaises(ConfigurationException, self.builder.build_config,
+#                self.json_dict[CONFIG_KEY])
+
+    def test_new_config(self):
+        config = Config()
+        self.assertEquals([], config.credentials)
+        self.assertEquals([], config.groups)
 
 
 class CredentialParsingTests(unittest.TestCase):
 
     def setUp(self):
-        self.credentials_dict = [
+        self.builder = ConfigBuilder()
+        self.credentials_list = [
                 {
                     NAME_KEY: "ansshlogin",
                     TYPE_KEY: "ssh",
@@ -117,10 +129,11 @@ class CredentialParsingTests(unittest.TestCase):
                     PASSWORD_KEY: "password"
                 },
         ]
-        self.config_dict = {'credentials': self.credentials_dict}
+        self.config_dict = {'credentials': self.credentials_list}
 
     def test_build_credentials(self):
-        creds = Config(self.config_dict).credentials
+        creds = self.builder.build_credentials(self.credentials_list)
+
         self.assertEquals(2, len(creds))
         self.assertEquals("ansshlogin", creds[0].name)
         self.assertEquals(SshCredentials, type(creds[0]))
@@ -129,24 +142,24 @@ class CredentialParsingTests(unittest.TestCase):
         self.assertEquals(SshKeyCredentials, type(creds[1]))
 
     def test_build_credentials_bad_type(self):
-        self.credentials_dict[0][TYPE_KEY] = "badtype"
+        self.credentials_list[0][TYPE_KEY] = "badtype"
         self.assertRaises(ConfigurationException,
-            Config, self.config_dict)
+            self.builder.build_credentials, self.credentials_list)
 
     def test_build_credentials_missing_type(self):
-        self.credentials_dict[0].pop(TYPE_KEY)
+        self.credentials_list[0].pop(TYPE_KEY)
         self.assertRaises(ConfigurationException,
-            Config, self.config_dict)
+            self.builder.build_credentials, self.credentials_list)
 
     def test_build_credentials_missing_username(self):
-        self.credentials_dict[0].pop(USERNAME_KEY)
+        self.credentials_list[0].pop(USERNAME_KEY)
         self.assertRaises(ConfigurationException,
-            Config, self.config_dict)
+            self.builder.build_credentials, self.credentials_list)
 
     def test_build_credentials_key_no_passphrase(self):
         # I think we're going to support a passphraseless key for now:
-        self.credentials_dict[1].pop(PASSWORD_KEY)
-        creds = Config(self.config_dict).credentials
+        self.credentials_list[1].pop(PASSWORD_KEY)
+        creds = self.builder.build_credentials(self.credentials_list)
 
 
 class GroupParsingTests(unittest.TestCase):
@@ -165,7 +178,7 @@ class GroupParsingTests(unittest.TestCase):
             }
 
     def test_create_group(self):
-        g = Group(self.group_dict)
+        g = self.builder.build_groups([self.group_dict])[0]
         self.assertEquals("accounting", g.name)
         self.assertEquals(2, len(g.credentials))
         self.assertEquals(2, len(g.ports))
@@ -175,20 +188,22 @@ class GroupParsingTests(unittest.TestCase):
     def test_empty_range(self):
         self.group_dict[RANGE_KEY] = []
         # Just don't want to see an error:
-        g = Group(self.group_dict)
+        self.builder.build_groups([self.group_dict])
 
     def test_no_ports(self):
         self.group_dict[PORTS_KEY] = []
         # Just don't want to see an error:
-        g = Group(self.group_dict)
+        g = self.builder.build_groups([self.group_dict])
 
     def test_invalid_ports(self):
         self.group_dict[PORTS_KEY] = ["aslkjdh"]
-        self.assertRaises(ConfigurationException, Group, self.group_dict)
+        self.assertRaises(ConfigurationException, self.builder.build_groups,
+                [self.group_dict])
 
     def test_name_required(self):
         self.group_dict.pop(NAME_KEY)
-        self.assertRaises(ConfigurationException, Group, self.group_dict)
+        self.assertRaises(ConfigurationException, self.builder.build_groups,
+                [self.group_dict])
 
 
 class MiscTests(unittest.TestCase):

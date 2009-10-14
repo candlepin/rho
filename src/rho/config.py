@@ -64,12 +64,9 @@ def verify_keys(check_dict, required=[], optional=None):
 class Config(object):
     """ Simple object represeting Rho configuration. """
 
-    def __init__(self, config_dict):
+    def __init__(self, credentials=None, groups=None):
         """
-        Create a config object from the incoming dict.
-
-        dict is only used to instantiate members on the objects. Calling
-        to_dict() will return a new dict with the current object state.
+        Create a config object from the given credentials and groups.
         """
 
         self.credentials = []
@@ -77,47 +74,20 @@ class Config(object):
         # Will map credential key name to the credentials object:
         self.credential_keys = {}
 
-        # Credentials needs to be parsed first so we can check that the groups
-        # reference valid credential keys.
-        if CREDENTIALS_KEY in config_dict:
-            credentials_dict = config_dict[CREDENTIALS_KEY]
-            self._build_credentials(credentials_dict)
+        # Need to iterate credentials first:
+        if credentials:
+            for c in credentials:
+                self.credentials.append(c)
+                self.credential_keys[c.name] = c
 
-        if GROUPS_KEY in config_dict:
-            groups_dict = config_dict[GROUPS_KEY]
-            self._build_groups(groups_dict)
-
-    def _build_credentials(self, creds_list):
-        """ Create a list of Credentials object. """
-
-        for credentials_dict in creds_list:
-            # Omit optional, will verify these once we know what class to
-            # instantiate.
-            verify_keys(credentials_dict, required=[NAME_KEY, TYPE_KEY])
-
-            type_key = credentials_dict[TYPE_KEY]
-
-            if type_key not in CREDENTIAL_TYPES:
-                raise ConfigurationException("Unsupported credential type: %s",
-                        credentials_dict[TYPE_KEY])
-
-            creds_obj = CREDENTIAL_TYPES[type_key](credentials_dict)
-            self.credentials.append(creds_obj)
-            self.credential_keys[creds_obj.name] = creds_obj
-
-    def _build_groups(self, groups_list):
-        """ Create a list of Credentials object. """
-
-        for group_dict in groups_list:
-
-            group_obj = Group(group_dict)
+        if groups:
             # Make sure none of the groups reference invalid credential keys:
-            for c in group_obj.credentials:
-                if c not in self.credential_keys:
-                    raise ConfigurationException("No such credentials: %s" %
-                            c)
-            self.groups.append(group_obj)
-
+            for group in groups:
+                for c in group.credentials:
+                    if c not in self.credential_keys:
+                        raise ConfigurationException("No such credentials: %s" %
+                                c)
+            self.groups.extend(groups)
 
 class Credentials(object):
     pass
@@ -154,23 +124,21 @@ class SshKeyCredentials(Credentials):
 
 class Group(object):
 
-    def __init__(self, group_dict):
+    def __init__(self, name, ranges, credentials, ports):
         """
-        Create a group object from the given dict. 
-        """
-        verify_keys(group_dict, required=[NAME_KEY, RANGE_KEY, CREDENTIALS_KEY,
-                PORTS_KEY], optional=[])
-        self.name = group_dict[NAME_KEY]
-        self.range = group_dict[RANGE_KEY]
-        self.credentials = group_dict[CREDENTIALS_KEY]
+        Create a group object.
 
-        self.ports = []
-        for p in group_dict[PORTS_KEY]:
-            # Make sure we can cast to integers:
-            try:
-                self.ports.append(int(p))
-            except ValueError:
-                raise ConfigurationException("Invalid ssh port: %s" % p)
+        Ranges is a list of strings specifying IP ranges. We just store the
+        string.
+
+        Credentials is a list of strings referencing credential *keys*.
+
+        Ports is a list of integers.
+        """
+        self.name = name
+        self.ranges = ranges
+        self.credentials = credentials
+        self.ports = ports
 
 
 # Needs to follow the class definitions:
@@ -184,11 +152,12 @@ class ConfigBuilder(object):
     """
     Stateless object used to parse JSON into actual objects.
 
-    Really only exists to keep any JSON library specifics out of the other
-    objects.
+    Knows how to convert JSON text to dict, and form actual objects from those
+    including validation checks to ensure the config is sane.
+
+    Also converts the other direction turning objects into JSON text.
     """
 
-    # TODO: This does almost nothing, bump it down to just a function.
     def build_config(self, json_text):
         """ Create Config object from JSON string. """
         json_dict = None
@@ -200,8 +169,62 @@ class ConfigBuilder(object):
         verify_keys(json_dict, required=[CONFIG_KEY])
         config_dict = json_dict[CONFIG_KEY]
 
-        config = Config(config_dict)
+        # Credentials needs to be parsed first so we can check that the groups
+        # reference valid credential keys.
+        creds = None
+        if CREDENTIALS_KEY in config_dict:
+            credentials_dict = config_dict[CREDENTIALS_KEY]
+            creds = self.build_credentials(credentials_dict)
+
+        groups = None
+        if GROUPS_KEY in config_dict:
+            groups_dict = config_dict[GROUPS_KEY]
+            groups = self.build_groups(groups_dict)
+
+        config = Config(credentials=creds, groups=groups)
 
         return config
+
+    def build_credentials(self, creds_list):
+        """ Create a list of Credentials object. """
+        creds = []
+        for credentials_dict in creds_list:
+            # Omit optional, will verify these once we know what class to
+            # instantiate.
+            verify_keys(credentials_dict, required=[NAME_KEY, TYPE_KEY])
+
+            type_key = credentials_dict[TYPE_KEY]
+
+            if type_key not in CREDENTIAL_TYPES:
+                raise ConfigurationException("Unsupported credential type: %s",
+                        credentials_dict[TYPE_KEY])
+
+            creds_obj = CREDENTIAL_TYPES[type_key](credentials_dict)
+            creds.append(creds_obj)
+        return creds
+
+    def build_groups(self, groups_list):
+        """ Create a list of Credentials object. """
+
+        groups = []
+        for group_dict in groups_list:
+            verify_keys(group_dict, required=[NAME_KEY, RANGE_KEY,
+                CREDENTIALS_KEY, PORTS_KEY], optional=[])
+            name = group_dict[NAME_KEY]
+            ranges = group_dict[RANGE_KEY]
+            credentials = group_dict[CREDENTIALS_KEY]
+
+            ports = []
+            for p in group_dict[PORTS_KEY]:
+                # Make sure we can cast to integers:
+                try:
+                    ports.append(int(p))
+                except ValueError:
+                    raise ConfigurationException("Invalid ssh port: %s" % p)
+
+                group_obj = Group(name, ranges, credentials, ports)
+                groups.append(group_obj)
+
+        return groups
 
 
