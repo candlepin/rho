@@ -41,7 +41,7 @@ class _TestSshJobs(unittest.TestCase):
             self.output.append((result.ip, result.returncode, result.output))
 
     def test_echo_ip(self):
-        ssh_cmds = [ssh_jobs.SshJob(ip=self.ip, cmd="echo  vvv %s" % self.ip, auth=self.auth)]
+        ssh_cmds = [ssh_jobs.SshJob(ip=self.ip, cmds=["echo  vvv %s" % self.ip], auth=self.auth)]
         self.jobs.cmds_to_run = ssh_cmds
         self.jobs.run_cmds(callback = self._callback)
 
