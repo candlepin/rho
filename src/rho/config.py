@@ -34,9 +34,9 @@ class ConfigurationException(Exception):
     pass
 
 
-def verify_keys(check_hash, required=[], optional=None):
+def verify_keys(check_dict, required=[], optional=None):
     """
-    Verify that all required keys are present in the hash, and nothing
+    Verify that all required keys are present in the dict, and nothing
     extraneous is present.
 
     Assumes that if optional arguments is not specified, we're only checking
@@ -47,12 +47,12 @@ def verify_keys(check_hash, required=[], optional=None):
     Will throw a ConfigurationException if anything is amiss.
     """
     for required_key in required:
-        if required_key not in check_hash:
+        if required_key not in check_dict:
             raise ConfigurationException("Missing required key: %s" % 
                     required_key)
 
     if optional is not None:
-        for key in check_hash:
+        for key in check_dict:
             if (key not in required) and (key not in optional):
                 raise ConfigurationException("Extraneous key: %s" %
                         required_key)
@@ -61,16 +61,42 @@ def verify_keys(check_hash, required=[], optional=None):
 class Config(object):
     """ Simple object represeting Rho configuration. """
 
-    def __init__(self):
+    def __init__(self, config_dict):
         """
-        Create a config object from the incoming hash.
+        Create a config object from the incoming dict.
 
-        Hash is only used to instantiate members on the objects. Calling
-        to_hash() will return a new hash with the current object state.
+        dict is only used to instantiate members on the objects. Calling
+        to_dict() will return a new dict with the current object state.
         """
 
         self.credentials = []
         self.groups = []
+
+        #  Should this move into the Config constructor?
+        if CREDENTIALS_KEY in config_dict:
+            credentials_dict = config_dict[CREDENTIALS_KEY]
+            for creds in self.build_credentials(credentials_dict):
+                self.credentials.append(creds)
+
+    def build_credentials(self, all_credentials_dict):
+        """ Create a list of Credentials object. """
+        creds = []
+
+        for credentials_dict in all_credentials_dict:
+            # Omit optional, will verify these once we know what class to
+            # instantiate.
+            verify_keys(credentials_dict, required=[NAME_KEY, TYPE_KEY])
+
+            type_key = credentials_dict[TYPE_KEY]
+
+            if type_key not in CREDENTIAL_TYPES:
+                raise ConfigurationException("Unsupported credential type: %s",
+                        credentials_dict[TYPE_KEY])
+
+            creds_obj = CREDENTIAL_TYPES[type_key](credentials_dict)
+            creds.append(creds_obj)
+
+        return creds
 
 
 class Credentials(object):
@@ -78,30 +104,30 @@ class Credentials(object):
 
 
 class SshCredentials(Credentials):
-    def __init__(self, json_hash):
+    def __init__(self, json_dict):
 
-        verify_keys(json_hash, required=[NAME_KEY, TYPE_KEY,
+        verify_keys(json_dict, required=[NAME_KEY, TYPE_KEY,
                 USERNAME_KEY, PASSWORD_KEY], optional=[])
 
-        self.name = json_hash[NAME_KEY]
-        self.username = json_hash[USERNAME_KEY]
-        self.password = json_hash[PASSWORD_KEY]
+        self.name = json_dict[NAME_KEY]
+        self.username = json_dict[USERNAME_KEY]
+        self.password = json_dict[PASSWORD_KEY]
 
 
 class SshKeyCredentials(Credentials):
-    def __init__(self, json_hash):
+    def __init__(self, json_dict):
 
-        verify_keys(json_hash, required=[NAME_KEY, TYPE_KEY,
+        verify_keys(json_dict, required=[NAME_KEY, TYPE_KEY,
                 USERNAME_KEY, SSHKEY_KEY], optional=[PASSWORD_KEY])
 
-        self.name = json_hash[NAME_KEY]
-        self.username = json_hash[USERNAME_KEY]
-        self.key = json_hash[SSHKEY_KEY]
+        self.name = json_dict[NAME_KEY]
+        self.username = json_dict[USERNAME_KEY]
+        self.key = json_dict[SSHKEY_KEY]
 
         # Password is optional for ssh keys.
         self.password = ''
-        if PASSWORD_KEY in json_hash:
-            self.password = json_hash[PASSWORD_KEY]
+        if PASSWORD_KEY in json_dict:
+            self.password = json_dict[PASSWORD_KEY]
 
 
 class Group(object):
@@ -125,42 +151,17 @@ class ConfigBuilder(object):
 
     def build_config(self, json_text):
         """ Create Config object from JSON string. """
-        json_hash = None
+        json_dict = None
         try:
-            json_hash = json.loads(json_text)
+            json_dict = json.loads(json_text)
         except ValueError:
             raise BadJsonException
 
-        verify_keys(json_hash, required=[CONFIG_KEY])
-        config_hash = json_hash[CONFIG_KEY]
+        verify_keys(json_dict, required=[CONFIG_KEY])
+        config_dict = json_dict[CONFIG_KEY]
 
-        config = Config()
-
-        if CREDENTIALS_KEY in config_hash:
-            credentials_hash = config_hash[CREDENTIALS_KEY]
-            for creds in self.build_credentials(credentials_hash):
-                config.credentials.append(creds)
+        config = Config(config_dict)
 
         return config
-
-    def build_credentials(self, all_credentials_hash):
-        """ Create a list of Credentials object. """
-        creds = []
-
-        for credentials_hash in all_credentials_hash:
-            # Omit optional, will verify these once we know what class to
-            # instantiate.
-            verify_keys(credentials_hash, required=[NAME_KEY, TYPE_KEY])
-
-            type_key = credentials_hash[TYPE_KEY]
-
-            if type_key not in CREDENTIAL_TYPES:
-                raise ConfigurationException("Unsupported credential type: %s",
-                        credentials_hash[TYPE_KEY])
-
-            creds_obj = CREDENTIAL_TYPES[type_key](credentials_hash)
-            creds.append(creds_obj)
-
-        return creds
 
 

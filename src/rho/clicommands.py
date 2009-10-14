@@ -104,14 +104,16 @@ class ProfileAddCommand(CliCommand):
         pass
 
     def _do_command(self):
-        c = Config()
-        cred = {} 
-        cred['name'] = self.options.name
-        cred['range'] = [self.options.ipstart]
-        c.credentials.append(cred)
+        pass
+        # TODO: not quite ready for this yet
+        #c = Config()
+        #cred = {} 
+        #cred['name'] = self.options.name
+        #cred['range'] = [self.options.ipstart]
+        #c.credentials.append(cred)
 
-        #print(json.dumps(c))
-        print(c.credentials)
+        ##print(json.dumps(c))
+        #print(c.credentials)
 
 # TODO not sure if we want to have separate classes for sub/subcommands
 class AuthShowCommand(CliCommand):

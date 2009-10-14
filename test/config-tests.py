@@ -86,7 +86,8 @@ class ConfigParsingTests(unittest.TestCase):
         config = self.builder.build_config(SAMPLE_CONFIG1)
         self.assertEquals(2, len(config.credentials))
 
-class ConfigParsingTests(unittest.TestCase):
+
+class CredentialParsingTests(unittest.TestCase):
 
     def setUp(self):
         self.builder = ConfigBuilder()
@@ -105,9 +106,10 @@ class ConfigParsingTests(unittest.TestCase):
                     PASSWORD_KEY: "password"
                 },
         ]
+        self.config_hash = {'credentials': self.credentials_hash}
 
     def test_build_credentials(self):
-        creds = self.builder.build_credentials(self.credentials_hash)
+        creds = Config(self.config_hash).credentials
         self.assertEquals(2, len(creds))
         self.assertEquals("ansshlogin", creds[0].name)
         self.assertEquals(SshCredentials, type(creds[0]))
@@ -118,22 +120,22 @@ class ConfigParsingTests(unittest.TestCase):
     def test_build_credentials_bad_type(self):
         self.credentials_hash[0][TYPE_KEY] = "badtype"
         self.assertRaises(ConfigurationException,
-                self.builder.build_credentials, self.credentials_hash)
+            Config, self.config_hash)
 
     def test_build_credentials_missing_type(self):
         self.credentials_hash[0].pop(TYPE_KEY)
         self.assertRaises(ConfigurationException,
-                self.builder.build_credentials, self.credentials_hash)
+            Config, self.config_hash)
 
     def test_build_credentials_missing_username(self):
         self.credentials_hash[0].pop(USERNAME_KEY)
         self.assertRaises(ConfigurationException,
-                self.builder.build_credentials, self.credentials_hash)
+            Config, self.config_hash)
 
     def test_build_credentials_key_no_passphrase(self):
         # I think we're going to support a passphraseless key for now:
         self.credentials_hash[1].pop(PASSWORD_KEY)
-        self.builder.build_credentials(self.credentials_hash)
+        creds = Config(self.config_hash).credentials
 
 
 class MiscTests(unittest.TestCase):
