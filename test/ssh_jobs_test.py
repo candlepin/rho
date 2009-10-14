@@ -30,8 +30,8 @@ except ImportError:
 
 # this api is going to change...
 class _TestSshJobs(unittest.TestCase):
-    auth = None
-    ip = hostname
+
+    ips = [] 
     def setUp(self):
         self.jobs = ssh_jobs.SshJobs()
         self.output = []
@@ -46,11 +46,14 @@ class _TestSshJobs(unittest.TestCase):
     def _run_cmds(self, cmds=None, number=1):
         if cmds:
             self.cmds = cmds
-        self.ssh_cmds = [ssh_jobs.SshJob(ip=self.ip, cmds=cmds, auth=self.auth)] * number
+        self.ssh_cmds = []
+        for ip, auth in self.ips:
+            self.ssh_cmds = self.ssh_cmds + [ssh_jobs.SshJob(ip=ip, cmds=cmds, auth=auth)] * number
+        print self.ssh_cmds
         self.jobs.run_cmds(cmds=self.ssh_cmds, callback = self._callback)
 
-    def test_echo_ip(self):
-        self._run_cmds(["echo blippy %s" % self.ip])
+    def test_echo_blippy(self):
+        self._run_cmds(["echo blippy"])
 
     def test_ls_tmp(self):
         self._run_cmds(["ls -lart /tmp"])
@@ -96,18 +99,35 @@ class _TestSshJobs(unittest.TestCase):
         self._run_cmds(["""rpm -q --queryformat "%{NAME}\n%{VERSION}\n%{RELEASE}\n" --whatprovides redhat-release"""])
 
 
+# ok, for joe schmo, none of these will work. They kind of expect machines
+# to exist, that you can ssh to, and have auth on. Obviously, I do not
+# know what those are. But these should be examples. I'm not sure of
+# a better way to test this.
 
-class TestSshJobsWorks(_TestSshJobs):
-    auth = auth_good
+#class TestSshJobsWorks(_TestSshJobs):
+#    ips = [(hostname, auth_good)]
 
 #class TestSshJobsNoUser(_TestSshJobs):
 #    auth =  ssh_jobs.SshAuth(name="badadrian", username="badadrian")
     
-class TestSshJobsNoHost(_TestSshJobs):
-    auth = auth_good
-    ip = bad_hostname
+
+
+
+
+#class TestSshJobsNoHost(_TestSshJobs):
+#    auth = auth_good
+#    ip = bad_hostname
+
+
 
 #class TestSshJobsF11(_TestSshJobs):
-#    auth = auth_test
-#    ip = "f11-virt-1.usersys.redhat.com"
+#    ips = [("f11-virt-1.usersys.redhat.com", auth_test)]
+
+#class TestSshJobsAll(_TestSshJobs):
+#    ips = [("f11-virt-1.usersys.redhat.com", auth_test),
+#           ("f11-virt-2.usersys.redhat.com", auth_test),
+#           ("f11-virt-1.usersys.redhat.com", auth_bad_password),
+#            (hostname, auth_good)]
+
+
 
