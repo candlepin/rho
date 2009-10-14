@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+#import ssh_jobs
 # Import built-in Python modules
 import getpass, threading, Queue, sys, os, re, datetime
 from optparse import OptionParser
@@ -60,24 +61,27 @@ class SSHThread(GenericThread):
         try:
             while not self.quitting:
                 queueObj = self.ssh_connect_queue.get()
-                if queueObj == 'quit':
-                    self.quit()
+#                if queueObj == 'quit':
+#                    self.quit()
                     
                 # These variable assignments are just here for readability further down
-                host = queueObj['host']
-                username = queueObj['username']
-                password = queueObj['password']
-                timeout = queueObj['timeout']
-                commands = queueObj['commands']
+                host = queueObj.ip
+                username = queueObj.auth.username
+                password = queueObj.auth.password
+                timeout = queueObj.timeout
+                commands = queueObj.cmds
                 
                 success, command_output = attemptConnection(host, username, password, timeout, commands)
                 if success:
-                    queueObj['connection_result'] = "SUCCESS"
+                    queueObj.connection_result = "SUCCESS"
                 else:
-                    queueObj['connection_result'] = "FAILED"
-                queueObj['command_output'] = command_output
+                    queueObj.connection_result = "FAILED"
+                queueObj.command_output = command_output
                 self.output_queue.put(queueObj)
                 self.ssh_connect_queue.task_done()
+                # just for progress, etc...
+                if queueObj.output_callback:
+                    queueObj.output_callback()
         except Exception, detail:
             print detail
             self.quit()
@@ -113,15 +117,9 @@ def stopSSHQueue():
             t.quit()
     return True
 
-def queueSSHConnection(ssh_connect_queue, host, username, password, timeout, commands):
+def queueSSHConnection(ssh_connect_queue, cmd):
     """Add files to the SSH Queue (ssh_connect_queue)"""
-    queueObj = {}
-    queueObj['host'] = host
-    queueObj['username'] = username
-    queueObj['password'] = password
-    queueObj['timeout'] = timeout
-    queueObj['commands'] = commands
-    ssh_connect_queue.put(queueObj)
+    ssh_connect_queue.put(cmd)
     return True
 
 def paramikoConnect(host, username, password, timeout):
