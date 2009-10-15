@@ -107,6 +107,14 @@ class ProfileShowCommand(CliCommand):
     def _validate_options(self):
         pass
 
+    def _do_command(self):
+        if not self.config.list_groups():
+            print(_("No profiles found"))
+
+        for g in self.config.list_groups():
+            # make this a pretty table
+            print(g.to_dict())
+
 class ProfileClearCommand(CliCommand):
     def __init__(self):
         usage = _("usage: %prog profile clear [options]")
@@ -122,7 +130,9 @@ class ProfileClearCommand(CliCommand):
         pass
 
     def _do_command(self):
-        pass
+        self.config.clear_groups()
+        c = config.ConfigBuilder().dump_config(self.config)
+        crypto.write_file(self.options.config, c, self.passphrase)
 
 class ProfileAddCommand(CliCommand):
     def __init__(self):
@@ -150,16 +160,14 @@ class ProfileAddCommand(CliCommand):
     def _do_command(self):
         pass
         # TODO: not quite ready for this yet
-        #ports = self.options.ports.strip().split(",")
+        ports = self.options.ports.strip().split(",")
         #self._create_range(self.options.ipstart, self.options.ipend)
-        #g = Group(name=self.options.name, ranges=None, credentials=None, ports=ports)
-        #cred = {} 
-        #cred['name'] = self.options.name
-        #cred['range'] = [self.options.ipstart]
-        #c.credentials.append(cred)
-
-        ##print(json.dumps(c))
-        #print(c.credentials)
+        g = config.Group(name=self.options.name, ranges=None,
+                         credential_names=[], ports=ports)
+        self.config.add_group(g)
+        c = config.ConfigBuilder().dump_config(self.config)
+        print(c)
+        crypto.write_file(self.options.config, c, self.passphrase)
 
 class AuthClearCommand(CliCommand):
     def __init__(self):
@@ -192,6 +200,9 @@ class AuthShowCommand(CliCommand):
         pass
 
     def _do_command(self):
+        if not self.config.list_credentials():
+            print(_("No auth credentials found"))
+
         for c in self.config.list_credentials():
             # make this a pretty table
             print(c.to_dict())
