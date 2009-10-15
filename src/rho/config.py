@@ -33,7 +33,7 @@ class BadJsonException(Exception):
     pass
 
 
-class ConfigurationException(Exception):
+class ConfigError(Exception):
     pass
 
 
@@ -47,17 +47,17 @@ def verify_keys(check_dict, required=[], optional=None):
     empty list for optional if you wish to check for required tags and
     error out if anything extra is found.
 
-    Will throw a ConfigurationException if anything is amiss.
+    Will throw a ConfigError if anything is amiss.
     """
     for required_key in required:
         if required_key not in check_dict:
-            raise ConfigurationException("Missing required key: %s" % 
+            raise ConfigError("Missing required key: %s" % 
                     required_key)
 
     if optional is not None:
         for key in check_dict:
             if (key not in required) and (key not in optional):
-                raise ConfigurationException("Extraneous key: %s" %
+                raise ConfigError("Extraneous key: %s" %
                         required_key)
 
 
@@ -69,37 +69,57 @@ class Config(object):
         Create a config object from the given credentials and groups.
         """
 
-        self.credentials = []
-        self.groups = []
+        self._credentials = []
+        self._groups = []
         # Will map credential key name to the credentials object:
-        self.credential_keys = {}
+        self._credential_index = {}
 
         # Need to iterate credentials first:
         if credentials:
             for c in credentials:
-                self.credentials.append(c)
-                self.credential_keys[c.name] = c
+                self.add_credentials(c)
 
         if groups:
             # Make sure none of the groups reference invalid credential keys:
             for group in groups:
-                for c in group.credential_names:
-                    if c not in self.credential_keys:
-                        raise ConfigurationException("No such credentials: %s" %
-                                c)
-            self.groups.extend(groups)
+                self.add_group(group)
+
+    def add_credentials(self, c):
+        self._credentials.append(c)
+        self._credential_index[c.name] = c
+
+    def list_credentials(self):
+        """ Return a list of all credential objects in this configuration. """
+        # TODO: Should this return a copy of list? Immutable?
+        return self._credentials
+
+    def add_group(self, group):
+        """ 
+        Add a new group to this configuration, and ensure it references valid
+        credentials.
+        """
+        for c in group.credential_names:
+            if c not in self._credential_index:
+                raise ConfigError("No such credentials: %s" %
+                        c)
+        self._groups.append(group)
+
+    def list_groups(self):
+        """ Return a list of all groups in this configuration. """
+        return self._groups
 
     def to_dict(self):
         creds = []
-        for c in self.credentials:
+        for c in self._credentials:
             creds.append(c.to_dict())
         groups = []
-        for g in self.groups:
+        for g in self._groups:
             groups.append(g.to_dict())
         return {
                 CREDENTIALS_KEY: creds,
                 GROUPS_KEY: groups
         }
+
 
 class Credentials(object):
 
@@ -235,7 +255,7 @@ class ConfigBuilder(object):
             type_key = credentials_dict[TYPE_KEY]
 
             if type_key not in CREDENTIAL_TYPES:
-                raise ConfigurationException("Unsupported credential type: %s",
+                raise ConfigError("Unsupported credential type: %s",
                         credentials_dict[TYPE_KEY])
 
             creds_obj = CREDENTIAL_TYPES[type_key](credentials_dict)
@@ -259,7 +279,7 @@ class ConfigBuilder(object):
                 try:
                     ports.append(int(p))
                 except ValueError:
-                    raise ConfigurationException("Invalid ssh port: %s" % p)
+                    raise ConfigError("Invalid ssh port: %s" % p)
 
                 group_obj = Group(name, ranges, credential_names, ports)
                 groups.append(group_obj)

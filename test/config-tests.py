@@ -107,16 +107,15 @@ class ConfigBuilderTests(unittest.TestCase):
 
     def test_json_config_key(self):
         """ Verify top level of JSON dict is just a config key. """
-        self.assertRaises(ConfigurationException, self.builder.build_config,
+        self.assertRaises(ConfigError, self.builder.build_config,
                 "{}")
-        self.assertRaises(ConfigurationException, self.builder.build_config,
+        self.assertRaises(ConfigError, self.builder.build_config,
                 "{}")
 
     def test_build_config(self):
         config = self.builder.build_config(SAMPLE_CONFIG1)
-        self.assertEquals(2, len(config.credentials))
-        self.assertEquals(2, len(config.credential_keys))
-        self.assertEquals(2, len(config.groups))
+        self.assertEquals(2, len(config.list_credentials()))
+        self.assertEquals(2, len(config.list_groups()))
 
 
 class ConfigTests(unittest.TestCase):
@@ -125,13 +124,13 @@ class ConfigTests(unittest.TestCase):
         self.builder = ConfigBuilder()
 
     def test_group_references_invalid_credentials(self):
-        self.assertRaises(ConfigurationException, 
+        self.assertRaises(ConfigError, 
                 self.builder.build_config, BAD_CREDNAME_CONFIG)
 
     def test_new_config(self):
         config = Config()
-        self.assertEquals([], config.credentials)
-        self.assertEquals([], config.groups)
+        self.assertEquals([], config.list_credentials())
+        self.assertEquals([], config.list_groups())
 
     def test_to_dict(self):
         config = self.builder.build_config(SAMPLE_CONFIG1)
@@ -174,17 +173,17 @@ class CredentialTests(unittest.TestCase):
 
     def test_build_credentials_bad_type(self):
         self.credentials_list[0][TYPE_KEY] = "badtype"
-        self.assertRaises(ConfigurationException,
+        self.assertRaises(ConfigError,
             self.builder.build_credentials, self.credentials_list)
 
     def test_build_credentials_missing_type(self):
         self.credentials_list[0].pop(TYPE_KEY)
-        self.assertRaises(ConfigurationException,
+        self.assertRaises(ConfigError,
             self.builder.build_credentials, self.credentials_list)
 
     def test_build_credentials_missing_username(self):
         self.credentials_list[0].pop(USERNAME_KEY)
-        self.assertRaises(ConfigurationException,
+        self.assertRaises(ConfigError,
             self.builder.build_credentials, self.credentials_list)
 
     def test_build_credentials_key_no_passphrase(self):
@@ -249,12 +248,12 @@ class GroupTests(unittest.TestCase):
 
     def test_invalid_ports(self):
         self.group_dict[PORTS_KEY] = ["aslkjdh"]
-        self.assertRaises(ConfigurationException,
+        self.assertRaises(ConfigError,
                 self.builder.build_groups, [self.group_dict])
 
     def test_name_required(self):
         self.group_dict.pop(NAME_KEY)
-        self.assertRaises(ConfigurationException, 
+        self.assertRaises(ConfigError, 
                 self.builder.build_groups, [self.group_dict])
 
     def test_to_dict(self):
@@ -291,11 +290,11 @@ class MiscTests(unittest.TestCase):
         verify_keys({'a': 1, 'b': 2}, required=['a', 'b'])
 
     def test_verify_keys_missing_required(self):
-        self.assertRaises(ConfigurationException,
+        self.assertRaises(ConfigError,
                 verify_keys, {'b': 2}, required=['a'], optional=['b'])
 
     def test_extraneous_keys(self):
-        self.assertRaises(ConfigurationException, verify_keys, 
+        self.assertRaises(ConfigError, verify_keys, 
                 {'a': 1, 'b': 2}, required=['a'], optional=[])
 
     def test_only_check_required(self):
