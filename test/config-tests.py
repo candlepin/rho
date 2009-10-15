@@ -18,79 +18,65 @@ import simplejson as json
 
 SAMPLE_CONFIG1 = """
 {
-    "config": {
-
-        "credentials": [
-
-            {
-                "name": "bobslogin",
-                "type": "ssh",
-                "username": "bob",
-                "password": "sekurity"
-            },
-
-            {
-                "name": "bobskey",
-                "type": "ssh_key",
-                "username": "bob",
-                "key": "-----BEGIN RSA PRIVATE KEY-----\\nProc-Type: 4,ENCRYPTED\\nDEK-Info:\\nBLHABLAHBLAHBLAH\\n-----END RSA PRIVATE KEY-----",
-                "password": "sekurity"
-            }
-
-        ],
-
-        "groups": [
-
-            {
-                "name": "accounting",
-                "range": [
-                    "192.168.0.0/24",
-                    "192.168.1.1-192.168.1.10",
-                    "192.168.5.0"
-                ],
-                "credentials": ["bobskey", "bobslogin"],
-                "ports": [22, 2222]
-            },
-
-            {
-                "name": "it",
-                "range": [
-                    "192.168.9.0/24"
-                ],
-                "credentials": ["bobskey"],
-                "ports": []
-            }
-
-        ]
-
-    }
+    "credentials": [
+        {
+            "name": "bobslogin",
+            "type": "ssh",
+            "username": "bob",
+            "password": "sekurity"
+        },
+        {
+            "name": "bobskey",
+            "type": "ssh_key",
+            "username": "bob",
+            "key": "-----BEGIN RSA PRIVATE KEY-----\\nProc-Type: 4,ENCRYPTED\\nDEK-Info:\\nBLHABLAHBLAHBLAH\\n-----END RSA PRIVATE KEY-----",
+            "password": "sekurity"
+        }
+    ],
+    "groups": [
+        {
+            "name": "accounting",
+            "range": [
+                "192.168.0.0/24",
+                "192.168.1.1-192.168.1.10",
+                "192.168.5.0"
+            ],
+            "credentials": ["bobskey", "bobslogin"],
+            "ports": [22, 2222]
+        },
+        {
+            "name": "it",
+            "range": [
+                "192.168.9.0/24"
+            ],
+            "credentials": ["bobskey"],
+            "ports": []
+        }
+    ]
 }
 """
 BAD_CREDNAME_CONFIG = """
 {
-    "config": {
-        "credentials": [
-            {
-                "name": "bobslogin",
-                "type": "ssh",
-                "username": "bob",
-                "password": "sekurity"
-            }
-        ],
-        "groups": [
-            {
-                "name": "accounting",
-                "range": [
-                    "192.168.0.0/24",
-                    "192.168.1.1-192.168.1.10",
-                    "192.168.5.0"
-                ],
-                "credentials": ["nosuchcredentialname"],
-                "ports": [22, 2222]
-            }
-        ]
-
-    }
+    "credentials": [
+        {
+            "name": "bobslogin",
+            "type": "ssh",
+            "username": "bob",
+            "password": "sekurity"
+        }
+    ],
+    "groups": [
+        {
+            "name": "accounting",
+            "range": [
+                "192.168.0.0/24",
+                "192.168.1.1-192.168.1.10",
+                "192.168.5.0"
+            ],
+            "credentials": ["nosuchcredentialname"],
+            "ports": [22, 2222]
+        }
+    ]
 }
 """
 
@@ -104,13 +90,6 @@ class ConfigBuilderTests(unittest.TestCase):
     def test_bad_json_string(self):
         bad_json = "does this look valid to you?"
         self.assertRaises(BadJsonException, self.builder.build_config, bad_json)
-
-    def test_json_config_key(self):
-        """ Verify top level of JSON dict is just a config key. """
-        self.assertRaises(ConfigError, self.builder.build_config,
-                "{}")
-        self.assertRaises(ConfigError, self.builder.build_config,
-                "{}")
 
     def test_build_config(self):
         config = self.builder.build_config(SAMPLE_CONFIG1)

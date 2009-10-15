@@ -14,7 +14,6 @@
 import simplejson as json
 
 # Keys used in the configuration JSON:
-CONFIG_KEY = "config"
 CREDENTIALS_KEY = "credentials"
 GROUPS_KEY = "groups"
 NAME_KEY = "name"
@@ -219,14 +218,11 @@ class ConfigBuilder(object):
 
     def build_config(self, json_text):
         """ Create Config object from JSON string. """
-        json_dict = None
+        config_dict = None
         try:
-            json_dict = json.loads(json_text)
+            config_dict = json.loads(json_text)
         except ValueError:
             raise BadJsonException
-
-        verify_keys(json_dict, required=[CONFIG_KEY])
-        config_dict = json_dict[CONFIG_KEY]
 
         # Credentials needs to be parsed first so we can check that the groups
         # reference valid credential keys.
@@ -289,7 +285,6 @@ class ConfigBuilder(object):
     def dump_config(self, config):
         """ Returns JSON text for the given Config object. """
         config_dict = config.to_dict()
-        config_dict = {CONFIG_KEY: config_dict}
         json_text = json.dumps(config_dict)
         return json_text
 
