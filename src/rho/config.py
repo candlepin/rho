@@ -286,4 +286,11 @@ class ConfigBuilder(object):
 
         return groups
 
+    def dump_config(self, config):
+        """ Returns JSON text for the given Config object. """
+        config_dict = config.to_dict()
+        config_dict = {CONFIG_KEY: config_dict}
+        json_text = json.dumps(config_dict)
+        return json_text
+
 

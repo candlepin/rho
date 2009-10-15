@@ -117,6 +117,11 @@ class ConfigBuilderTests(unittest.TestCase):
         self.assertEquals(2, len(config.list_credentials()))
         self.assertEquals(2, len(config.list_groups()))
 
+    def test_round_trip(self):
+        config = self.builder.build_config(SAMPLE_CONFIG1)
+        regenerated_json = self.builder.dump_config(config)
+        config2 = self.builder.build_config(regenerated_json)
+
 
 class ConfigTests(unittest.TestCase):
 
