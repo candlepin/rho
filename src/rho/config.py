@@ -83,7 +83,7 @@ class Config(object):
         if groups:
             # Make sure none of the groups reference invalid credential keys:
             for group in groups:
-                for c in group.credentials:
+                for c in group.credential_names:
                     if c not in self.credential_keys:
                         raise ConfigurationException("No such credentials: %s" %
                                 c)
@@ -155,27 +155,27 @@ class SshKeyCredentials(Credentials):
 
 class Group(object):
 
-    def __init__(self, name, ranges, credentials, ports):
+    def __init__(self, name, ranges, credential_names, ports):
         """
         Create a group object.
 
-        Ranges is a list of strings specifying IP ranges. We just store the
+        ranges is a list of strings specifying IP ranges. We just store the
         string.
 
-        Credentials is a list of strings referencing credential *keys*.
+        credential_names is a list of strings referencing credential *keys*.
 
-        Ports is a list of integers.
+        ports is a list of integers.
         """
         self.name = name
         self.ranges = ranges
-        self.credentials = credentials
+        self.credential_names = credential_names
         self.ports = ports
 
     def to_dict(self):
         return {
                 NAME_KEY: self.name,
                 RANGE_KEY: self.ranges,
-                CREDENTIALS_KEY: self.credentials,
+                CREDENTIALS_KEY: self.credential_names,
                 PORTS_KEY: self.ports
         }
 
@@ -251,7 +251,7 @@ class ConfigBuilder(object):
                 CREDENTIALS_KEY, PORTS_KEY], optional=[])
             name = group_dict[NAME_KEY]
             ranges = group_dict[RANGE_KEY]
-            credentials = group_dict[CREDENTIALS_KEY]
+            credential_names = group_dict[CREDENTIALS_KEY]
 
             ports = []
             for p in group_dict[PORTS_KEY]:
@@ -261,7 +261,7 @@ class ConfigBuilder(object):
                 except ValueError:
                     raise ConfigurationException("Invalid ssh port: %s" % p)
 
-                group_obj = Group(name, ranges, credentials, ports)
+                group_obj = Group(name, ranges, credential_names, ports)
                 groups.append(group_obj)
 
         return groups

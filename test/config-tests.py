@@ -117,7 +117,6 @@ class ConfigTests(unittest.TestCase):
         self.assertTrue(GROUPS_KEY in config_dict)
 
 
-
 class CredentialTests(unittest.TestCase):
 
     def setUp(self):
@@ -209,7 +208,7 @@ class GroupTests(unittest.TestCase):
     def test_create_group(self):
         g = self.builder.build_groups([self.group_dict])[0]
         self.assertEquals("accounting", g.name)
-        self.assertEquals(2, len(g.credentials))
+        self.assertEquals(2, len(g.credential_names))
         self.assertEquals(2, len(g.ports))
         self.assertEquals(22, g.ports[0])
         self.assertEquals(2222, g.ports[1])
