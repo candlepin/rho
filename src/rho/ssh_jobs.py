@@ -42,16 +42,17 @@ class SshJob():
 
         # rho commands is RhoCmdList, aka, a list of RhoCmds (duh)
         self.rho_cmds = rho_cmds
-
+        
         self.auth = auth
         self.timeout = timeout
         self.command_output = None
-        self.connection_result = None
+        self.connection_result = True
         self.returncode = None
         self.auth_used = None
+        assert getattr(rho_cmds, "__iter__")
 
     def output_callback(self):
-        print "ip: %s %s" % (self.ip, self.command_output)
+        print "ip: %s\ncommand_output: %s\nconnection_result: %s" % (self.ip, self.command_output, self.connection_result)
         
         #self.config = config.Config()['config']
         #self.auth = self.config.credentials['bobslogin']
@@ -68,14 +69,16 @@ class SshJobs():
         self.outfile = None
         self.max_threads = 10  
 
-    def run_jobs(self, jobs=None, callback=None):
+    def run_jobs(self, ssh_jobs=None, callback=None):
         if ssh_jobs:
-            self.ssh_jobs = jobs
+            self.ssh_jobs = ssh_jobs
+        
         self.output_queue = my_sshpt.startOutputThread(self.verbose, self.outfile)
         self.ssh_connect_queue = my_sshpt.startSSHQueue(self.output_queue, self.max_threads)
 
         while self.ssh_jobs:
             for ssh_job in self.ssh_jobs:
+                
                 if self.ssh_connect_queue.qsize()  <= self.max_threads:
                     my_sshpt.queueSSHConnection(self.ssh_connect_queue, ssh_job)
                     self.ssh_jobs.remove(ssh_job)
