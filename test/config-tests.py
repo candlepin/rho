@@ -18,6 +18,7 @@ import simplejson as json
 
 SAMPLE_CONFIG1 = """
 {
+    "version": 1,
     "credentials": [
         {
             "name": "bobslogin",
@@ -57,6 +58,7 @@ SAMPLE_CONFIG1 = """
 """
 BAD_CREDNAME_CONFIG = """
 {
+    "version": 1,
     "credentials": [
         {
             "name": "bobslogin",
@@ -121,7 +123,8 @@ class ConfigTests(unittest.TestCase):
     def test_to_dict(self):
         config = self.builder.build_config(SAMPLE_CONFIG1)
         config_dict = config.to_dict()
-        self.assertEquals(2, len(config_dict))
+        self.assertEquals(3, len(config_dict))
+        self.assertEquals(CONFIG_VERSION, config_dict[VERSION_KEY])
         self.assertTrue(CREDENTIALS_KEY in config_dict)
         self.assertTrue(GROUPS_KEY in config_dict)
 
