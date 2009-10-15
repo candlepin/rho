@@ -65,6 +65,11 @@ class CryptoTests(unittest.TestCase):
         result = rho.crypto.unpad(plaintext)
         self.assertEquals("7", result) # should be unchanged but isn't...
 
+    def test_unpad_unpadded_string(self):
+        plaintext = "abcdefgh"
+        result = rho.crypto.unpad(plaintext)
+        self.assertEquals(plaintext, result)
+
     def test_encryption_padding_required(self):
         plaintext = "hey look at my text $"
         key = "sekurity is alsome"
