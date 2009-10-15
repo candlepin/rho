@@ -115,6 +115,9 @@ class Config(object):
         """ Return a list of all groups in this configuration. """
         return self._groups
 
+    def clear_groups(self):
+        self._groups = []
+
     def to_dict(self):
         creds = []
         for c in self._credentials:
