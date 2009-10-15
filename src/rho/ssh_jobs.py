@@ -37,6 +37,9 @@ class SshAuth(Auth):
 # a list of cli commands to run
 class SshJob():
     def __init__(self, ip=None, port=22, rho_cmds=None, auth=None, timeout=30):
+        # rho_cmds really needs to be list like, easy mistake to make...
+        assert getattr(rho_cmds, "__iter__")
+
         self.ip = ip
         self.port = port
 
@@ -49,7 +52,6 @@ class SshJob():
         self.connection_result = True
         self.returncode = None
         self.auth_used = None
-        assert getattr(rho_cmds, "__iter__")
 
     def output_callback(self):
         print "ip: %s\ncommand_output: %s\nconnection_result: %s" % (self.ip, self.command_output, self.connection_result)
