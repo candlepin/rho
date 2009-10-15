@@ -59,9 +59,13 @@ class CliCommand(object):
         pass
 
     def _read_config(self, filename, passphrase):
-        confstr = crypto.read_file(filename, passphrase)
-        print(confstr)
-        return config.ConfigBuilder().build_config(confstr)
+        if os.path.exists(filename):
+            confstr = crypto.read_file(filename, passphrase)
+            print(confstr)
+            return config.ConfigBuilder().build_config(confstr)
+        else:
+            print _("Creating new config file: %s" % filename)
+            return config.Config()
 
     def main(self):
         (self.options, self.args) = self.parser.parse_args()
