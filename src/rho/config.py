@@ -159,6 +159,14 @@ class Group(object):
         self.credentials = credentials
         self.ports = ports
 
+    def to_dict(self):
+        return {
+                NAME_KEY: self.name,
+                RANGE_KEY: self.ranges,
+                CREDENTIALS_KEY: self.credentials,
+                PORTS_KEY: self.ports
+        }
+
 
 # Needs to follow the class definitions:
 CREDENTIAL_TYPES = {

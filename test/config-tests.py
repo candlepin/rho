@@ -226,6 +226,27 @@ class GroupTests(unittest.TestCase):
         self.assertRaises(ConfigurationException, 
                 self.builder.build_groups, [self.group_dict])
 
+    def test_to_dict(self):
+        g = self.builder.build_groups([self.group_dict])[0]
+        g_dict = g.to_dict()
+        self.assertEquals(4, len(g_dict))
+        self.assertEquals("accounting", g_dict[NAME_KEY])
+
+        ranges = g_dict[RANGE_KEY]
+        self.assertEquals(3, len(ranges))
+        self.assertEquals(self.group_dict[RANGE_KEY], 
+                g_dict[RANGE_KEY])
+
+        credential_names = g_dict[CREDENTIALS_KEY]
+        self.assertEquals(2, len(credential_names))
+        self.assertEquals(self.group_dict[CREDENTIALS_KEY], 
+                g_dict[CREDENTIALS_KEY])
+
+        ports = g_dict[PORTS_KEY]
+        self.assertEquals(2, len(ports))
+        self.assertEquals(self.group_dict[PORTS_KEY], 
+                g_dict[PORTS_KEY])
+
 
 class MiscTests(unittest.TestCase):
 
