@@ -84,6 +84,20 @@ class RedhatReleaseRhoCmd(RhoCmd):
         self.data['version'] = fields[1]
         self.data['release'] = fields[2]
 
+class ScriptRhoCmd(RhoCmd):
+    name = "script"
+    cmd_strings = []
+
+    def __init__(self, command):
+        self.cmd_strings = [command]
+        RhoCmd.__init__(self)
+
+    def parse_data(self):
+        print self.cmd_results
+        self.data['output'] = self.cmd_results[0][0]
+        self.data['error'] = self.cmd_results[0][1]
+
+
 # the list of commands to run on each host
 class RhoCmdList():
     def __init__(self):

@@ -45,4 +45,10 @@ class TestRedhatReleaseRhoCmd(_TestRhoCmd):
         self.rho_cmd.populate_data(self.out)
         print "name: %(name)s\n version:%(version)s\n%(release)s\n" % self.rho_cmd.data
 
+class TestScriptRhoCmd(_TestRhoCmd):
+    cmd_class = rho_cmds.ScriptRhoCmd
+    def setUp(self):
+        self.rho_cmd = self.cmd_class(command="ls -rho /tmp")
+        self.out = self._run_cmds()
 
+    
