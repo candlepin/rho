@@ -40,6 +40,8 @@ class RhoCmd():
     # we will need to populate it with the output of the ssh stuff
     # we can send a list of commands, so we expect output to be a list
     # of output strings
+
+    # [ (stdout, sterr) )
     def populate_data(self, results):
         # results is a tuple of (stdout, stderr)
         self.cmd_results = results
@@ -93,7 +95,6 @@ class ScriptRhoCmd(RhoCmd):
         RhoCmd.__init__(self)
 
     def parse_data(self):
-        print self.cmd_results
         self.data['output'] = self.cmd_results[0][0]
         self.data['error'] = self.cmd_results[0][1]
 
