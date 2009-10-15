@@ -32,31 +32,41 @@ class RhoCmd():
     name = "base"
     def __init__(self):
 #        self.cmd_strings = cmd
-        self.cmd_outputs = []
+        self.cmd_results = []
         self.data = {}
+
 
     # we're not actually running the class on the hosts, so
     # we will need to populate it with the output of the ssh stuff
     # we can send a list of commands, so we expect output to be a list
     # of output strings
-    def populate_data(self, output):
-        self.cmd_outputs = output
+    def populate_data(self, results):
+        # results is a tuple of (stdout, stderr)
+        self.cmd_results = results
+        # where do we error check? In the parse_data() step I guess... -akl
+        # 
         self.parse_data()
 
     # subclasses need to implement this, this is what parses the output
     # and packs in the self.data.
     def parse_data(self):
+
+        # but more or less something like:
+
+
         raise NotImplementedError
 
     
 class UnameRhoCmd(RhoCmd):
     name = "uname"
-    cmd_strings = ["uname -s", "uname -n", "uname -p"]
+    cmd_strings = ["uname -s", "uname -n", "uname -p", "uname -i"]
 
     def parse_data(self):
-        self.data['os'] = self.cmd_outputs[0]
-        self.data['hostname'] = self.cmd_outputs[1]
-        self.data['processor'] = self.cmd_outputs[2]
+        self.data['os'] = self.cmd_results[0][0]
+        self.data['hostname'] = self.cmd_results[1][0]
+        self.data['processor'] = self.cmd_results[2][0]
+        if not self.cmd_results[3][1]:
+            self.data['hardware_platform'] = self.cmd_results[3][0]
 
 
 class RedhatReleaseRhoCmd(RhoCmd):
@@ -65,7 +75,11 @@ class RedhatReleaseRhoCmd(RhoCmd):
 
     def parse_data(self):
         # new line seperated string, one result only
-        fields = self.cmd_outputs[0].splitlines()
+        if self.cmd_results[0][1]:
+            # and/or, something not dumb
+            self.data = {'name':'error', 'version':'error', 'release':'error'}
+            return
+        fields = self.cmd_results[0][0].splitlines()
         self.data['name'] = fields[0]
         self.data['version'] = fields[1]
         self.data['release'] = fields[2]

@@ -10,15 +10,15 @@ from rho import rho_cmds
 
 class _TestRhoCmd(unittest.TestCase):
     def setUp(self):
-        print "blargh"
         self.rho_cmd = self.cmd_class()
         self.out = self._run_cmds()
 
     def _run_cmds(self):
         output = []
         for cmd in self.rho_cmd.cmd_strings:
-            out, err = subprocess.Popen(cmd.split(), stderr=subprocess.PIPE, stdout=subprocess.PIPE, stdin=subprocess.PIPE).communicate()
-            output.append(out)
+            p = subprocess.Popen(cmd.split(' '), stderr=subprocess.PIPE, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+            out, err = p.communicate()
+            output.append((out, err))
         return output
 
     def test_run(self):
