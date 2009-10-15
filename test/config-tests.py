@@ -109,6 +109,14 @@ class ConfigTests(unittest.TestCase):
         self.assertEquals([], config.credentials)
         self.assertEquals([], config.groups)
 
+    def test_to_dict(self):
+        config = self.builder.build_config(SAMPLE_CONFIG1)
+        config_dict = config.to_dict()
+        self.assertEquals(2, len(config_dict))
+        self.assertTrue(CREDENTIALS_KEY in config_dict)
+        self.assertTrue(GROUPS_KEY in config_dict)
+
+
 
 class CredentialTests(unittest.TestCase):
 

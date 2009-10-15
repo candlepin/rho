@@ -89,6 +89,18 @@ class Config(object):
                                 c)
             self.groups.extend(groups)
 
+    def to_dict(self):
+        creds = []
+        for c in self.credentials:
+            creds.append(c.to_dict())
+        groups = []
+        for g in self.groups:
+            groups.append(g.to_dict())
+        return {
+                CREDENTIALS_KEY: creds,
+                GROUPS_KEY: groups
+        }
+
 class Credentials(object):
 
     def to_dict(self):
