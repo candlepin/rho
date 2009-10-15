@@ -85,7 +85,7 @@ def unpad(plaintext):
             chop_to = len(plaintext) - chop_count
             return_me = plaintext[0:chop_to]
 
-        return return_me
+    return return_me
 
 
 def encrypt(plaintext, key):

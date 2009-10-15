@@ -23,7 +23,8 @@ _ = t.ugettext
 from optparse import OptionParser
 from getpass import getpass
 
-from rho.config import *
+from rho import config
+from rho import crypto
 
 RHO_PASSPHRASE = "RHO_PASSPHRASE"
 
@@ -46,7 +47,7 @@ class CliCommand(object):
         self.parser.add_option("--debug", dest="debug",
                 help=_("enable debug output"))
         self.parser.add_option("--config", dest="config",
-                help=_("config file name"))
+                default="~/.rho.conf", help=_("config file name"))
 
     def _validate_options(self):
         """ 
@@ -56,6 +57,14 @@ class CliCommand(object):
 
     def _do_command(self):
         pass
+
+    def _read_config(self, filename, passphrase):
+        if os.path.exists(filename):
+            confstr = crypto.read_file(filename, passphrase)
+            return config.ConfigBuilder().build_config(confstr)
+        else:
+            print _("Creating new config file: %s" % filename)
+            return config.Config()
 
     def main(self):
         (self.options, self.args) = self.parser.parse_args()
@@ -70,6 +79,8 @@ class CliCommand(object):
             self.passphrase = os.environ[RHO_PASSPHRASE]
         else:
             self.passphrase = getpass()
+
+        self.config = self._read_config(self.options.config, self.passphrase)
 
         # do the work
         self._do_command()
@@ -158,6 +169,11 @@ class AuthClearCommand(CliCommand):
 
         CliCommand.__init__(self, "auth clear", usage, shortdesc, desc)
 
+    def _do_command(self):
+        self.config.clear_credentials()
+        c = config.ConfigBuilder().dump_config(self.config)
+        crypto.write_file(self.options.config, c, self.passphrase)
+
 # TODO not sure if we want to have separate classes for sub/subcommands
 class AuthShowCommand(CliCommand):
     def __init__(self):
@@ -174,6 +190,11 @@ class AuthShowCommand(CliCommand):
 
     def _validate_options(self):
         pass
+
+    def _do_command(self):
+        for c in self.config.list_credentials():
+            # make this a pretty table
+            print(c.to_dict())
 
 # TODO not sure if we want to have separate classes for sub/subcommands
 class AuthAddCommand(CliCommand):
@@ -195,8 +216,7 @@ class AuthAddCommand(CliCommand):
 
     def _validate_options(self):
         # file or username and password
-        if not self.options.filename or not self.options.username and not self.options.password:
-            print("option required")
+        pass
 
     def _do_command(self):
         if self.options.filename:
@@ -204,13 +224,13 @@ class AuthAddCommand(CliCommand):
             print("nothing needed")
         elif self.options.username and self.options.password:
             # using ssh
-            cred = SshCredentials({"name":self.options.name,
+            cred = config.SshCredentials({"name":self.options.name,
                 "username":self.options.username,
                 "password":self.options.password,
                 "type":"ssh"})
-            conf = Config(credentials=[cred])
-            print(conf.credentials)
-            print(conf.__dict__)
-            #f = open("rho.conf", 'w')
-            #f.write(json.dumps(conf.__dict__))
-            #f.close()
+            self.config.add_credentials(cred)
+            print(self.config.list_credentials())
+            c = config.ConfigBuilder().dump_config(self.config)
+            print(c)
+            print("[%s]" % self.passphrase)
+            crypto.write_file(self.options.config, c, self.passphrase)

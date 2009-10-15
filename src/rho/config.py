@@ -96,6 +96,10 @@ class Config(object):
         # TODO: Should this return a copy of list? Immutable?
         return self._credentials
 
+    def clear_credentials(self):
+        self._credentials = []
+        self._credential_index = {}
+
     def add_group(self, group):
         """ 
         Add a new group to this configuration, and ensure it references valid

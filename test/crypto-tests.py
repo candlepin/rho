@@ -15,6 +15,7 @@ import os
 import unittest
 
 import rho.crypto
+import rho.config
 
 class CryptoTests(unittest.TestCase):
 
@@ -64,6 +65,11 @@ class CryptoTests(unittest.TestCase):
         result = rho.crypto.unpad(plaintext)
         self.assertEquals("7", result) # should be unchanged but isn't...
 
+    def test_unpad_unpadded_string(self):
+        plaintext = "abcdefgh"
+        result = rho.crypto.unpad(plaintext)
+        self.assertEquals(plaintext, result)
+
     def test_encryption_padding_required(self):
         plaintext = "hey look at my text $"
         key = "sekurity is alsome"
@@ -109,6 +115,23 @@ class FileCryptoTests(unittest.TestCase):
             rho.crypto.write_file(temp_file, plaintext, key)
             result = rho.crypto.read_file(temp_file, key)
             self.assertEquals(plaintext, result)
+        finally:
+            try:
+                os.remove(temp_file)
+            except:
+                pass
+
+    def test_end_to_end_config_encryption(self):
+        c = rho.config.Config()
+        builder = rho.config.ConfigBuilder()
+        text = builder.dump_config(c)
+
+        key = "sekurity!"
+        temp_file = '/tmp/rho-crypto-test.txt'
+        try:
+            rho.crypto.write_file(temp_file, text, key)
+            result = rho.crypto.read_file(temp_file, key)
+            self.assertEquals(text, result)
         finally:
             try:
                 os.remove(temp_file)
