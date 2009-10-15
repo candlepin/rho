@@ -14,10 +14,13 @@
 from rho.clicommands import *
 
 import unittest
+import os
 
 class CliCommandsTests(unittest.TestCase):
 
     def _run_test(self, cmd, args):
+        os.environ[RHO_PASSPHRASE] = "blerg"
+
         sys.argv = args
         cmd.main()
 

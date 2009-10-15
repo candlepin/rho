@@ -21,8 +21,11 @@ t = gettext.translation('rho', 'locale', fallback=True)
 _ = t.ugettext
 
 from optparse import OptionParser
+from getpass import getpass
 
 from rho.config import *
+
+RHO_PASSPHRASE = "RHO_PASSPHRASE"
 
 class CliCommand(object):
     """ Base class for all sub-commands. """
@@ -36,6 +39,7 @@ class CliCommand(object):
         self.parser = OptionParser(usage=usage, description=description)
         self._add_common_options()
         self.name = name
+        self.passphrase = None
 
     def _add_common_options(self):
         """ Add options that apply to all sub-commands. """
@@ -61,6 +65,11 @@ class CliCommand(object):
         if len(sys.argv) < 2:
             print(self.parser.error(_("Please enter at least 2 args")))
             sys.edit(1)
+
+        if RHO_PASSPHRASE in os.environ:
+            self.passphrase = os.environ[RHO_PASSPHRASE]
+        else:
+            self.passphrase = getpass()
 
         # do the work
         self._do_command()

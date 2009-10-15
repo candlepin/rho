@@ -16,6 +16,7 @@ import simplejson as json
 # Keys used in the configuration JSON:
 CREDENTIALS_KEY = "credentials"
 GROUPS_KEY = "groups"
+VERSION_KEY = "version"
 NAME_KEY = "name"
 TYPE_KEY = "type"
 USERNAME_KEY = "username"
@@ -26,6 +27,9 @@ PORTS_KEY = "ports"
 
 SSH_TYPE = "ssh"
 SSH_KEY_TYPE = "ssh_key"
+
+# Current config version, bump this if we ever change the format:
+CONFIG_VERSION = 1
 
 
 class BadJsonException(Exception):
@@ -115,6 +119,7 @@ class Config(object):
         for g in self._groups:
             groups.append(g.to_dict())
         return {
+                VERSION_KEY: CONFIG_VERSION,
                 CREDENTIALS_KEY: creds,
                 GROUPS_KEY: groups
         }
@@ -224,17 +229,16 @@ class ConfigBuilder(object):
         except ValueError:
             raise BadJsonException
 
+        verify_keys(config_dict, required=[VERSION_KEY, CREDENTIALS_KEY,
+            GROUPS_KEY], optional=[])
+
         # Credentials needs to be parsed first so we can check that the groups
         # reference valid credential keys.
-        creds = None
-        if CREDENTIALS_KEY in config_dict:
-            credentials_dict = config_dict[CREDENTIALS_KEY]
-            creds = self.build_credentials(credentials_dict)
+        credentials_dict = config_dict[CREDENTIALS_KEY]
+        creds = self.build_credentials(credentials_dict)
 
-        groups = None
-        if GROUPS_KEY in config_dict:
-            groups_dict = config_dict[GROUPS_KEY]
-            groups = self.build_groups(groups_dict)
+        groups_dict = config_dict[GROUPS_KEY]
+        groups = self.build_groups(groups_dict)
 
         config = Config(credentials=creds, groups=groups)
 
