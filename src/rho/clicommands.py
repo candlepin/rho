@@ -61,7 +61,6 @@ class CliCommand(object):
     def _read_config(self, filename, passphrase):
         if os.path.exists(filename):
             confstr = crypto.read_file(filename, passphrase)
-            print(confstr)
             return config.ConfigBuilder().build_config(confstr)
         else:
             print _("Creating new config file: %s" % filename)
@@ -82,7 +81,6 @@ class CliCommand(object):
             self.passphrase = getpass()
 
         self.config = self._read_config(self.options.config, self.passphrase)
-        print(self.config)
 
         # do the work
         self._do_command()
@@ -171,6 +169,11 @@ class AuthClearCommand(CliCommand):
 
         CliCommand.__init__(self, "auth clear", usage, shortdesc, desc)
 
+    def _do_command(self):
+        self.config.clear_credentials()
+        c = config.ConfigBuilder().dump_config(self.config)
+        crypto.write_file(self.options.config, c, self.passphrase)
+
 # TODO not sure if we want to have separate classes for sub/subcommands
 class AuthShowCommand(CliCommand):
     def __init__(self):
@@ -187,6 +190,11 @@ class AuthShowCommand(CliCommand):
 
     def _validate_options(self):
         pass
+
+    def _do_command(self):
+        for c in self.config.list_credentials():
+            # make this a pretty table
+            print(c.to_dict())
 
 # TODO not sure if we want to have separate classes for sub/subcommands
 class AuthAddCommand(CliCommand):
