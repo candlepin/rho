@@ -68,7 +68,7 @@ SAMPLE_CONFIG1 = """
 """
 
 
-class ConfigParsingTests(unittest.TestCase):
+class ConfigBuilderTests(unittest.TestCase):
 
     def setUp(self):
         self.builder = ConfigBuilder()
@@ -110,7 +110,7 @@ class ConfigTests(unittest.TestCase):
         self.assertEquals([], config.groups)
 
 
-class CredentialParsingTests(unittest.TestCase):
+class CredentialTests(unittest.TestCase):
 
     def setUp(self):
         self.builder = ConfigBuilder()
@@ -161,8 +161,29 @@ class CredentialParsingTests(unittest.TestCase):
         self.credentials_list[1].pop(PASSWORD_KEY)
         creds = self.builder.build_credentials(self.credentials_list)
 
+    def test_ssh_creds_to_dict(self):
+        creds = self.builder.build_credentials(self.credentials_list)
+        ssh = creds[0]
+        ssh_dict = ssh.to_dict()
+        self.assertEquals(4, len(ssh_dict))
+        self.assertEquals("ansshlogin", ssh_dict[NAME_KEY])
+        self.assertEquals("ssh", ssh_dict[TYPE_KEY])
+        self.assertEquals("bob", ssh_dict[USERNAME_KEY])
+        self.assertEquals("password", ssh_dict[PASSWORD_KEY])
 
-class GroupParsingTests(unittest.TestCase):
+    def test_ssh_key_creds_to_dict(self):
+        creds = self.builder.build_credentials(self.credentials_list)
+        ssh = creds[1]
+        ssh_dict = ssh.to_dict()
+        self.assertEquals(5, len(ssh_dict))
+        self.assertEquals("ansshkey", ssh_dict[NAME_KEY])
+        self.assertEquals("ssh_key", ssh_dict[TYPE_KEY])
+        self.assertEquals("bob", ssh_dict[USERNAME_KEY])
+        self.assertEquals("password", ssh_dict[PASSWORD_KEY])
+        self.assertEquals("whatever", ssh_dict[SSHKEY_KEY])
+
+
+class GroupTests(unittest.TestCase):
 
     def setUp(self):
         self.builder = ConfigBuilder()
@@ -197,13 +218,13 @@ class GroupParsingTests(unittest.TestCase):
 
     def test_invalid_ports(self):
         self.group_dict[PORTS_KEY] = ["aslkjdh"]
-        self.assertRaises(ConfigurationException, self.builder.build_groups,
-                [self.group_dict])
+        self.assertRaises(ConfigurationException,
+                self.builder.build_groups, [self.group_dict])
 
     def test_name_required(self):
         self.group_dict.pop(NAME_KEY)
-        self.assertRaises(ConfigurationException, self.builder.build_groups,
-                [self.group_dict])
+        self.assertRaises(ConfigurationException, 
+                self.builder.build_groups, [self.group_dict])
 
 
 class MiscTests(unittest.TestCase):

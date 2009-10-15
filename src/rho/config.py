@@ -90,7 +90,9 @@ class Config(object):
             self.groups.extend(groups)
 
 class Credentials(object):
-    pass
+
+    def to_dict(self):
+        raise NotImplementedError
 
 
 class SshCredentials(Credentials):
@@ -103,6 +105,14 @@ class SshCredentials(Credentials):
         self.name = json_dict[NAME_KEY]
         self.username = json_dict[USERNAME_KEY]
         self.password = json_dict[PASSWORD_KEY]
+
+    def to_dict(self):
+        return {
+                NAME_KEY: self.name,
+                USERNAME_KEY: self.username,
+                PASSWORD_KEY: self.password,
+                TYPE_KEY: SSH_TYPE
+        }
 
 
 class SshKeyCredentials(Credentials):
@@ -120,6 +130,15 @@ class SshKeyCredentials(Credentials):
         self.password = ''
         if PASSWORD_KEY in json_dict:
             self.password = json_dict[PASSWORD_KEY]
+
+    def to_dict(self):
+        return {
+                NAME_KEY: self.name,
+                USERNAME_KEY: self.username,
+                PASSWORD_KEY: self.password,
+                TYPE_KEY: SSH_KEY_TYPE,
+                SSHKEY_KEY: self.key
+        }
 
 
 class Group(object):
