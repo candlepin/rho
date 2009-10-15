@@ -28,7 +28,7 @@ class OutputThread(GenericThread):
         output_queue: Queue.Queue(): The queue to use for incoming messages.
         verbose - Boolean: Whether or not we should output to stdout.
     """
-    def __init__(self, output_queue, verbose=True):
+    def __init__(self, output_queue, verbose=True, outfile=None):
         """Name ourselves and assign the variables we were instanciated with."""
         threading.Thread.__init__(self, name="OutputThread")
         self.output_queue = output_queue
@@ -77,7 +77,7 @@ class SSHThread(GenericThread):
                 attemptConnection(queueObj)
 
                 #hmm, this is weird...
-                if queueObj.connection_status:
+                if queueObj.connection_result:
                     queueObj.connection_result = "SUCCESS"
                 else:
                     queueObj.connection_result = "FAILED"
@@ -146,38 +146,42 @@ def paramikoConnect(ssh_job):
                     timeout=ssh_job.timeout)
     except Exception, detail:
         # Connecting failed (for whatever reason)
+#        print str(detail)
         ssh = str(detail)
     return ssh
 
 
-def excecuteCommands(tranport, rho_commands):
+def executeCommands(transport, rho_commands):
     host = transport.get_host_keys().keys()[0]
     output = []
     for rho_cmd in rho_commands:
         for cmd_string in rho_cmd.cmd_strings:
             stdin, stdout, stderr = transport.exec_command(cmd_string)
             # one item in the list for each cmd stdout
-            output.append(stdout.readlines(), stderr.readlines())
+            output.append((stdout.read(), stderr.read()))
+#            output.append((stdout.readlines(), stderr.readlines()))
         rho_cmd.populate_data(output)
     return rho_commands
 
 def attemptConnection(ssh_job):
     # ssh_job is a SshJob object
 
-    if host != "":
+    if ssh_job.ip != "":
         try:
             ssh = paramikoConnect(ssh_job)
             if type(ssh) == type(""): # If ssh is a string that means the connection failed and 'ssh' is the details as to why
                 ssh_job.command_output = ssh
                 ssh_job.connection_result = False
+                return
             command_output = []
-            executeCommands(transport=ssh, commands=ssh_job.rho_cmds)
+            executeCommands(transport=ssh, rho_commands=ssh_job.rho_cmds)
             ssh.close()
 
         except Exception, detail:
             # Connection failed
-            #print "Exception: %s" % detail
-            
+            print "Exception: %s" % detail
+            print sys.exc_type()
+            print sys.exc_info()
             ssh_job.connection_result = False
             ssh_job.command_output = detail
             ssh.close()
