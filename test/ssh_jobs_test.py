@@ -48,7 +48,7 @@ class _TestSshJobs(unittest.TestCase):
             self.cmds = cmds
         self.ssh_cmds = []
         for ip, auth in self.ips:
-            self.ssh_cmds = self.ssh_cmds + [ssh_jobs.SshJob(ip=ip, cmds=cmds, auth=auth)] * number
+            self.ssh_cmds = self.ssh_cmds + [ssh_jobs.SshJob(ip=ip, rho_cmds=cmds, auth=auth)] * number
         print self.ssh_cmds
         self.jobs.run_cmds(cmds=self.ssh_cmds, callback = self._callback)
 
