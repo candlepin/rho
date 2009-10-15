@@ -66,6 +66,33 @@ SAMPLE_CONFIG1 = """
     }
 }
 """
+BAD_CREDNAME_CONFIG = """
+{
+    "config": {
+        "credentials": [
+            {
+                "name": "bobslogin",
+                "type": "ssh",
+                "username": "bob",
+                "password": "sekurity"
+            }
+        ],
+        "groups": [
+            {
+                "name": "accounting",
+                "range": [
+                    "192.168.0.0/24",
+                    "192.168.1.1-192.168.1.10",
+                    "192.168.5.0"
+                ],
+                "credentials": ["nosuchcredentialname"],
+                "ports": [22, 2222]
+            }
+        ]
+
+    }
+}
+"""
 
 
 class ConfigBuilderTests(unittest.TestCase):
@@ -97,12 +124,9 @@ class ConfigTests(unittest.TestCase):
     def setUp(self):
         self.builder = ConfigBuilder()
 
-#    def test_group_references_invalid_credentials(self):
-#        # Hack config to reference a credentials name that doesn't exist:
-#        self.json_dict[CONFIG_KEY][GROUPS_KEY][1][CREDENTIALS_KEY] = \
-#            ["nosuchcredentials"]
-#        self.assertRaises(ConfigurationException, self.builder.build_config,
-#                self.json_dict[CONFIG_KEY])
+    def test_group_references_invalid_credentials(self):
+        self.assertRaises(ConfigurationException, 
+                self.builder.build_config, BAD_CREDNAME_CONFIG)
 
     def test_new_config(self):
         config = Config()
