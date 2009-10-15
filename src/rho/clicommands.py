@@ -41,6 +41,8 @@ class CliCommand(object):
         """ Add options that apply to all sub-commands. """
         self.parser.add_option("--debug", dest="debug",
                 help=_("enable debug output"))
+        self.parser.add_option("--config", dest="config",
+                help=_("config file name"))
 
     def _validate_options(self):
         """ 
@@ -122,10 +124,15 @@ class ProfileAddCommand(CliCommand):
     def _validate_options(self):
         pass
 
+    def _create_range(self, start, end):
+        pass
+
     def _do_command(self):
+        pass
         # TODO: not quite ready for this yet
-        conf = {}
-        c = Config()
+        #ports = self.options.ports.strip().split(",")
+        #self._create_range(self.options.ipstart, self.options.ipend)
+        #g = Group(name=self.options.name, ranges=None, credentials=None, ports=ports)
         #cred = {} 
         #cred['name'] = self.options.name
         #cred['range'] = [self.options.ipstart]
@@ -178,5 +185,23 @@ class AuthAddCommand(CliCommand):
                 help=_("password for authenticating against target machine"))
 
     def _validate_options(self):
-        pass
+        # file or username and password
+        if not self.options.filename or not self.options.username and not self.options.password:
+            print("option required")
 
+    def _do_command(self):
+        if self.options.filename:
+            # using sshkey
+            print("nothing needed")
+        elif self.options.username and self.options.password:
+            # using ssh
+            cred = SshCredentials({"name":self.options.name,
+                "username":self.options.username,
+                "password":self.options.password,
+                "type":"ssh"})
+            conf = Config(credentials=[cred])
+            print(conf.credentials)
+            print(conf.__dict__)
+            #f = open("rho.conf", 'w')
+            #f.write(json.dumps(conf.__dict__))
+            #f.close()
