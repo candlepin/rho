@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 #import ssh_jobs
 # Import built-in Python modules
 import getpass, threading, Queue, sys, os, re, datetime
