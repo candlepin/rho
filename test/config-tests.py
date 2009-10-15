@@ -115,6 +115,8 @@ class ConfigTests(unittest.TestCase):
         config = Config()
         self.assertEquals([], config.list_credentials())
         self.assertEquals([], config.list_groups())
+        json = self.builder.dump_config(config)
+        config = self.builder.build_config(json)
 
     def test_to_dict(self):
         config = self.builder.build_config(SAMPLE_CONFIG1)
