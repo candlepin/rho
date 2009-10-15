@@ -47,8 +47,9 @@ class CliCommand(object):
         self.parser.add_option("--debug", dest="debug",
                 help=_("enable debug output"))
         self.parser.add_option("--config", dest="config",
-                default=os.path.expanduser("~/.rho.conf"),
                 help=_("config file name"))
+
+        self.parser.set_defaults(config=os.path.expanduser("~/.rho.conf"))
 
     def _validate_options(self):
         """ 
@@ -118,22 +119,36 @@ class ProfileShowCommand(CliCommand):
 
 class ProfileClearCommand(CliCommand):
     def __init__(self):
-        usage = _("usage: %prog profile clear [options]")
+        usage = _("usage: %prog profile clear [--name | --all] [options]")
         shortdesc = _("clears profile list")
         desc = _("add a network profile")
 
         CliCommand.__init__(self, "profile clear", usage, shortdesc, desc)
 
         self.parser.add_option("--name", dest="name", metavar="NAME",
-                help=_("profile name"))
+                help=_("NAME of the profile to be removed"))
+        self.parser.add_option("--all", dest="all", action="store_true",
+                help=_("remove ALL profiles"))
+
+        self.parser.set_defaults(all=False)
 
     def _validate_options(self):
-        pass
+        if not self.options.name and not self.options.all:
+            print(self.parser.print_help())
+            sys.exit(1)
+
+        if self.options.name and self.options.all:
+            print(self.parser.print_help())
+            sys.exit(1)
 
     def _do_command(self):
-        self.config.clear_groups()
-        c = config.ConfigBuilder().dump_config(self.config)
-        crypto.write_file(self.options.config, c, self.passphrase)
+        if self.options.name:
+            raise NotImplementedError
+        elif self.options.all:
+            self.config.clear_groups()
+            c = config.ConfigBuilder().dump_config(self.config)
+            crypto.write_file(self.options.config, c, self.passphrase)
+            print(_("All network profiles removed"))
 
 class ProfileAddCommand(CliCommand):
     def __init__(self):
@@ -144,26 +159,37 @@ class ProfileAddCommand(CliCommand):
         CliCommand.__init__(self, "profile add", usage, shortdesc, desc)
 
         self.parser.add_option("--name", dest="name", metavar="NAME",
-                help=_("profile name"))
+                help=_("NAME of the profile - REQUIRED"))
         self.parser.add_option("--ip_start", dest="ipstart", metavar="IPSTART",
                 help=_("beginning of ip range"))
         self.parser.add_option("--ip_end", dest="ipend", metavar="IPEND",
                 help=_("end of ip range"))
         self.parser.add_option("--ports", dest="ports", metavar="PORTS",
-                help=_("ssh ports to try i.e. '22, 2222, 5402'"))
+                help=_("list of ssh ports to try i.e. '22, 2222, 5402'"))
+
+        self.parser.set_defaults(ports="22")
 
     def _validate_options(self):
-        pass
+        if not self.options.name:
+            print(self.parser.print_help())
+            sys.exit(1)
 
     def _create_range(self, start, end):
-        pass
+        # TODO: need some ip address parsing code here
+        if not start:
+            return None
+
+        if end:
+            return "%s-%s" % (start, end)
+        else:
+            return start
 
     def _do_command(self):
-        pass
-        # TODO: not quite ready for this yet
-        ports = self.options.ports.strip().split(",")
-        #self._create_range(self.options.ipstart, self.options.ipend)
-        g = config.Group(name=self.options.name, ranges=None,
+        ports = []
+        if self.options.ports:
+            ports = self.options.ports.strip().split(",")
+        range = self._create_range(self.options.ipstart, self.options.ipend)
+        g = config.Group(name=self.options.name, ranges=range,
                          credential_names=[], ports=ports)
         self.config.add_group(g)
         c = config.ConfigBuilder().dump_config(self.config)
@@ -227,7 +253,7 @@ class AuthAddCommand(CliCommand):
                 help=_("password for authenticating against target machine"))
 
     def _validate_options(self):
-        # file or username and password
+        # need to pass in file or username and password combo
         pass
 
     def _do_command(self):
