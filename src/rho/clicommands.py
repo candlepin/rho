@@ -47,7 +47,8 @@ class CliCommand(object):
         self.parser.add_option("--debug", dest="debug",
                 help=_("enable debug output"))
         self.parser.add_option("--config", dest="config",
-                default="~/.rho.conf", help=_("config file name"))
+                default=os.path.expanduser("~/.rho.conf"),
+                help=_("config file name"))
 
     def _validate_options(self):
         """ 
@@ -210,9 +211,9 @@ class AuthShowCommand(CliCommand):
 # TODO not sure if we want to have separate classes for sub/subcommands
 class AuthAddCommand(CliCommand):
     def __init__(self):
-        usage = _("usage: %prog auth [add|show] [options]")
-        shortdesc = _("auth short desc")
-        desc = _("auth long desc")
+        usage = _("usage: %prog auth add [options]")
+        shortdesc = _("add auth credentials to config")
+        desc = _("adds the authorization credentials to the config")
 
         CliCommand.__init__(self, "auth add", usage, shortdesc, desc)
 
