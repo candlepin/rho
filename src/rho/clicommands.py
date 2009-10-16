@@ -222,8 +222,26 @@ class AuthClearCommand(CliCommand):
 
         CliCommand.__init__(self, "auth clear", usage, shortdesc, desc)
 
+        self.parser.add_option("--name", dest="name", metavar="NAME",
+                help=_("NAME of the auth credential to be removed"))
+        self.parser.add_option("--all", dest="all", action="store_true",
+                help=_("remove ALL auth credentials"))
+
+    def _validate_options(self):
+        if not self.options.name and not self.options.all:
+            print(self.parser.print_help())
+            sys.exit(1)
+
+        if self.options.name and self.options.all:
+            print(self.parser.print_help())
+            sys.exit(1)
+
     def _do_command(self):
-        self.config.clear_credentials()
+        if self.options.name:
+            self.config.remove_credential(self.options.name)
+        elif self.options.all:
+            self.config.clear_credentials()
+
         c = config.ConfigBuilder().dump_config(self.config)
         crypto.write_file(self.options.config, c, self.passphrase)
 
@@ -273,7 +291,6 @@ class AuthAddCommand(CliCommand):
     def _validate_options(self):
         if not self.options.name:
             print(self.parser.print_help())
-            self.parser.error(_("--name is required"))
 
         # need to pass in file or username and password combo
         if self.options.filename:
