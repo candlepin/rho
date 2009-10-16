@@ -53,6 +53,16 @@ class SshJob():
         self.returncode = None
         self.auth_used = None
 
+    def output(self):
+        print "ip: %s\n" % self.ip 
+        print "command_output: %s" % self.command_output
+        print "connection_result: %s" % self.connection_result
+        print "auth: %s" % self.auth
+        print "rho_cmds: %s" % self.rho_cmds
+        print "timeout: %s" % self.timeout
+        print "returncode: %s" % self.returncode
+        print "port: %s" % self.port
+
     def output_callback(self):
         print "ip: %s\ncommand_output: %s\nconnection_result: %s" % (self.ip, self.command_output, self.connection_result)
         
@@ -63,7 +73,7 @@ class SshJob():
 
 
 class SshJobs():
-    def __init__(self, ssh_job_src=None):
+    def __init__(self, ssh_job_src=[]):
         # cmdSrc is some sort of list/iterator thing
         self.ssh_jobs = ssh_job_src
 
@@ -89,12 +99,11 @@ class SshJobs():
         return self.output_queue
 
 
-def example_callback():
-    for result in resultlist:
-        print "%s: %s" % (result.ip, result.output)
-
 if __name__ == "__main__":  
+
+    import rho_cmds
     ssh_jobs = []
+
 
     auth = SshAuth(name="adrian", username="adrian")
 
