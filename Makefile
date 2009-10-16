@@ -55,6 +55,9 @@ install_rpm:
 clean_rpms:
 	-rpm -e rho
 
+tests:
+	-nosetests -d -v -a '!slow' 
+
 sdist: messages
 	$(PYTHON) setup.py sdist
 
