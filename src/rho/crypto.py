@@ -110,9 +110,12 @@ def decrypt(ciphertext, key):
     obj = Blowfish.new(key, Blowfish.MODE_CBC)
     decrypted_plaintext = obj.decrypt(ciphertext)
     return_me = unpad(decrypted_plaintext)
-    if return_me is None:
-        # Looks like decryption failed, probably a bad key:
-        raise BadKeyException
+
+    # TODO: is there a way to know decryption failed?
+    #if return_me is None:
+    #    # Looks like decryption failed, probably a bad key:
+    #    raise BadKeyException
+
     return return_me
 
 

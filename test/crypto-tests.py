@@ -99,8 +99,12 @@ class CryptoTests(unittest.TestCase):
         plaintext = "hey look at my text $"
         key = "sekurity is alsome"
         ciphertext = rho.crypto.encrypt(plaintext, key)
-        self.assertRaises(rho.crypto.BadKeyException, 
-                rho.crypto.decrypt, ciphertext, 'badkey')
+        result = rho.crypto.decrypt(ciphertext, 'badkey')
+        # TODO: Guess we can't really verify if decryption failed:
+        #self.assertRaises(rho.crypto.BadKeyException,
+        #        rho.crypto.decrypt, ciphertext, 'badkey')
+        self.assertNotEqual(plaintext, result)
+
 
 
 class FileCryptoTests(unittest.TestCase):
