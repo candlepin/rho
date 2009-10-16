@@ -20,11 +20,18 @@ class CliCommandsTests(unittest.TestCase):
 
     def _run_test(self, cmd, args):
         os.environ[RHO_PASSPHRASE] = "blerg"
-        sys.argv = ["bin/rho" ]  + args + ["--config", "test/rho.conf.test"]
+        self.conffile = "test/rho.conf.test"
+        # tests aren't real bright, start with a fresh file
+        if os.access(self.conffile, os.R_OK):
+            os.remove(self.conffile)
+        sys.argv = ["bin/rho" ]  + args + ["--config", self.conffile]
         cmd.main()
 
     def test_scan(self):
-        self._run_test(ScanCommand(), ["scan"])
+        try:
+            self._run_test(ScanCommand(), ["scan"])
+        except SystemExit:
+            pass
 
     def test_profile_show(self):
         self._run_test(ProfileShowCommand(), ["profile", "show"])
@@ -41,4 +48,12 @@ class CliCommandsTests(unittest.TestCase):
             self._run_test(AuthAddCommand(), ["auth", "add"])
         except SystemExit:
             # we expect this to throw a optparse.parse.error
+            pass
+
+    def test_dumpconfig(self):
+        try:
+            self._run_test(DumpConfigCommand(), ['dumpconfig',
+                                                 '--encrypted-file', 
+                                                 'test/data/encrypted.data'])
+        except SystemExit:
             pass
