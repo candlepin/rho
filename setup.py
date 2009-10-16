@@ -8,24 +8,20 @@
 # FOR A PARTICULAR PURPOSE. You should have received a copy of GPLv2
 # along with this software; if not, see
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
-#
-
 """
 Rho Setup Script
 """
 
 from setuptools import setup, find_packages
 from setuptools import Command
-#from distutils import install_data
 
 import glob
 import os
-import shutil
-import string
 import subprocess
-#class InstallData(install_data):
-	
+
+
 class BuildLangs(Command):
+
     description = "generate pot/po/mo translation files"
     user_options = [("gen-messages", None, "generate message catalog from strings")]
     boolean_options = ["gen-messages"]
@@ -44,7 +40,7 @@ class BuildLangs(Command):
 	py_files = ['bin/rho']
 	for py_dir in py_dirs:
             py_files = py_files + glob.glob("%s/*.py" % py_dir)
-        print py_files
+        print(py_files)
 	args = ["xgettext", "-L", "python", "-o", "locale/rho.pot", "-d", "rho"] + py_files
 	subprocess.Popen(args, stdout=subprocess.PIPE).communicate()
 	# we develop in en_US, so make the default pot a en_Us
@@ -74,8 +70,9 @@ def gen_mo_files():
         mo_files.append(mo_file)
     return mo_files
 
-localepath = "share"
+
 def get_locale_paths():
+    localepath = "share"
     mo_files = glob.glob("locale/*/LC_MESSAGES/*.mo")
     data = []
     data_paths = []
@@ -83,6 +80,7 @@ def get_locale_paths():
         data_dir = "%s/%s" % (localepath, os.path.split(mo_file)[0])
         data_paths.append((data_dir,[mo_file]))
     return data_paths
+
 
 def get_data_files():
     gen_mo_files()
@@ -115,12 +113,14 @@ setup(
         'Development Status :: 2 - Pre-Alpha',
         'Environment :: Console',
         'Intended Audience :: Developers',
+        'Intended Audience :: System Administrators',
         'Intended Audience :: Information Technology',
+        'Operating System :: POSIX',
+        'Topic :: Utilities',
         'Programming Language :: Python'
     ],
 
     cmdclass = { 'build_langs': BuildLangs }
-#    test_suite = 'nose.collector',
 )
 
 
