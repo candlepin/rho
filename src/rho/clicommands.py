@@ -116,8 +116,6 @@ class ScanCommand(CliCommand):
         self.scanner = scanner.Scanner()
         self.scanner.scan(ip=self.options.ip, auth=ssh_jobs.SshAuth(username=self.options.username, password=self.options.password))
         
-        
-
 class ProfileShowCommand(CliCommand):
     def __init__(self):
         usage = _("usage: %prog profile show [options]")
@@ -264,7 +262,7 @@ class AuthAddCommand(CliCommand):
         CliCommand.__init__(self, "auth add", usage, shortdesc, desc)
 
         self.parser.add_option("--name", dest="name", metavar="NAME",
-                help=_("auth credential name"))
+                help=_("auth credential name - REQUIRED"))
         self.parser.add_option("--file", dest="filename", metavar="FILENAME",
                 help=_("file containing SSH key"))
         self.parser.add_option("--username", dest="username", metavar="USERNAME",
@@ -273,8 +271,19 @@ class AuthAddCommand(CliCommand):
                 help=_("password for authenticating against target machine"))
 
     def _validate_options(self):
+        if not self.options.name:
+            print(self.parser.print_help())
+            self.parser.error(_("--name is required"))
+
         # need to pass in file or username and password combo
-        pass
+        if self.options.filename:
+            if self.options.username or self.options.password:
+                self.parser.error(
+                    _("can not use --file with --username or --password"))
+
+        if not self.options.username or not self.options.password:
+            print(self.parser.print_help())
+            sys.exit(1)
 
     def _do_command(self):
         if self.options.filename:
