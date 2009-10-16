@@ -36,14 +36,14 @@ class TestUnameCmd(_TestRhoCmd):
 
     def test_data_display(self):
         self.rho_cmd.populate_data(self.out)
-        print "uname: %(os)s\n hostname:%(hostname)s\n%(processor)s\n" % self.rho_cmd.data
+        print "uname: %(uname.os)s\n hostname:%(uname.hostname)s\n%(uname.processor)s\n" % self.rho_cmd.data
 
 class TestRedhatReleaseRhoCmd(_TestRhoCmd):
     cmd_class = rho_cmds.RedhatReleaseRhoCmd
 
     def test_data_display(self):
         self.rho_cmd.populate_data(self.out)
-        print "name: %(name)s\n version:%(version)s\n%(release)s\n" % self.rho_cmd.data
+        print "name: %(redhat-release.name)s\n version:%(redhat-release.version)s\n%(redhat-release.release)s\n" % self.rho_cmd.data
 
 class TestScriptRhoCmd(_TestRhoCmd):
     cmd_class = rho_cmds.ScriptRhoCmd
