@@ -16,13 +16,7 @@ class ScanReport():
     def __init__(self):
         self.ips = {}
         # ips is a dict of 
-        # {'ip':ip,
-        #    'auth': 
-        #           {'type':type, 
-        #             'key':key, 
-        #              'username':username,
-        #               'password': password},
-        #     'cmds': {'uname': {..uname dict..}, 'redhat-release': {redhat-release-dict}}}
+        # {'ip:ip', 'uanme.os':unameresults... etc}
 
     def add(self, ssh_job):
         data = {}
