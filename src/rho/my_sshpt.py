@@ -35,12 +35,22 @@ class OutputThread(GenericThread):
         self.verbose = verbose
         self.quitting = False
 
+    
+    def quit(self):
+        self.quitting = True
+
+    def write(self, queueObj):
+        print queueObj.ip
+        for rho_cmd in queueObj.rho_cmds:
+            print rho_cmd.name, rho_cmd.data
+
     def run(self):
         while not self.quitting:
             queueObj = self.output_queue.get()
             if queueObj == "quit":
                 self.quit()
 
+            self.write(queueObj)
             # somewhere in here, we return the data to...?
             self.output_queue.task_done()
 
@@ -66,12 +76,15 @@ class SSHThread(GenericThread):
         self.id = id
         self.quitting = False
 
+    def quit(self):
+        self.quitting = True
+
     def run (self):
         try:
             while not self.quitting:
                 queueObj = self.ssh_connect_queue.get()
-#                if queueObj == 'quit':
-#                    self.quit()
+                if queueObj == 'quit':
+                    self.quit()
                     
 #                success, command_output = attemptConnection(host, username, password, timeout, commands)
                 attemptConnection(queueObj)
@@ -153,13 +166,12 @@ def paramikoConnect(ssh_job):
 
 def executeCommands(transport, rho_commands):
     host = transport.get_host_keys().keys()[0]
-    output = []
     for rho_cmd in rho_commands:
+        output = []
         for cmd_string in rho_cmd.cmd_strings:
             stdin, stdout, stderr = transport.exec_command(cmd_string)
             # one item in the list for each cmd stdout
             output.append((stdout.read(), stderr.read()))
-#            output.append((stdout.readlines(), stderr.readlines()))
         rho_cmd.populate_data(output)
     return rho_commands
 
