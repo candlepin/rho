@@ -40,6 +40,10 @@ class ConfigError(Exception):
     pass
 
 
+class DuplicateNameError(Exception):
+    pass
+
+
 def verify_keys(check_dict, required=[], optional=None):
     """
     Verify that all required keys are present in the dict, and nothing
@@ -88,6 +92,10 @@ class Config(object):
                 self.add_group(group)
 
     def add_credentials(self, c):
+
+        if c.name in self._credential_index:
+            raise DuplicateNameError
+
         self._credentials.append(c)
         self._credential_index[c.name] = c
 

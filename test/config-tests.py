@@ -128,6 +128,22 @@ class ConfigTests(unittest.TestCase):
         self.assertTrue(CREDENTIALS_KEY in config_dict)
         self.assertTrue(GROUPS_KEY in config_dict)
 
+    def test_duplicate_credential_names(self):
+        config = Config()
+        creds1 = SshCredentials({
+            NAME_KEY: "creds1",
+            TYPE_KEY: SSH_TYPE,
+            USERNAME_KEY: "bob",
+            PASSWORD_KEY: "password"})
+        creds2 = SshCredentials({
+            NAME_KEY: "creds1",
+            TYPE_KEY: SSH_TYPE,
+            USERNAME_KEY: "bob2",
+            PASSWORD_KEY: "password2"})
+        config.add_credentials(creds1)
+        self.assertRaises(DuplicateNameError, config.add_credentials, 
+                creds2)
+
 
 class CredentialTests(unittest.TestCase):
 
