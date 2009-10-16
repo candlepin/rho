@@ -5,7 +5,7 @@ MESSAGESPOT=po/rho.pot
 
 TOPDIR = $(shell pwd)
 DIRS	= test bin locale src
-PYDIRS	= src bin 
+PYDIRS	= src/rho bin 
 
 #MANPAGES = funcd func func-inventory func-transmit func-build-map func-create-module
 
@@ -34,15 +34,16 @@ clean:
 	-rm -f etc/version
 #	-for d in $(DIRS); do ($(MAKE) -C $$d clean ); done
 
-authclean:
+confclean:
 	-rm -rf ~/.rho.conf
 
-authbackup:
-	-cp ~/.rho.conf ./rho.conf-backup
+# this is slightly nuts,we keep "versioned" copies of the conf file, just in case
+confbackup:
+	-cp ~/.rho.conf ./.rho.conf-backup/rho.conf-backup-`date +"%s"`
 
-
-authrestore:
-	-cp ./rho.conf-backup ~/.rho.conf
+# pop the latest stored
+confrestore:
+	-mv ./.rho.conf-backup/`ls -t ./.rho.conf-backup/ | head -1` ~/.rho.conf
 
 
 install: build
