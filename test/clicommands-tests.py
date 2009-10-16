@@ -18,6 +18,10 @@ import os
 
 class CliCommandsTests(unittest.TestCase):
 
+    def setUp(self):
+        if os.path.exists("test/rho.conf.test"):
+            os.remove("test/rho.conf.test")
+
     def _run_test(self, cmd, args):
         os.environ[RHO_PASSPHRASE] = "blerg"
         self.conffile = "test/rho.conf.test"
@@ -38,7 +42,6 @@ class CliCommandsTests(unittest.TestCase):
 
     def test_profile_add(self):
         self._run_test(ProfileAddCommand(), ["profile", "add", "--name", "profilename"])
-
 
     def test_auth_show(self):
         self._run_test(AuthShowCommand(), ["auth", "show"])
