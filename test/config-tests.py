@@ -129,20 +129,22 @@ class ConfigTests(unittest.TestCase):
         self.assertTrue(GROUPS_KEY in config_dict)
 
     def test_duplicate_credential_names(self):
-        config = Config()
+        config = self.builder.build_config(SAMPLE_CONFIG1)
+        # This name is already used in the SAMPLE_CONFIG1
         creds1 = SshCredentials({
-            NAME_KEY: "creds1",
+            NAME_KEY: "bobslogin",
             TYPE_KEY: SSH_TYPE,
             USERNAME_KEY: "bob",
             PASSWORD_KEY: "password"})
-        creds2 = SshCredentials({
-            NAME_KEY: "creds1",
-            TYPE_KEY: SSH_TYPE,
-            USERNAME_KEY: "bob2",
-            PASSWORD_KEY: "password2"})
-        config.add_credentials(creds1)
         self.assertRaises(DuplicateNameError, config.add_credentials, 
-                creds2)
+                creds1)
+
+    def test_duplicate_group_names(self):
+        config = self.builder.build_config(SAMPLE_CONFIG1)
+        g = Group("accounting", ["192.168.1.1/24"], ["bobslogin"],
+                [22])
+            
+        self.assertRaises(DuplicateNameError, config.add_group, g)
 
 
 class CredentialTests(unittest.TestCase):

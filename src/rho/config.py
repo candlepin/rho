@@ -80,6 +80,7 @@ class Config(object):
         self._groups = []
         # Will map credential key name to the credentials object:
         self._credential_index = {}
+        self._group_index = {}
 
         # Need to iterate credentials first:
         if credentials:
@@ -104,6 +105,8 @@ class Config(object):
             c = self._credential_index[cname]
             self._credentials.remove(c)
             del self._credential_index[cname]
+        # TODO: need to raise error here, user shouldn't see nothing if
+        # they botched their command to remove a credential
 
     def list_credentials(self):
         """ Return a list of all credential objects in this configuration. """
@@ -119,11 +122,16 @@ class Config(object):
         Add a new group to this configuration, and ensure it references valid
         credentials.
         """
+        if group.name in self._group_index:
+            raise DuplicateNameError(group.name)
+
         for c in group.credential_names:
             if c not in self._credential_index:
                 raise ConfigError("No such credentials: %s" %
                         c)
+
         self._groups.append(group)
+        self._group_index[group.name] = group
 
     def list_groups(self):
         """ Return a list of all groups in this configuration. """
@@ -131,6 +139,7 @@ class Config(object):
 
     def clear_groups(self):
         self._groups = []
+        self._group_index = {}
 
     def to_dict(self):
         creds = []
@@ -302,8 +311,8 @@ class ConfigBuilder(object):
                 except ValueError:
                     raise ConfigError("Invalid ssh port: %s" % p)
 
-                group_obj = Group(name, ranges, credential_names, ports)
-                groups.append(group_obj)
+            group_obj = Group(name, ranges, credential_names, ports)
+            groups.append(group_obj)
 
         return groups
 
