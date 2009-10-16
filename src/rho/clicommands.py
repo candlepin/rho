@@ -23,6 +23,8 @@ from getpass import getpass
 
 from rho import config
 from rho import crypto
+from rho import scanner
+from rho import ssh_jobs
 
 RHO_PASSPHRASE = "RHO_PASSPHRASE"
 
@@ -95,10 +97,25 @@ class ScanCommand(CliCommand):
 
         self.parser.add_option("--all", dest="all", action="store_true",
                 help=_("remove ALL profiles"))
+        self.parser.add_option("--ip_start", dest="ipstart", metavar="IPSTART",
+                help=_("beginning of ip range"))
+        self.parser.add_option("--ip_end", dest="ipend", metavar="IPEND",
+                help=_("end of ip range"))
+        self.parser.add_option("--ip", dest="ip", metavar="IP",
+                help=_("single ip/hostname to scan"))
+        self.parser.add_option("--ports", dest="ports", metavar="PORTS",
+                help=_("list of ssh ports to try i.e. '22, 2222, 5402'"))
+        self.parser.add_option("--username", dest="username", metavar="USERNAME",
+                help=_("user name for authenticating against target machine"))
+        self.parser.add_option("--password", dest="password", metavar="PASSWORD",
+                help=_("password for authenticating against target machine"))
+
 
     def _do_command(self):
         print("scan called")
-        print self.config
+        self.scanner = scanner.Scanner()
+        self.scanner.scan(ip=self.options.ip, auth=ssh_jobs.SshAuth(username=self.options.username, password=self.options.password))
+        
         
 
 class ProfileShowCommand(CliCommand):
