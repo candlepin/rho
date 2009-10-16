@@ -28,12 +28,13 @@ class OutputThread(GenericThread):
         output_queue: Queue.Queue(): The queue to use for incoming messages.
         verbose - Boolean: Whether or not we should output to stdout.
     """
-    def __init__(self, output_queue, verbose=True, outfile=None):
+    def __init__(self, output_queue, verbose=True, outfile=None, report=None):
         """Name ourselves and assign the variables we were instanciated with."""
         threading.Thread.__init__(self, name="OutputThread")
         self.output_queue = output_queue
         self.verbose = verbose
         self.quitting = False
+        self.report = report
 
     
     def quit(self):
@@ -50,7 +51,8 @@ class OutputThread(GenericThread):
             if queueObj == "quit":
                 self.quit()
 
-            self.write(queueObj)
+            self.report.add(queueObj)
+#            self.write(queueObj)
             # somewhere in here, we return the data to...?
             self.output_queue.task_done()
 
@@ -104,10 +106,10 @@ class SSHThread(GenericThread):
             print detail
             self.quit()
 
-def startOutputThread(verbose, outfile):
+def startOutputThread(verbose, outfile, report):
     """Starts up the OutputThread (which is used by SSHThreads to print/write out results)."""
     output_queue = Queue.Queue()
-    output_thread = OutputThread(output_queue, verbose, outfile)
+    output_thread = OutputThread(output_queue, verbose, outfile, report)
     output_thread.setDaemon(True)
     output_thread.start()
     return output_queue

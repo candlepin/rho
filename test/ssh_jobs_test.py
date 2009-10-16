@@ -44,11 +44,12 @@ class _TestSshJobs(unittest.TestCase):
         self.rh_release = rho_cmds.RedhatReleaseRhoCmd()
 
     def _callback(self, resultlist=[]):
-        for result in resultlist:
-            print
-            print "%s:%s %s" % (result.ip, result.returncode, result.output)
-            print
-            self.output.append((result.ip, result.returncode, result.output))
+        pass
+#        for result in resultlist:
+#            print
+#            print "%s:%s %s" % (result.ip, result.returncode, result.output)
+#            print
+#            self.output.append((result.ip, result.returncode, result.output))
 
     def _run_jobs(self, jobs=None, number=1):
         if jobs:

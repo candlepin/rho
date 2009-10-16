@@ -10,6 +10,7 @@
 #
 
 import my_sshpt
+import scanner
 
 import os
 import posix
@@ -64,7 +65,8 @@ class SshJob():
         print "port: %s" % self.port
 
     def output_callback(self):
-        print "ip: %s\ncommand_output: %s\nconnection_result: %s" % (self.ip, self.command_output, self.connection_result)
+        pass
+#        print "ip: %s\ncommand_output: %s\nconnection_result: %s" % (self.ip, self.command_output, self.connection_result)
         
         #self.config = config.Config()['config']
         #self.auth = self.config.credentials['bobslogin']
@@ -78,14 +80,16 @@ class SshJobs():
         self.ssh_jobs = ssh_job_src
 
         self.verbose = True
-        self.outfile = None
+        self.output = scanner.ScanReport()
         self.max_threads = 10  
+
+        self.report = scanner.ScanReport()
 
     def run_jobs(self, ssh_jobs=None, callback=None):
         if ssh_jobs:
             self.ssh_jobs = ssh_jobs
         
-        self.output_queue = my_sshpt.startOutputThread(self.verbose, self.outfile)
+        self.output_queue = my_sshpt.startOutputThread(self.verbose, self.output, report=self.report)
         self.ssh_connect_queue = my_sshpt.startSSHQueue(self.output_queue, self.max_threads)
 
         while self.ssh_jobs:
