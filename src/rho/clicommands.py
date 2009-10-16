@@ -75,7 +75,7 @@ class CliCommand(object):
 
         if len(sys.argv) < 2:
             print(self.parser.error(_("Please enter at least 2 args")))
-            sys.edit(1)
+            sys.exit(1)
 
         if RHO_PASSPHRASE in os.environ:
             self.passphrase = os.environ[RHO_PASSPHRASE]
@@ -95,8 +95,13 @@ class ScanCommand(CliCommand):
 
         CliCommand.__init__(self, "scan", usage, shortdesc, desc)
 
+        self.parser.add_option("--all", dest="all", action="store_true",
+                help=_("remove ALL profiles"))
+
     def _do_command(self):
         print("scan called")
+        print self.config
+        
 
 class ProfileShowCommand(CliCommand):
     def __init__(self):
