@@ -115,7 +115,36 @@ class ScanCommand(CliCommand):
         print("scan called")
         self.scanner = scanner.Scanner()
         self.scanner.scan(ip=self.options.ip, auth=ssh_jobs.SshAuth(username=self.options.username, password=self.options.password))
-        
+
+
+class DumpConfigCommand(CliCommand):
+    """
+    Dumps the config file to stdout.
+    """
+
+    def __init__(self):
+        usage = _("usage: %prog dumpconfig [--encrypted-file]")
+        shortdesc = _("dumps the config file to stdout")
+        desc = _("dumps the config file to stdout")
+
+        CliCommand.__init__(self, "dumpconfig", usage, shortdesc, desc)
+        self.parser.add_option("--encrypted-file", dest="encrypted_file",
+            metavar="CONFIG", help=_("Path to config file"))
+
+    def _validate_options(self):
+        if (not self.options.encrypted_file or
+            not os.access(self.options.encrypted_file, os.R_OK)):
+            print(self.parser.print_help())
+            sys.exit(1)
+
+    def _do_command(self):
+        """
+        Executes the command.
+        """
+        import getpass
+        print(crypto.read_file(self.options.config, getpass.getpass()))
+
+
 class ProfileShowCommand(CliCommand):
     def __init__(self):
         usage = _("usage: %prog profile show [options]")
@@ -222,26 +251,8 @@ class AuthClearCommand(CliCommand):
 
         CliCommand.__init__(self, "auth clear", usage, shortdesc, desc)
 
-        self.parser.add_option("--name", dest="name", metavar="NAME",
-                help=_("NAME of the auth credential to be removed"))
-        self.parser.add_option("--all", dest="all", action="store_true",
-                help=_("remove ALL auth credentials"))
-
-    def _validate_options(self):
-        if not self.options.name and not self.options.all:
-            print(self.parser.print_help())
-            sys.exit(1)
-
-        if self.options.name and self.options.all:
-            print(self.parser.print_help())
-            sys.exit(1)
-
     def _do_command(self):
-        if self.options.name:
-            self.config.remove_credential(self.options.name)
-        elif self.options.all:
-            self.config.clear_credentials()
-
+        self.config.clear_credentials()
         c = config.ConfigBuilder().dump_config(self.config)
         crypto.write_file(self.options.config, c, self.passphrase)
 
@@ -291,6 +302,7 @@ class AuthAddCommand(CliCommand):
     def _validate_options(self):
         if not self.options.name:
             print(self.parser.print_help())
+            self.parser.error(_("--name is required"))
 
         # need to pass in file or username and password combo
         if self.options.filename:

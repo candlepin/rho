@@ -20,25 +20,26 @@ class CliCommandsTests(unittest.TestCase):
 
     def _run_test(self, cmd, args):
         os.environ[RHO_PASSPHRASE] = "blerg"
-        sys.argv = ["bin/rho" ]  + args + ["--config", "test/rho.conf.test"]
+
+        sys.argv = args
         cmd.main()
 
     def test_scan(self):
-        self._run_test(ScanCommand(), ["scan"])
+        self._run_test(ScanCommand(), ["bin/rho", "scan"])
 
     def test_profile_show(self):
-        self._run_test(ProfileShowCommand(), ["profile", "show"])
+        self._run_test(ProfileShowCommand(), ["bin/rho", "profile", "show"])
 
     def test_profile_add(self):
-        self._run_test(ProfileAddCommand(), ["profile", "add", "--name", "profilename"])
+        self._run_test(ProfileAddCommand(), ["bin/rho", "profile", "add", "--name", "profilename"])
 
 
     def test_auth_show(self):
-        self._run_test(AuthShowCommand(), ["auth", "show"])
+        self._run_test(AuthShowCommand(), ["bin/rho", "auth", "show"])
 
     def test_auth_add(self):
-        try:
-            self._run_test(AuthAddCommand(), ["auth", "add"])
-        except SystemExit:
-            # we expect this to throw a optparse.parse.error
-            pass
+        self._run_test(AuthAddCommand(), ["bin/rho", "auth", "add"])
+
+    def test_dumpconfig(self):
+        self._run_test(DumpConfigCommand(), ['bin/rho', 'dumpconfig',
+            '--encrypted-file', 'test/data/encrypted.data'])
