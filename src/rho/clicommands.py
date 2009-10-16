@@ -191,8 +191,8 @@ class ProfileAddCommand(CliCommand):
         ports = []
         if self.options.ports:
             ports = self.options.ports.strip().split(",")
-        range = self._create_range(self.options.ipstart, self.options.ipend)
-        g = config.Group(name=self.options.name, ranges=range,
+        ip_range = self._create_range(self.options.ipstart, self.options.ipend)
+        g = config.Group(name=self.options.name, ranges=ip_range,
                          credential_names=[], ports=ports)
         self.config.add_group(g)
         c = config.ConfigBuilder().dump_config(self.config)
