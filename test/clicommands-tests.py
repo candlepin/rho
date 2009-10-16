@@ -17,17 +17,15 @@ import unittest
 import os
 
 class CliCommandsTests(unittest.TestCase):
+    conffile = "test/rho.conf.test"
 
     def setUp(self):
-        if os.path.exists("test/rho.conf.test"):
-            os.remove("test/rho.conf.test")
+        if os.path.exists(self.conffile):
+            os.remove(self.conffile)
 
     def _run_test(self, cmd, args):
         os.environ[RHO_PASSPHRASE] = "blerg"
-        self.conffile = "test/rho.conf.test"
-        # tests aren't real bright, start with a fresh file
-        if os.access(self.conffile, os.R_OK):
-            os.remove(self.conffile)
+
         sys.argv = ["bin/rho" ]  + args + ["--config", self.conffile]
         cmd.main()
 
