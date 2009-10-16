@@ -41,7 +41,6 @@ class RhoCmd():
     # we can send a list of commands, so we expect output to be a list
     # of output strings
 
-    # [ (stdout, sterr) )
     def populate_data(self, results):
         # results is a tuple of (stdout, stderr)
         self.cmd_results = results
@@ -64,11 +63,11 @@ class UnameRhoCmd(RhoCmd):
     cmd_strings = ["uname -s", "uname -n", "uname -p", "uname -i"]
 
     def parse_data(self):
-        self.data['os'] = self.cmd_results[0][0]
-        self.data['hostname'] = self.cmd_results[1][0]
-        self.data['processor'] = self.cmd_results[2][0]
+        self.data['%s.os' % self.name] = self.cmd_results[0][0].strip()
+        self.data['%s.hostname' % self.name] = self.cmd_results[1][0].strip()
+        self.data['%s.processor' % self.name] = self.cmd_results[2][0].strip()
         if not self.cmd_results[3][1]:
-            self.data['hardware_platform'] = self.cmd_results[3][0]
+            self.data['%s.hardware_platform' % self.name] = self.cmd_results[3][0].strip()
 
 
 class RedhatReleaseRhoCmd(RhoCmd):
@@ -82,22 +81,23 @@ class RedhatReleaseRhoCmd(RhoCmd):
             self.data = {'name':'error', 'version':'error', 'release':'error'}
             return
         fields = self.cmd_results[0][0].splitlines()
-        self.data['name'] = fields[0]
-        self.data['version'] = fields[1]
-        self.data['release'] = fields[2]
+        self.data['%s.name' % self.name] = fields[0].strip()
+        self.data['%s.version' % self.name ] = fields[1].strip()
+        self.data['%s.release' % self.name ] = fields[2].strip()
 
 class ScriptRhoCmd(RhoCmd):
     name = "script"
     cmd_strings = []
 
     def __init__(self, command):
-        self.cmd_strings = [command]
+        self.command = command
+        self.cmd_strings = [self.command]
         RhoCmd.__init__(self)
 
     def parse_data(self):
-        self.data['output'] = self.cmd_results[0][0]
-        self.data['error'] = self.cmd_results[0][1]
-
+        self.data['%s.output' % self.name] = self.cmd_results[0][0]
+        self.data['%s.error' % self.name] = self.cmd_results[0][1]
+        self.data['%s.command' % self.name] = self.command
 
 # the list of commands to run on each host
 class RhoCmdList():
