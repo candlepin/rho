@@ -34,6 +34,16 @@ clean:
 	-rm -f etc/version
 #	-for d in $(DIRS); do ($(MAKE) -C $$d clean ); done
 
+authclean:
+	-rm -rf ~/.rho.conf
+
+authbackup:
+	-cp ~/.rho.conf ./rho.conf-backup
+
+
+authrestore:
+	-cp ./rho.conf-backup ~/.rho.conf
+
 
 install: build
 	$(PYTHON) setup.py install -f
