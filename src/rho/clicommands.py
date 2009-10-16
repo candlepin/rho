@@ -13,8 +13,6 @@
 
 import sys
 import os
-import re
-import simplejson as json
 
 import gettext
 t = gettext.translation('rho', 'locale', fallback=True)
