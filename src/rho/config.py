@@ -99,6 +99,12 @@ class Config(object):
         self._credentials.append(c)
         self._credential_index[c.name] = c
 
+    def remove_credential(self, cname):
+        if self._credential_index.has_key(cname):
+            c = self._credential_index[cname]
+            self._credentials.remove(c)
+            del self._credential_index[cname]
+
     def list_credentials(self):
         """ Return a list of all credential objects in this configuration. """
         # TODO: Should this return a copy of list? Immutable?
