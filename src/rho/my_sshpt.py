@@ -9,12 +9,14 @@
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 #
 
+import config
 #import ssh_jobs
 # Import built-in Python modules
 import getpass, threading, Queue, sys, os, re, datetime
 from optparse import OptionParser
 from time import sleep
 import traceback
+import StringIO
 
 import paramiko
 
@@ -148,7 +150,7 @@ def queueSSHConnection(ssh_connect_queue, cmd):
 def paramikoConnect(ssh_job):
     """Connects to 'host' and returns a Paramiko transport object to use in further communications"""
     # Uncomment this line to turn on Paramiko debugging (good for troubleshooting why some servers report connection failures)
-    #paramiko.util.log_to_file('paramiko.log')
+#    paramiko.util.log_to_file('paramiko.log')
 
     # FIXME: akl
     # this is probably the place to try the different auth in order, and set some
@@ -156,16 +158,28 @@ def paramikoConnect(ssh_job):
     for auth in ssh_job.auths:
         ssh = paramiko.SSHClient()
         try:
+            pkey = None
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            if auth.type == config.SSH_KEY_TYPE:
+                fo = StringIO.StringIO(auth.key)
+                #FIXME: paramiko has an abstraction class for rsa/dsa keys, but it
+                # seems to be broken, not sure what to do about it... but this
+                # will work for RSA keys for now
+                pkey = paramiko.RSAKey.from_private_key(fo)
             ssh.connect(ssh_job.ip, port=ssh_job.port, 
                         username=auth.username,
-                        password=auth.password, 
+                        password=auth.password,
+                        pkey=pkey,
+                        # we should probably set this somewhere
+                        #allow_agent=False,
+                        look_for_keys=False,
                         timeout=ssh_job.timeout)
             # set the successful auth type
             ssh_job.auth = auth
             break
         except Exception, detail:
             # Connecting failed (for whatever reason)
+            #FIXME: need to popular ssh_job.auth with something when we fail?
             print _("connection failed using auth class: %s %s") % (auth.name, str(detail))
             ssh = str(detail)
     return ssh
