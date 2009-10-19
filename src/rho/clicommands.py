@@ -255,7 +255,9 @@ class ProfileAddCommand(CliCommand):
         self.parser.add_option("--ip_end", dest="ipend", metavar="IPEND",
                 help=_("end of ip range"))
         self.parser.add_option("--ports", dest="ports", metavar="PORTS",
-                help=_("list of ssh ports to try i.e. '22, 2222, 5402'"))
+                help=_("list of ssh ports to try i.e. '22, 2222, 5402'")),
+        self.parser.add_option("--auth", dest="auth", metavar="AUTH", action="append",
+                help=_("auth class to associate with profile"))
 
         self.parser.set_defaults(ports="22")
 
@@ -282,7 +284,7 @@ class ProfileAddCommand(CliCommand):
             ports = self.options.ports.strip().split(",")
         ip_range = self._create_range(self.options.ipstart, self.options.ipend)
         g = config.Group(name=self.options.name, ranges=ip_range,
-                         credential_names=[], ports=ports)
+                         credential_names=self.options.auth, ports=ports)
         self.config.add_group(g)
         c = config.ConfigBuilder().dump_config(self.config)
         print(c)
