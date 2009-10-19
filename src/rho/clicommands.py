@@ -355,6 +355,15 @@ class AuthAddCommand(CliCommand):
             print(self.parser.print_help())
             sys.exit(1)
 
+    def _save_cred(self, cred):
+        try:
+            self.config.add_credentials(cred)
+        except config.DuplicateNameError:
+            #FIXME: need to handle this better... -akl
+            print _("The auth name %s already exists" % cred.name)
+            return
+        c = config.ConfigBuilder().dump_config(self.config)
+        crypto.write_file(self.options.config, c, self.passphrase)
         
     def _do_command(self):
         if self.options.filename:
@@ -362,24 +371,22 @@ class AuthAddCommand(CliCommand):
             sshkeyfile = open(os.path.expanduser(os.path.expandvars(self.options.filename)), "r")
             sshkey = sshkeyfile.read()
             sshkeyfile.close()
+
+            
             cred = config.SshKeyCredentials({"name": self.options.name,
-                                          "key":sshkey,
-                                          "username": self.options.username,
-                                          "type":"ssh"})
-            self.config.add_credentials(cred)
-            print(self.config.list_credentials())   #remove
-            c = config.ConfigBuilder().dump_config(self.config)
-            crypto.write_file(self.options.config, c, self.passphrase)
+                                             "key":sshkey,
+                                             "username": self.options.username,
+                                             "type":"ssh"})
+
+
+
+            self._save_cred(cred)
+
 
         elif self.options.username and self.options.password:
             # using ssh
             cred = config.SshCredentials({"name":self.options.name,
-                "username":self.options.username,
-                "password":self.options.password,
-                "type":"ssh"})
-            self.config.add_credentials(cred)
-            print(self.config.list_credentials())  #remove
-            c = config.ConfigBuilder().dump_config(self.config)
-            print(c)
-            print("[%s]" % self.passphrase)
-            crypto.write_file(self.options.config, c, self.passphrase)
+                                             "username":self.options.username,
+                                             "password":self.options.password,
+                                             "type":"ssh"})
+            self._save_cred(cred)
