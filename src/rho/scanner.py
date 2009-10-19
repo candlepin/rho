@@ -72,27 +72,18 @@ class Scanner():
     def scan_profiles(self, profilenames):
         missing_profiles = []
         ssh_job_list = []
-        print "profilenames", profilenames
         for profilename in profilenames:
             profile = self.config.get_group(profilename)
-            print "profile", profile
-            print "profile.ranges", profile.ranges
             if profile is None:
                 missing_profiles.append(profilename)
                 continue
             ipr = rho_ips.RhoIpRange(profile.ranges)
-            print ipr
-            print ipr.ips
             ips = map(str, list(ipr.ips))
 
             self._find_auths(profile.credential_names)
-            print "self.auths", self.auths
-            print "ips", ips
             for ip in ips:
-                print ip
                 #FIXME: look up auth -akl
                 sshj = ssh_jobs.SshJob(ip=ip, rho_cmds=self.get_rho_cmds(), auths=self.auths)
-                print sshj
                 ssh_job_list.append(sshj)
             self.ssh_jobs.ssh_jobs = ssh_job_list
             self.run_scan()
