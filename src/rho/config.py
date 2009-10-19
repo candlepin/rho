@@ -109,10 +109,7 @@ class Config(object):
         # they botched their command to remove a credential
 
     def get_credentials(self, cname):
-        print cname, self._credential_index
-        if self._credential_index.has_key(cname):
-            return self._credential_index[cname]
-        return None
+        return self._credential_index.get(cname)
 
     def list_credentials(self):
         """ Return a list of all credential objects in this configuration. """
@@ -142,6 +139,10 @@ class Config(object):
     def list_groups(self):
         """ Return a list of all groups in this configuration. """
         return self._groups
+
+    def get_group(self, gname):
+        print gname, self._group_index
+        return self._group_index.get(gname)
 
     def clear_groups(self):
         self._groups = []
