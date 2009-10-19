@@ -20,6 +20,7 @@ _ = t.ugettext
 
 from optparse import OptionParser
 from getpass import getpass
+import simplejson as json
 
 from rho import config
 from rho import crypto
@@ -142,6 +143,8 @@ class DumpConfigCommand(CliCommand):
         desc = _("dumps the config file to stdout")
 
         CliCommand.__init__(self, "dumpconfig", usage, shortdesc, desc)
+        self.parser.add_option("--pretty", dest="pretty", metavar="pretty",
+                               help=_("pretty print config output"))
 
     def _validate_options(self):
         CliCommand._validate_options(self)
@@ -159,7 +162,8 @@ class DumpConfigCommand(CliCommand):
         """
         Executes the command.
         """
-        print(crypto.read_file(self.options.config, self.passphrase))
+        content = crypto.read_file(self.options.config, self.passphrase)
+        print(json.dumps(json.loads(content), sort_keys = True, indent = 4))
 
         
 class ProfileShowCommand(CliCommand):
