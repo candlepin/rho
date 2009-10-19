@@ -24,32 +24,29 @@ class RhoIpRange(object):
         self.parse_iprange(iprange)
         # list of netaddr.IP() objects
 
-    def _check_for_hostname(self, iprange):
+    # make sure we end up with an ip
+    def _find_ip(self, iprange):
         # try to guess if this is an ip or a hostname
         if ip_regex.search(iprange):
-            return None
-        return iprange
+            return iprange
+        # try to resolve if it looks like a hostname
+        # FIXME: thisis blocky and generally icky and failureprone -akl
+        ip = socket.gethostbyname(iprange)
+        return ip
 
     def parse_iprange(self, iprange):
-        # very dumb check to see if this looks like a hostname instead of an ip
-        # FIXME: there has to be a better way to do this -akl
-        if self._check_for_hostname(iprange):
-            self.range_str = socket.gethostbyname(self.range_str)
-            # we don't support hostname globbing, so assume a hostname string is
-            # a single host
-            self.ips = [self.range_str]
-            return self.ips
-
-
         # FIXME: NOTE: all of this stuff is pretty much untested ;-> -akl
-        if self.range_str.find('-') > -1:
+        if self.range_str.find(' - ') > -1:
             #looks like a range
-            parts = self.range_str.split('-')
-            self.start_ip = parts[0]
-            self.end_ip = parts[1]
+            parts = self.range_str.split(' - ')
+            self.start_ip = self._find_ip(parts[0])
+            self.end_ip = self._find_ip(parts[1])
             ipr = netaddr.IPRange(self.start_ip, self.end_ip)
             self.ips = list(ipr)
             return self.ips
+        
+        # FIXME: not sure what to do about cases like 
+        # foo.example.com/24 or "*.example.com". punt? -akl
 
         if self.range_str.find('/') > -1:
             # looks like a cidr
@@ -62,6 +59,18 @@ class RhoIpRange(object):
             self.ips = list(wildcard)
             return self.ips
 
+        if ip_regex.search(self.range_str):
+            # must be a single ip
+            self.start_ip = self._find_ip(self.range_str)
+            self.ips = [netaddr.IP(self.start_ip)]
+        
+        # doesn't look like anything else, try treating it as a hostname
+        try:
+            self.start_ip = self._find_ip(self.range_str)
+            self.ips = [netaddr.IP(self.start_ip)]
+        except:
+            return None
+            
         
 
         return None
