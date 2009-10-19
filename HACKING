@@ -2,6 +2,7 @@ You must have the following packages installed:
 
     python-crypto
     python-paramiko
+    python-netaddr
 
 For testing, you will need the following additional packages:
 
