@@ -26,6 +26,7 @@ class ScanReport():
             data.update(rho_cmd.data)
 #        print data
         self.ips[ssh_job.ip] = {'ip': ssh_job.ip,
+                                'port':ssh_job.port,
                                 'auth.type': ssh_job.auth.type,
                                 'auth.name': ssh_job.auth.name,
                                 'auth.username': ssh_job.auth.username,
