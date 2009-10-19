@@ -14,6 +14,7 @@
 import getpass, threading, Queue, sys, os, re, datetime
 from optparse import OptionParser
 from time import sleep
+import traceback
 
 import paramiko
 
@@ -148,21 +149,26 @@ def paramikoConnect(ssh_job):
     """Connects to 'host' and returns a Paramiko transport object to use in further communications"""
     # Uncomment this line to turn on Paramiko debugging (good for troubleshooting why some servers report connection failures)
     #paramiko.util.log_to_file('paramiko.log')
-    ssh = paramiko.SSHClient()
 
     # FIXME: akl
     # this is probably the place to try the different auth in order, and set some
     # value on the ssh_job type so we can update config properly
-    try:
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(ssh_job.ip, port=ssh_job.port, 
-                    username=ssh_job.auth.username,
-                    password=ssh_job.auth.password, 
-                    timeout=ssh_job.timeout)
-    except Exception, detail:
-        # Connecting failed (for whatever reason)
-#        print str(detail)
-        ssh = str(detail)
+    for auth in ssh_job.auths:
+        print "auth", auth, type(auth)
+        ssh = paramiko.SSHClient()
+        try:
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(ssh_job.ip, port=ssh_job.port, 
+                        username=auth.username,
+                        password=auth.password, 
+                        timeout=ssh_job.timeout)
+            # set the successful auth type
+            ssh_job.auth = auth
+            break
+        except Exception, detail:
+            # Connecting failed (for whatever reason)
+            print _("connection failed using auth class: %s %s") % (auth.name, str(detail))
+            ssh = str(detail)
     return ssh
 
 
@@ -196,6 +202,7 @@ def attemptConnection(ssh_job):
             print "Exception: %s" % detail
             print sys.exc_type()
             print sys.exc_info()
+            print traceback.print_tb(sys.exc_info()[2])
             ssh_job.connection_result = False
             ssh_job.command_output = detail
             ssh.close()
