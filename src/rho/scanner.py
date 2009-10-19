@@ -7,8 +7,10 @@
 #
 
 import config
-import ssh_jobs
 import rho_cmds
+import rho_ips
+import ssh_jobs
+
 
 class ScanReport():
 
@@ -42,19 +44,37 @@ class ScanReport():
             # ip, uname.os, uname.process, uname.hardware_platform, redhat-release.name, redhat-release.version, redhat-release.release
 
 class Scanner():
-    def __init__(self):
-        self.config = None
+    def __init__(self, config=None):
+        self.config = config
         self.profiles = []
 #        self.default_rho_cmd_classes= [rho_cmds.UnameRhoCmd]
         self.default_rho_cmd_classes = [rho_cmds.UnameRhoCmd, rho_cmds.RedhatReleaseRhoCmd]
         self.ssh_jobs = ssh_jobs.SshJobs()
         self.output = []
 
-    def scan_profile(self, profilename):
-        pass
-        # for profie in self.profiles:
-        #     for host in profile.ip_range:
-        #         self.scan(...)
+    # FIXME: auth will go away, look it up based on lists of auth
+    # associated with each profile -akl
+    def scan_profiles(self, profilenames, auth):
+        missing_profiles = []
+        ssh_job_list = []
+        for profilename in profilenames:
+            profile = self.config.get_group(profilename)
+            if profile is None:
+                missing_profiles.append(profilename)
+                continue
+            ipr = rho_ips.RhoIpRange(profile.ranges)
+            ips = map(str, list(ipr.ips))
+            for ip in ips:
+                print ip
+                #FIXME: look up auth -akl
+                sshj = ssh_jobs.SshJob(ip=ip, rho_cmds=self.get_rho_cmds(), auth=auth)
+                print sshj
+                ssh_job_list.append(sshj)
+            self.ssh_jobs.ssh_jobs = ssh_job_list
+            self.run_scan()
+            self.report()
+
+        return missing_profiles
 
     def get_rho_cmds(self, rho_cmd_classes=None):
         if not rho_cmd_classes:
