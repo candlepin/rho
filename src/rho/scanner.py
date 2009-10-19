@@ -14,7 +14,7 @@ import ssh_jobs
 
 class ScanReport():
 
-    format = """%(ip)s,%(uname.os)s,%(uname.processor)s,%(uname.hardware_platform)s,%(redhat-release.name)s,%(redhat-release.version)s,%(redhat-release.release)s"""
+    format = """%(ip)s,%(uname.os)s,%(uname.processor)s,%(uname.hardware_platform)s,%(redhat-release.name)s,%(redhat-release.version)s,%(redhat-release.release)s,%(auth.type)s,%(auth.username)s,%(auth.name)s"""
     def __init__(self):
         self.ips = {}
         # ips is a dict of 
@@ -51,23 +51,47 @@ class Scanner():
         self.default_rho_cmd_classes = [rho_cmds.UnameRhoCmd, rho_cmds.RedhatReleaseRhoCmd]
         self.ssh_jobs = ssh_jobs.SshJobs()
         self.output = []
+        self.auths = []
+        self.missing_auths = []
+
+    def _find_auths(self, authnames):
+        # FIXME: this seems like a reasonable place to plug in a "default" auth
+        # if we like, maybe?  -akl
+        self.missing_auths = []
+        for authname in authnames:
+            auth = self.config.get_credentials(authname)
+            #FIXME: what do we do if an authname is invalid? 
+            # for now, we ignore it
+            if auth:
+                self.auths.append(auth)
+            else:
+                self.missing_auths.append(authname) 
 
     # FIXME: auth will go away, look it up based on lists of auth
     # associated with each profile -akl
-    def scan_profiles(self, profilenames, auth):
+    def scan_profiles(self, profilenames):
         missing_profiles = []
         ssh_job_list = []
+        print "profilenames", profilenames
         for profilename in profilenames:
             profile = self.config.get_group(profilename)
+            print "profile", profile
+            print "profile.ranges", profile.ranges
             if profile is None:
                 missing_profiles.append(profilename)
                 continue
             ipr = rho_ips.RhoIpRange(profile.ranges)
+            print ipr
+            print ipr.ips
             ips = map(str, list(ipr.ips))
+
+            self._find_auths(profile.credential_names)
+            print "self.auths", self.auths
+            print "ips", ips
             for ip in ips:
                 print ip
                 #FIXME: look up auth -akl
-                sshj = ssh_jobs.SshJob(ip=ip, rho_cmds=self.get_rho_cmds(), auth=auth)
+                sshj = ssh_jobs.SshJob(ip=ip, rho_cmds=self.get_rho_cmds(), auths=self.auths)
                 print sshj
                 ssh_job_list.append(sshj)
             self.ssh_jobs.ssh_jobs = ssh_job_list
@@ -84,8 +108,9 @@ class Scanner():
             rho_cmds.append(rho_cmd_class())
         return rho_cmds
 
-    def scan(self, ip, auth):
-        ssh_job = ssh_jobs.SshJob(ip=ip, rho_cmds=self.get_rho_cmds(), auth=auth)
+    def scan(self, ip):
+        self._find_auths(profile.credential_names)
+        ssh_job = ssh_jobs.SshJob(ip=ip, rho_cmds=self.get_rho_cmds(), auths=self.auths)
         self.ssh_jobs.ssh_jobs.append(ssh_job)
         self.run_scan()
         self.report()
