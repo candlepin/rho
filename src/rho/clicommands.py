@@ -346,18 +346,31 @@ class AuthAddCommand(CliCommand):
 
         # need to pass in file or username and password combo
         if self.options.filename:
-            if self.options.username or self.options.password:
+            if self.options.password:
                 self.parser.error(
                     _("can not use --file with --username or --password"))
+            return
 
-        if not self.options.username or not self.options.password:
+        if not self.options.username or not self.options.password and not self.options.filename:
             print(self.parser.print_help())
             sys.exit(1)
 
+        
     def _do_command(self):
         if self.options.filename:
             # using sshkey
-            print("nothing needed")
+            sshkeyfile = open(os.path.expanduser(os.path.expandvars(self.options.filename)), "r")
+            sshkey = sshkeyfile.read()
+            sshkeyfile.close()
+            cred = config.SshKeyCredentials({"name": self.options.name,
+                                          "key":sshkey,
+                                          "username": self.options.username,
+                                          "type":"ssh"})
+            self.config.add_credentials(cred)
+            print(self.config.list_credentials())   #remove
+            c = config.ConfigBuilder().dump_config(self.config)
+            crypto.write_file(self.options.config, c, self.passphrase)
+
         elif self.options.username and self.options.password:
             # using ssh
             cred = config.SshCredentials({"name":self.options.name,
@@ -365,7 +378,7 @@ class AuthAddCommand(CliCommand):
                 "password":self.options.password,
                 "type":"ssh"})
             self.config.add_credentials(cred)
-            print(self.config.list_credentials())
+            print(self.config.list_credentials())  #remove
             c = config.ConfigBuilder().dump_config(self.config)
             print(c)
             print("[%s]" % self.passphrase)
