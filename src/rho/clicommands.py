@@ -134,21 +134,15 @@ class DumpConfigCommand(CliCommand):
         desc = _("dumps the config file to stdout")
 
         CliCommand.__init__(self, "dumpconfig", usage, shortdesc, desc)
-        self.parser.add_option("--encrypted-file", dest="encrypted_file",
-            metavar="CONFIG", help=_("Path to config file"))
 
     def _validate_options(self):
-        if (not self.options.encrypted_file or
-            not os.access(self.options.encrypted_file, os.R_OK)):
-            print(self.parser.print_help())
-            sys.exit(1)
+        pass
 
     def _do_command(self):
         """
         Executes the command.
         """
-        import getpass
-        print(crypto.read_file(self.options.config, getpass.getpass()))
+        print(crypto.read_file(self.options.config, self.passphrase))
 
         
 class ProfileShowCommand(CliCommand):
