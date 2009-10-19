@@ -11,6 +11,7 @@
 
 import my_sshpt
 import scanner
+import config
 
 import os
 import posix
@@ -37,7 +38,7 @@ class SshAuth(Auth):
 #FIXME: SshJob needs to have a RhoJobsList, where each RhoJob item actually has
 # a list of cli commands to run
 class SshJob():
-    def __init__(self, ip=None, port=22, rho_cmds=None, auth=None, timeout=30):
+    def __init__(self, ip=None, port=22, rho_cmds=None, auths=None, timeout=30):
         # rho_cmds really needs to be list like, easy mistake to make...
         assert getattr(rho_cmds, "__iter__")
 
@@ -46,8 +47,13 @@ class SshJob():
 
         # rho commands is RhoCmdList, aka, a list of RhoCmds (duh)
         self.rho_cmds = rho_cmds
+
+        # list of auths to try
+        self.auths = auths
         
-        self.auth = auth
+        # the auth we actually used
+        self.auth = None
+
         self.timeout = timeout
         self.command_output = None
         self.connection_result = True
