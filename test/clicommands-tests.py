@@ -54,7 +54,7 @@ class CliCommandsTests(unittest.TestCase):
     def test_dumpconfig(self):
         try:
             self._run_test(DumpConfigCommand(), ['dumpconfig',
-                                                 '--encrypted-file', 
+                                                 '--config', 
                                                  'test/data/encrypted.data'])
         except SystemExit:
             pass
