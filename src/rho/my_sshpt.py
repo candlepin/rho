@@ -154,7 +154,6 @@ def paramikoConnect(ssh_job):
     # this is probably the place to try the different auth in order, and set some
     # value on the ssh_job type so we can update config properly
     for auth in ssh_job.auths:
-        print "auth", auth, type(auth)
         ssh = paramiko.SSHClient()
         try:
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -199,7 +198,7 @@ def attemptConnection(ssh_job):
 
         except Exception, detail:
             # Connection failed
-            print "Exception: %s" % detail
+            print _("Exception: %s") % detail
             print sys.exc_type()
             print sys.exc_info()
             print traceback.print_tb(sys.exc_info()[2])
