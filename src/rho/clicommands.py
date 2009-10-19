@@ -176,8 +176,6 @@ class ScanCommand(CliCommand):
             if self.options.ports:
                 ports = self.options.ports.strip().split(",")
             ip_range = self._create_range(self.options.ip, self.options.ip)
-            print "self.options.auth", self.options.auth
-            print "ip_range", ip_range
             g = config.Group(name="clioptions", ranges=ip_range,
                          credential_names=self.options.auth, ports=ports)
             self.config.add_group(g)
@@ -315,7 +313,7 @@ class ProfileAddCommand(CliCommand):
         # self.options.auth can be None, so don't pass it to Group()
         if self.options.auth:
             auths = self.options.auth
-        print "self.options.auth", self.options.auth
+
         g = config.Group(name=self.options.name, ranges=ip_range,
                          credential_names=auths, ports=ports)
         self.config.add_group(g)
