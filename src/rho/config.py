@@ -108,6 +108,12 @@ class Config(object):
         # TODO: need to raise error here, user shouldn't see nothing if
         # they botched their command to remove a credential
 
+    def get_credentials(self, cname):
+        print cname, self._credential_index
+        if self._credential_index.has_key(cname):
+            return self._credential_index[cname]
+        return None
+
     def list_credentials(self):
         """ Return a list of all credential objects in this configuration. """
         # TODO: Should this return a copy of list? Immutable?
@@ -171,6 +177,7 @@ class SshCredentials(Credentials):
         self.name = json_dict[NAME_KEY]
         self.username = json_dict[USERNAME_KEY]
         self.password = json_dict[PASSWORD_KEY]
+        self.type = SSH_TYPE
 
     def to_dict(self):
         return {
@@ -191,6 +198,7 @@ class SshKeyCredentials(Credentials):
         self.name = json_dict[NAME_KEY]
         self.username = json_dict[USERNAME_KEY]
         self.key = json_dict[SSHKEY_KEY]
+        self.type = SSH_KEY_TYPE
 
         # Password is optional for ssh keys.
         self.password = ''
