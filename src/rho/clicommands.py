@@ -148,7 +148,11 @@ class ScanCommand(CliCommand):
         if self.args:
             # FIXME: auth will go away, we will find the auth associated with each profile
             # in scanner -akl
-            self.scanner.scan_profiles(self.args, auth)
+            missing = self.scanner.scan_profiles(self.args, auth)
+            if missing:
+                print _("The following profile names were not found:")
+                for name in missing:
+                    print name
 
 
 class DumpConfigCommand(CliCommand):
