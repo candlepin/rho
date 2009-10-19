@@ -27,6 +27,7 @@ from rho import scanner
 from rho import ssh_jobs
 
 RHO_PASSPHRASE = "RHO_PASSPHRASE"
+DEFAULT_RHO_CONF = "~/.rho.conf"
 
 class CliCommand(object):
     """ Base class for all sub-commands. """
@@ -46,15 +47,17 @@ class CliCommand(object):
         """ Add options that apply to all sub-commands. """
         self.parser.add_option("--debug", dest="debug",
                 help=_("enable debug output"))
-        self.parser.add_option("--config", dest="config",
-                help=_("config file name"))
 
-        self.parser.set_defaults(config=os.path.expanduser("~/.rho.conf"))
+        # Default is expanded later:
+        self.parser.add_option("--config", dest="config",
+                help=_("config file name"), default=DEFAULT_RHO_CONF)
+
 
     def _validate_options(self):
         """ 
         Sub-commands can override to do any argument validation they 
-        require. """
+        require. 
+        """
         pass
 
     def _do_command(self):
@@ -70,6 +73,10 @@ class CliCommand(object):
 
     def main(self):
         (self.options, self.args) = self.parser.parse_args()
+
+        # Translate path to config file to something absolute and expanded:
+        self.options.config = os.path.abspath(os.path.expanduser(
+            self.options.config))
 
         self._validate_options()
 
@@ -111,6 +118,7 @@ class ScanCommand(CliCommand):
                 help=_("password for authenticating against target machine"))
 
     def _validate_options(self):
+        CliCommand._validate_options(self)
         if not self.options.ip:
             print(self.parser.print_help())
             sys.exit(1)
@@ -136,7 +144,16 @@ class DumpConfigCommand(CliCommand):
         CliCommand.__init__(self, "dumpconfig", usage, shortdesc, desc)
 
     def _validate_options(self):
-        pass
+        CliCommand._validate_options(self)
+
+        if not os.path.exists(self.options.config):
+            print _("No such file: %s" % self.options.config)
+            sys.exit(1)
+
+        if (not os.access(self.options.config, os.R_OK)):
+            print(self.parser.print_help())
+            sys.exit(1)
+
 
     def _do_command(self):
         """
@@ -152,9 +169,6 @@ class ProfileShowCommand(CliCommand):
         desc = _("show the network profiles")
 
         CliCommand.__init__(self, "profile show", usage, shortdesc, desc)
-
-    def _validate_options(self):
-        pass
 
     def _do_command(self):
         if not self.config.list_groups():
@@ -180,6 +194,8 @@ class ProfileClearCommand(CliCommand):
         self.parser.set_defaults(all=False)
 
     def _validate_options(self):
+        CliCommand._validate_options(self)
+
         if not self.options.name and not self.options.all:
             print(self.parser.print_help())
             sys.exit(1)
@@ -217,6 +233,8 @@ class ProfileAddCommand(CliCommand):
         self.parser.set_defaults(ports="22")
 
     def _validate_options(self):
+        CliCommand._validate_options(self)
+
         if not self.options.name:
             print(self.parser.print_help())
             sys.exit(1)
@@ -257,6 +275,8 @@ class AuthClearCommand(CliCommand):
                 help=_("remove ALL auth credentials"))
 
     def _validate_options(self):
+        CliCommand._validate_options(self)
+
         if not self.options.name and not self.options.all:
             print(self.parser.print_help())
             sys.exit(1)
@@ -288,9 +308,6 @@ class AuthShowCommand(CliCommand):
         self.parser.add_option("--usernames", dest="usernames",
                 action="store_true", help=_("shows auth keys"))
 
-    def _validate_options(self):
-        pass
-
     def _do_command(self):
         if not self.config.list_credentials():
             print(_("No auth credentials found"))
@@ -318,6 +335,8 @@ class AuthAddCommand(CliCommand):
                 help=_("password for authenticating against target machine"))
 
     def _validate_options(self):
+        CliCommand._validate_options(self)
+
         if not self.options.name:
             print(self.parser.print_help())
 
