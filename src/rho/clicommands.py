@@ -116,7 +116,9 @@ class ScanCommand(CliCommand):
         self.parser.add_option("--username", dest="username", metavar="USERNAME",
                 help=_("user name for authenticating against target machine"))
         self.parser.add_option("--password", dest="password", metavar="PASSWORD",
-                help=_("password for authenticating against target machine"))
+                help=_("password for authenticating against target machine")),
+        self.parser.add_option("--auth", dest="auth", metavar="AUTH",
+                help=_("auth class name to use"))
 
     def _validate_options(self):
         CliCommand._validate_options(self)
@@ -127,9 +129,17 @@ class ScanCommand(CliCommand):
     def _do_command(self):
         print("scan called")
         self.scanner = scanner.Scanner()
+        if self.options.auth:
+            auth = self.config.get_credentials(self.options.auth)
+        else:
+            # FIXME: need a more abstrct credentials class -akl
+            auth=config.SshCredentials({'name':"clioptions", 
+                                        'username':self.options.username,
+                                        'password':self.options.password,
+                                        'type':'ssh'})
         # this is all temporary, but make the tests pass
         if self.options.ip:
-            self.scanner.scan(ip=self.options.ip, auth=ssh_jobs.SshAuth(username=self.options.username, password=self.options.password))
+            self.scanner.scan(ip=self.options.ip, auth=auth)
 
 
 class DumpConfigCommand(CliCommand):
