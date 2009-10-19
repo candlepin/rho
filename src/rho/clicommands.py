@@ -27,6 +27,7 @@ from rho import crypto
 from rho import scanner
 from rho import ssh_jobs
 
+
 RHO_PASSPHRASE = "RHO_PASSPHRASE"
 DEFAULT_RHO_CONF = "~/.rho.conf"
 
@@ -74,6 +75,8 @@ class CliCommand(object):
 
     def main(self):
         (self.options, self.args) = self.parser.parse_args()
+        # we dont need argv[0] in this list...
+        self.args = self.args[1:]
 
         # Translate path to config file to something absolute and expanded:
         self.options.config = os.path.abspath(os.path.expanduser(
@@ -122,13 +125,14 @@ class ScanCommand(CliCommand):
 
     def _validate_options(self):
         CliCommand._validate_options(self)
-        if not self.options.ip:
+        if not self.options.ip and not self.args:
             print(self.parser.print_help())
             sys.exit(1)
 
     def _do_command(self):
         print("scan called")
-        self.scanner = scanner.Scanner()
+        self.scanner = scanner.Scanner(config=self.config)
+
         if self.options.auth:
             auth = self.config.get_credentials(self.options.auth)
         else:
@@ -140,6 +144,11 @@ class ScanCommand(CliCommand):
         # this is all temporary, but make the tests pass
         if self.options.ip:
             self.scanner.scan(ip=self.options.ip, auth=auth)
+            
+        if self.args:
+            # FIXME: auth will go away, we will find the auth associated with each profile
+            # in scanner -akl
+            self.scanner.scan_profiles(self.args, auth)
 
 
 class DumpConfigCommand(CliCommand):
