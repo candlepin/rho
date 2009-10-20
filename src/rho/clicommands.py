@@ -251,11 +251,54 @@ class ProfileShowCommand(CliCommand):
             # make this a pretty table
             print(g.to_dict())
 
+class ProfileEditCommand(CliCommand):
+    def __init__(self):
+        usage = _("usage: %prog profile edit [options]")
+        shortdesc = _("edits a given profile")
+        desc = _("edit a given profile")
+
+        CliCommand.__init__(self, "profile edit", usage, shortdesc, desc)
+
+        self.parser.add_option("--name", dest="name", metavar="NAME",
+                help=_("NAME of the profile - REQUIRED"))
+        self.parser.add_option("--range", dest="ranges", action="append",
+                metavar="RANGE", default=[],
+                help=_("IP range to scan. See 'man rho' for supported formats."))
+
+        self.parser.add_option("--ports", dest="ports", metavar="PORTS",
+                help=_("list of ssh ports to try i.e. '22, 2222, 5402'")),
+        self.parser.add_option("--auth", dest="auth", metavar="AUTH",
+                action="append",
+                help=_("auth class to associate with profile"))
+
+        self.parser.set_defaults(ports="22")
+
+    def _validate_options(self):
+        CliCommand._validate_options(self)
+
+        if not self.options.name:
+            self.parser.print_help()
+            sys.exit(1)
+
+    def _do_command(self):
+        g = self.config.get_group(self.options.name)
+
+        if self.options.ranges:
+            g.ranges = self.options.ranges
+        if self.options.ports:
+            g.ports = self.options.ports.strip().split(",")
+        if self.options.auth:
+            g.credential_names = self.options.auth
+
+        c = config.ConfigBuilder().dump_config(self.config)
+        crypto.write_file(self.options.config, c, self.passphrase)
+        print(_("Profile %s edited" % self.options.name))
+
 class ProfileClearCommand(CliCommand):
     def __init__(self):
         usage = _("usage: %prog profile clear [--name | --all] [options]")
-        shortdesc = _("clears profile list")
-        desc = _("add a network profile")
+        shortdesc = _("removes 1 or all profiles from list")
+        desc = _("removes profiles")
 
         CliCommand.__init__(self, "profile clear", usage, shortdesc, desc)
 
