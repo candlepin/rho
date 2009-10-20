@@ -7,19 +7,19 @@ what should work
 	add profiles
 
 		(add a single machine, using foobar auth)
-		rho profile add --name "mymachine" --ip_start 10.0.0.1 --auth foobar
+		rho profile add --name "mymachine" --ip 10.0.0.1 --auth foobar
 
 		(add a range of machines,using foobar auth)
-		rho profile add --name "mysubnet" --ip_start 10.0.0.1 --ip_end 10.0.0.10 --auth foobar
+		rho profile add --name "mysubnet" --range "10.0.0.1 - 10.0.0.10" --auth foobar
 
 
 		(add a machine with two (or more) auth methods, note auth method should be tried 
 		in the order they are added on the cli)
-		rho profile add --name "myothermachine" --ip_start 10.0.1.0 --auth "mykeys" --auth "foobar"
+		rho profile add --name "myothermachine" --ip 10.0.1.0 --auth "mykeys" --auth "foobar"
 		
 
 		(add a profile with no auth info)
-		rho profile add --name "somemachines" --ip_start 10.1.0.0 00 --ip_end 10.1.0.10 
+		rho profile add --name "somemachines" --range "10.1.0.0 00 - 10.1.0.10"
 
 
 	show auth
