@@ -17,6 +17,14 @@ X bin/rho auth add prints None at the end for no reason
 * rho scan: you can scan using a profile and at the same time specify a
 * --range on the command line.. the scan goes into loops
 * include ip or hostname in connection failed before report is listed
+
+* dumpconfig contains a stanza called "groups". For consistency reasons we
+* think it should be called "profiles". 
+
+* profile add --range:  the range string should be validated for format at
+* profile creation
+
+* adding a duplicate profile, causes traceback
  
 
 * no dsa keys - can add using 'auth add' but then scan fails with "10.10.77.239,,,,,,,,,,connection failed using auth class: myvm not a valid RSA private key file"
