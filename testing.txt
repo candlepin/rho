@@ -1,0 +1,64 @@
+what should work
+	adding auth
+		rho auth add --name "foobar" --username "blippy" --password "nomoresecrets"
+
+		rho auth add --name "mykeys" --username "me" --file ~/.ssh/id_rsa_me
+
+	add profiles
+
+		(add a single machine, using foobar auth)
+		rho profile add --name "mymachine" --ip_start 10.0.0.1 --auth foobar
+
+		(add a range of machines,using foobar auth)
+		rho profile add --name "mysubnet" --ip_start 10.0.0.1 --ip_end 10.0.0.10 --auth foobar
+
+
+		(add a machine with two (or more) auth methods, note auth method should be tried 
+		in the order they are added on the cli)
+		rho profile add --name "myothermachine" --ip_start 10.0.1.0 --auth "mykeys" --auth "foobar"
+		
+
+		(add a profile with no auth info)
+		rho profile add --name "somemachines" --ip_start 10.1.0.0 00 --ip_end 10.1.0.10 
+
+
+	show auth
+
+		rho auth show
+
+
+	show profiles
+
+		rho profile show
+
+
+	show a dump of the config
+		
+		rho dumpconfig
+
+
+	scan a profile with it's defautl auth
+
+		rho scan "mymachine"
+
+	scan a profile range with it sdefault auth
+
+		rho scan "mysubnet"
+
+	scan a host directly without it being in a profile
+
+		rho scan --ip 10.0.0.1 --username foobar --password blip
+
+		(this method doesn't support keys yet)
+
+
+
+
+What is know not to work
+
+	rho auth show --usernames
+	rho auth show --keys
+
+
+
+
