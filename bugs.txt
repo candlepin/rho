@@ -7,18 +7,18 @@ X change prompt of Password: to explain what it's for
 X Password: doesn't make sense (changed to Config Encryption Password:)
 X bin/rho auth add prints None at the end for no reason
 * ports not validated for valid values i.e. -1 or 333333 is accepted.
-X add ssh port that worked to output report
+Q add ssh port that worked to output report
 * rho scan --range needs a decryption password (which it probably shouldn't)
-X --profile is missing from rho scan
+Q --profile is missing from rho scan
 * profile add with --auth=[nonexistent auth] gives traceback, should just print 'auth doesn't exist' - same with nonexistent ssh keyfile, etc
 * profile add --ip doesn't work
-X rho scan --help should say "profile" on the usage line. 
+Q rho scan --help should say "profile" on the usage line. 
 * rho scan: you can scan using a profile and at the same time specify a
-* --range on the command line.. the scan goes into loops
+  --range on the command line.. the scan goes into loops
 X include ip or hostname in connection failed before report is listed
 
-* dumpconfig contains a stanza called "groups". For consistency reasons we
-* think it should be called "profiles". 
+Q dumpconfig contains a stanza called "groups". For consistency reasons we
+  think it should be called "profiles". 
 
 * profile add --range:  the range string should be validated for format at
 * profile creation
@@ -31,9 +31,13 @@ X profile clear --name does not work
 
 * Can not add a private RSA key to authentication
 
-* no dsa keys - can add using 'auth add' but then scan fails with "10.10.77.239,,,,,,,,,,connection failed using auth class: myvm not a valid RSA private key file"
+Q no dsa keys - can add using 'auth add' but then scan fails with "10.10.77.239,,,,,,,,,,connection failed using auth class: myvm not a valid RSA private key file"
 X * "connection failed using auth class: mypw Authentication failed." or "timed out". Need to include what IP this was.
+===============
 X = fixed
+Q = dev says it's fixed but noone else has tested it, hahahahaha
+A = Ack (kidding...)
+=================
 
 -------------------
 NOT A BUG (one command uses --config the other doesn't, this
