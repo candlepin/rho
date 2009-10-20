@@ -19,7 +19,7 @@ import simplejson as json
 SAMPLE_CONFIG1 = """
 {
     "version": 1,
-    "credentials": [
+    "auths": [
         {
             "name": "bobslogin",
             "type": "ssh",
@@ -42,7 +42,7 @@ SAMPLE_CONFIG1 = """
                 "192.168.1.1-192.168.1.10",
                 "192.168.5.0"
             ],
-            "credentials": ["bobskey", "bobslogin"],
+            "auths": ["bobskey", "bobslogin"],
             "ports": [22, 2222]
         },
         {
@@ -50,7 +50,7 @@ SAMPLE_CONFIG1 = """
             "range": [
                 "192.168.9.0/24"
             ],
-            "credentials": ["bobskey"],
+            "auths": ["bobskey"],
             "ports": []
         }
     ]
@@ -59,7 +59,7 @@ SAMPLE_CONFIG1 = """
 BAD_CREDNAME_CONFIG = """
 {
     "version": 1,
-    "credentials": [
+    "auths": [
         {
             "name": "bobslogin",
             "type": "ssh",
@@ -75,7 +75,7 @@ BAD_CREDNAME_CONFIG = """
                 "192.168.1.1-192.168.1.10",
                 "192.168.5.0"
             ],
-            "credentials": ["nosuchcredentialname"],
+            "auths": ["nosuchcredentialname"],
             "ports": [22, 2222]
         }
     ]
@@ -95,7 +95,7 @@ class ConfigBuilderTests(unittest.TestCase):
 
     def test_build_config(self):
         config = self.builder.build_config(SAMPLE_CONFIG1)
-        self.assertEquals(2, len(config.list_credentials()))
+        self.assertEquals(2, len(config.list_auths()))
         self.assertEquals(2, len(config.list_groups()))
 
     def test_round_trip(self):
@@ -109,13 +109,13 @@ class ConfigTests(unittest.TestCase):
     def setUp(self):
         self.builder = ConfigBuilder()
 
-    def test_group_references_invalid_credentials(self):
+    def test_group_references_invalid_auths(self):
         self.assertRaises(ConfigError, 
                 self.builder.build_config, BAD_CREDNAME_CONFIG)
 
     def test_new_config(self):
         config = Config()
-        self.assertEquals([], config.list_credentials())
+        self.assertEquals([], config.list_auths())
         self.assertEquals([], config.list_groups())
         json = self.builder.dump_config(config)
         config = self.builder.build_config(json)
@@ -125,18 +125,18 @@ class ConfigTests(unittest.TestCase):
         config_dict = config.to_dict()
         self.assertEquals(3, len(config_dict))
         self.assertEquals(CONFIG_VERSION, config_dict[VERSION_KEY])
-        self.assertTrue(CREDENTIALS_KEY in config_dict)
+        self.assertTrue(AUTHS_KEY in config_dict)
         self.assertTrue(GROUPS_KEY in config_dict)
 
     def test_duplicate_credential_names(self):
         config = self.builder.build_config(SAMPLE_CONFIG1)
         # This name is already used in the SAMPLE_CONFIG1
-        creds1 = SshCredentials({
+        creds1 = SshAuth({
             NAME_KEY: "bobslogin",
             TYPE_KEY: SSH_TYPE,
             USERNAME_KEY: "bob",
             PASSWORD_KEY: "password"})
-        self.assertRaises(DuplicateNameError, config.add_credentials, 
+        self.assertRaises(DuplicateNameError, config.add_auth,
                 creds1)
 
     def test_duplicate_group_names(self):
@@ -151,7 +151,7 @@ class CredentialTests(unittest.TestCase):
 
     def setUp(self):
         self.builder = ConfigBuilder()
-        self.credentials_list = [
+        self.auths_list = [
                 {
                     NAME_KEY: "ansshlogin",
                     TYPE_KEY: "ssh",
@@ -166,40 +166,40 @@ class CredentialTests(unittest.TestCase):
                     PASSWORD_KEY: "password"
                 },
         ]
-        self.config_dict = {'credentials': self.credentials_list}
+        self.config_dict = {'auths': self.auths_list}
 
-    def test_build_credentials(self):
-        creds = self.builder.build_credentials(self.credentials_list)
+    def test_build_auths(self):
+        creds = self.builder.build_auths(self.auths_list)
 
         self.assertEquals(2, len(creds))
         self.assertEquals("ansshlogin", creds[0].name)
-        self.assertEquals(SshCredentials, type(creds[0]))
+        self.assertEquals(SshAuth, type(creds[0]))
 
         self.assertEquals("ansshkey", creds[1].name)
-        self.assertEquals(SshKeyCredentials, type(creds[1]))
+        self.assertEquals(SshKeyAuth, type(creds[1]))
 
-    def test_build_credentials_bad_type(self):
-        self.credentials_list[0][TYPE_KEY] = "badtype"
+    def test_build_auths_bad_type(self):
+        self.auths_list[0][TYPE_KEY] = "badtype"
         self.assertRaises(ConfigError,
-            self.builder.build_credentials, self.credentials_list)
+            self.builder.build_auths, self.auths_list)
 
-    def test_build_credentials_missing_type(self):
-        self.credentials_list[0].pop(TYPE_KEY)
+    def test_build_auths_missing_type(self):
+        self.auths_list[0].pop(TYPE_KEY)
         self.assertRaises(ConfigError,
-            self.builder.build_credentials, self.credentials_list)
+            self.builder.build_auths, self.auths_list)
 
-    def test_build_credentials_missing_username(self):
-        self.credentials_list[0].pop(USERNAME_KEY)
+    def test_build_auths_missing_username(self):
+        self.auths_list[0].pop(USERNAME_KEY)
         self.assertRaises(ConfigError,
-            self.builder.build_credentials, self.credentials_list)
+            self.builder.build_auths, self.auths_list)
 
-    def test_build_credentials_key_no_passphrase(self):
+    def test_build_auths_key_no_passphrase(self):
         # I think we're going to support a passphraseless key for now:
-        self.credentials_list[1].pop(PASSWORD_KEY)
-        creds = self.builder.build_credentials(self.credentials_list)
+        self.auths_list[1].pop(PASSWORD_KEY)
+        creds = self.builder.build_auths(self.auths_list)
 
     def test_ssh_creds_to_dict(self):
-        creds = self.builder.build_credentials(self.credentials_list)
+        creds = self.builder.build_auths(self.auths_list)
         ssh = creds[0]
         ssh_dict = ssh.to_dict()
         self.assertEquals(4, len(ssh_dict))
@@ -209,7 +209,7 @@ class CredentialTests(unittest.TestCase):
         self.assertEquals("password", ssh_dict[PASSWORD_KEY])
 
     def test_ssh_key_creds_to_dict(self):
-        creds = self.builder.build_credentials(self.credentials_list)
+        creds = self.builder.build_auths(self.auths_list)
         ssh = creds[1]
         ssh_dict = ssh.to_dict()
         self.assertEquals(5, len(ssh_dict))
@@ -231,14 +231,14 @@ class GroupTests(unittest.TestCase):
                     "192.168.1.1-192.168.1.10",
                     "192.168.5.0"
                     ],
-                CREDENTIALS_KEY: ["bobskey", "bobslogin"],
+                AUTHS_KEY: ["bobskey", "bobslogin"],
                 PORTS_KEY: [22, 2222]
             }
 
     def test_create_group(self):
         g = self.builder.build_groups([self.group_dict])[0]
         self.assertEquals("accounting", g.name)
-        self.assertEquals(2, len(g.credential_names))
+        self.assertEquals(2, len(g.auth_names))
         self.assertEquals(2, len(g.ports))
         self.assertEquals(22, g.ports[0])
         self.assertEquals(2222, g.ports[1])
@@ -274,10 +274,10 @@ class GroupTests(unittest.TestCase):
         self.assertEquals(self.group_dict[RANGE_KEY], 
                 g_dict[RANGE_KEY])
 
-        credential_names = g_dict[CREDENTIALS_KEY]
+        credential_names = g_dict[AUTHS_KEY]
         self.assertEquals(2, len(credential_names))
-        self.assertEquals(self.group_dict[CREDENTIALS_KEY], 
-                g_dict[CREDENTIALS_KEY])
+        self.assertEquals(self.group_dict[AUTHS_KEY],
+                g_dict[AUTHS_KEY])
 
         ports = g_dict[PORTS_KEY]
         self.assertEquals(2, len(ports))
