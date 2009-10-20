@@ -36,7 +36,10 @@ X * "connection failed using auth class: mypw Authentication failed." or "timed 
 X = fixed
 
 -------------------
-auth configs using ssh keys not listed w/ auth show
+NOT A BUG (one command uses --config the other doesn't, this
+results in 2 different configs being used)
+
+X auth configs using ssh keys not listed w/ auth show
 
 [whayutin@thinkdoe rho]$ bin/rho auth add --name=sshKey
 --file=/home/whayutin/workspace/rho/id_rsa --config=$PWD/sshConfig
