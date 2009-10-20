@@ -159,6 +159,28 @@ def queueSSHConnection(ssh_connect_queue, cmd):
     return True
 
 
+def get_pkey(auth):
+
+    if auth.type != config.SSH_KEY_TYPE:
+        return None
+
+    fo = StringIO.StringIO(auth.key)
+    # this is lame, but there doesn't appear to be any API to just
+    # DWIM with the the key_data, I have to figure out if its RSA or DSA/DSS myself
+    if fo.readline().find("-----BEGIN DSA PRIVATE KEY-----") > -1:
+        print "dsa"
+        fo.seek(0)
+        pkey = paramiko.DSSKey.from_private_key(fo, password=auth.password)
+        return pkey
+    fo.seek(0)
+    if fo.readline().find("-----BEGIN RSA PRIVATE KEY-----") > -1:
+        print "rsa"
+        fo.seek(0)
+        pkey = paramiko.RSAKey.from_private_key(fo, password=auth.password)
+        return pkey
+
+    print _("The private key file for %s is not a recognized ssh key type" % auth.name)
+    return None
 
 def paramikoConnect(ssh_job):
     """Connects to 'host' and returns a Paramiko transport object to use in further communications"""
@@ -168,12 +190,9 @@ def paramikoConnect(ssh_job):
     for auth in ssh_job.auths:
         pkey = None
 
-        #print "auth.name: %s auth.type: %s auth.password: %s" % (auth.name, auth.type, auth.password)
-        if auth.type == config.SSH_KEY_TYPE:
-            fo = StringIO.StringIO(auth.key)
-            pkey = paramiko.RSAKey.from_private_key(fo)
         # ugh...
         for port in ssh_job.ports:
+            pkey = get_pkey(auth)
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
@@ -189,6 +208,11 @@ def paramikoConnect(ssh_job):
                             #allow_agent=False,
                             look_for_keys=False,
                             timeout=ssh_job.timeout)
+            except paramiko.PasswordRequiredException, detail:
+                err = _("connection to %s:%s failed using auth class %s with error: ") % (ssh_job.ip, port, auth.name,)
+                err = err + str(detail)
+                ssh_job.error = err
+                ssh = str(detail)
                 # set the successful auth type and port
             except Exception, detail:
                 # Connecting failed (for whatever reason)
