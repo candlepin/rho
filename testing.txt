@@ -37,6 +37,19 @@ what should work
 		rho dumpconfig
 
 
+	remove/clear an auth
+
+		rho auth clear --name "mykeys"
+
+	remove/clear all auth
+
+		rho auth clear --all
+
+	remove/clear all profiles
+
+		rho profile clear --all
+
+
 	scan a profile with it's defautl auth
 
 		rho scan "mymachine"
@@ -60,9 +73,14 @@ off.  (either "ssh-add -D" or just kill the agent with "ssh-agent -k").
 
 What is known not to work
 
-	rho auth show --usernames
-	rho auth show --keys
-	
+
+	show a auth by name/key
+		rho auth show --usernames
+		rho auth show --keys
+
+	remove/clear a profile by name
+
+		rho profile clear --name "profilename	
 
 
 
