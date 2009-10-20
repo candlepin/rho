@@ -11,5 +11,6 @@ X bin/rho auth add prints None at the end for no reason
 * add ssh port that worked to output report
 * rho scan --range needs a decryption password (which it probably shouldn't)
 * --profile is missing from rho scan
+* profile add --ip doesn't work
 
 X = fixed
