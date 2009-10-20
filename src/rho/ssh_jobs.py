@@ -59,6 +59,7 @@ class SshJob():
         self.connection_result = True
         self.returncode = None
         self.auth_used = None
+        self.error = None
 
     def output(self):
         print "ip: %s\n" % self.ip 

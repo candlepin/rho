@@ -189,7 +189,9 @@ def paramikoConnect(ssh_job):
         except Exception, detail:
             # Connecting failed (for whatever reason)
             #FIXME: need to popular ssh_job.auth with something when we fail?
-            print _("connection failed using auth class: %s %s") % (auth.name, str(detail))
+            err = _("connection failed using auth class: %s %s") % (auth.name, str(detail))
+            print err
+            ssh_job.error = err
             ssh = str(detail)
     return ssh
 

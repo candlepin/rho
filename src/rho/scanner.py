@@ -14,7 +14,8 @@ import ssh_jobs
 
 class ScanReport():
 
-    format = """%(ip)s,%(uname.os)s,%(uname.processor)s,%(uname.hardware_platform)s,%(redhat-release.name)s,%(redhat-release.version)s,%(redhat-release.release)s,%(auth.type)s,%(auth.username)s,%(auth.name)s"""
+    format = """%(ip)s,%(uname.os)s,%(uname.processor)s,%(uname.hardware_platform)s,%(redhat-release.name)s,%(redhat-release.version)s,%(redhat-release.release)s,%(auth.type)s,%(auth.username)s,%(auth.name)s,"""
+    error_format = """%(ip)s,,,,,,,,,,%(error)s"""
     def __init__(self):
         self.ips = {}
         # ips is a dict of 
@@ -25,14 +26,22 @@ class ScanReport():
         for rho_cmd in ssh_job.rho_cmds:
             data.update(rho_cmd.data)
 #        print data
-        self.ips[ssh_job.ip] = {'ip': ssh_job.ip,
-                                'port':ssh_job.port,
-                                'auth.type': ssh_job.auth.type,
-                                'auth.name': ssh_job.auth.name,
-                                'auth.username': ssh_job.auth.username,
-                                'auth.password': ssh_job.auth.password}
+        if ssh_job.error:
+            self.ips[ssh_job.ip] = {'ip': ssh_job.ip,
+                                    'port':ssh_job.port,
+                                    'error': ssh_job.error,                          
+                                    'auth.type': '',
+                                    'auth.name': '',
+                                    'auth.username': '',
+                                    'auth.password': ''}
+        else:
+            self.ips[ssh_job.ip] = {'ip': ssh_job.ip,
+                                    'port':ssh_job.port,
+                                    'auth.type': ssh_job.auth.type,
+                                    'auth.name': ssh_job.auth.name,
+                                    'auth.username': ssh_job.auth.username,
+                                    'auth.password': ssh_job.auth.password}
         self.ips[ssh_job.ip].update(data)
-#        print self.ips[ssh_job.ip]
                                 
 
     def report(self):
@@ -41,7 +50,10 @@ class ScanReport():
         print
         print "#,%s" % self.format
         for ip in self.ips.keys():
-            print self.format % self.ips[ip]
+            if self.ips[ip].get("error"):
+                print self.error_format % self.ips[ip]
+            else:
+                print self.format % self.ips[ip]
             # ip, uname.os, uname.process, uname.hardware_platform, redhat-release.name, redhat-release.version, redhat-release.release
 
 class Scanner():
