@@ -36,3 +36,20 @@ X bin/rho auth add prints None at the end for no reason
 * "connection failed using auth class: mypw Authentication failed." or "timed out". Need to include what IP this was.
 X = fixed
 
+-------------------
+auth configs using ssh keys not listed w/ auth show
+
+[whayutin@thinkdoe rho]$ bin/rho auth add --name=sshKey
+--file=/home/whayutin/workspace/rho/id_rsa --config=$PWD/sshConfig
+--username=bad --password=bad
+Config Encryption Password:
+The auth name sshKey already exists
+[whayutin@thinkdoe rho]$ bin/rho auth show
+Config Encryption Password:
+{'username': 'whayutin', 'password': 'passw0rd', 'type': 'ssh', 'name':
+'default'}
+{'username': 'whayutin', 'password': 'b0rder', 'type': 'ssh', 'name':
+'whayutin'}
+[whayutin@thinkdoe rho]$
+
+------------------
