@@ -14,6 +14,8 @@ X bin/rho auth add prints None at the end for no reason
 * profile add with --auth=[nonexistent auth] gives traceback, should just print 'auth doesn't exist' - same with nonexistent ssh keyfile, etc
 * profile add --ip doesn't work
 * rho scan --help should say "profile" on the usage line. 
+* rho scan: you can scan using a profile and at the same time specify a
+* --range on the command line.. the scan goes into loops
  
 
 X = fixed
