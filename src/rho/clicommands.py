@@ -75,19 +75,6 @@ class CliCommand(object):
             print _("Creating new config file: %s" % filename)
             return config.Config()
 
-    # this seems like an odd thing to be here, and maybe it shouldn't be
-    # but I use it in at least 2 sub classes... -akl
-    def _create_range(self, start, end):
-        # TODO: need some ip address parsing code here
-        if not start:
-            return None
-
-        if end:
-            return "%s - %s" % (start, end)
-        else:
-            return start
-
-
     def main(self):
         (self.options, self.args) = self.parser.parse_args()
         # we dont need argv[0] in this list...
@@ -123,12 +110,14 @@ class ScanCommand(CliCommand):
 
         self.parser.add_option("--all", dest="all", action="store_true",
                 help=_("remove ALL profiles"))
-        self.parser.add_option("--ip_start", dest="ipstart", metavar="IPSTART",
-                help=_("beginning of ip range"))
-        self.parser.add_option("--ip_end", dest="ipend", metavar="IPEND",
-                help=_("end of ip range"))
+        self.parser.add_option("--range", dest="ranges", action="append",
+                metavar="RANGE", default=[],
+                help=_("IP range to scan. See 'man rho' for supported formats."))
+
+        # TODO: remove
         self.parser.add_option("--ip", dest="ip", metavar="IP",
                 help=_("single ip/hostname to scan"))
+
         self.parser.add_option("--ports", dest="ports", metavar="PORTS",
                 help=_("list of ssh ports to try i.e. '22, 2222, 5402'"))
         self.parser.add_option("--username", dest="username",
@@ -145,12 +134,11 @@ class ScanCommand(CliCommand):
 
     def _validate_options(self):
         CliCommand._validate_options(self)
-        if not self.options.ip and not self.args:
+        if len(self.options.ranges) == 0 and not self.args:
             print(self.parser.print_help())
             sys.exit(1)
 
     def _do_command(self):
-        print("scan called")
         self.scanner = scanner.Scanner(config=self.config)
 
         if self.options.auth:
@@ -173,14 +161,14 @@ class ScanCommand(CliCommand):
             self.options.auth = ["clioptions"]
 
         # this is all temporary, but make the tests pass
-        if self.options.ip:
-            # create a temporary profile named "clioptions" for anything
-            # specified on the command line
+        if len(self.options.ranges) > 0:
+            # create a temporary profile named "clioptions" for anything specified
+            # on the command line
             ports = []
             if self.options.ports:
                 ports = self.options.ports.strip().split(",")
-            ip_range = self._create_range(self.options.ip, self.options.ip)
-            g = config.Group(name="clioptions", ranges=ip_range,
+
+            g = config.Group(name="clioptions", ranges=self.options.ranges,
                          credential_names=self.options.auth, ports=ports)
             self.config.add_group(g)
             self.scanner.scan_profiles(["clioptions"])
@@ -288,10 +276,10 @@ class ProfileAddCommand(CliCommand):
 
         self.parser.add_option("--name", dest="name", metavar="NAME",
                 help=_("NAME of the profile - REQUIRED"))
-        self.parser.add_option("--ip_start", dest="ipstart", metavar="IPSTART",
-                help=_("beginning of ip range"))
-        self.parser.add_option("--ip_end", dest="ipend", metavar="IPEND",
-                help=_("end of ip range"))
+        self.parser.add_option("--range", dest="ranges", action="append",
+                metavar="RANGE", default=[],
+                help=_("IP range to scan. See 'man rho' for supported formats."))
+
         self.parser.add_option("--ports", dest="ports", metavar="PORTS",
                 help=_("list of ssh ports to try i.e. '22, 2222, 5402'")),
         self.parser.add_option("--auth", dest="auth", metavar="AUTH",
@@ -314,12 +302,12 @@ class ProfileAddCommand(CliCommand):
         auths = []
         if self.options.ports:
             ports = self.options.ports.strip().split(",")
-        ip_range = self._create_range(self.options.ipstart, self.options.ipend)
+
         # self.options.auth can be None, so don't pass it to Group()
         if self.options.auth:
             auths = self.options.auth
 
-        g = config.Group(name=self.options.name, ranges=ip_range,
+        g = config.Group(name=self.options.name, ranges=self.options.ranges,
                          credential_names=auths, ports=ports)
         self.config.add_group(g)
         c = config.ConfigBuilder().dump_config(self.config)

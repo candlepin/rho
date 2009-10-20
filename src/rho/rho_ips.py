@@ -20,7 +20,10 @@ ip_regex = re.compile(r'\d+\.\d+\.\d+\.\d+')
 class RhoIpRange(object):
     def __init__(self, iprange):
         self.range_str = iprange
+
+        # Iterator that returns netaddr.IP objects:
         self.ips = []
+
         self.parse_iprange(iprange)
         # list of netaddr.IP() objects
 
@@ -81,12 +84,12 @@ class RhoIpRange(object):
             self.ips = [netaddr.IP(self.start_ip)]
         except:
             return None
-            
-        
 
         return None
-        
-        
+
+    def list_ips(self):
+        """ Return a list of individual string IP addresses for this range. """
+        return map(str, list(self.ips))
         
     def _gen_list(self):
         pass

@@ -78,8 +78,10 @@ class Scanner():
             if profile is None:
                 missing_profiles.append(profilename)
                 continue
-            ipr = rho_ips.RhoIpRange(profile.ranges)
-            ips = map(str, list(ipr.ips))
+            ips = []
+            for range_str in profile.ranges:
+                ipr = rho_ips.RhoIpRange(range_str)
+                ips.extend(ipr.list_ips())
 
             self._find_auths(profile.credential_names)
             for ip in ips:
