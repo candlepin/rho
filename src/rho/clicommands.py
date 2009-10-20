@@ -131,11 +131,14 @@ class ScanCommand(CliCommand):
                 help=_("single ip/hostname to scan"))
         self.parser.add_option("--ports", dest="ports", metavar="PORTS",
                 help=_("list of ssh ports to try i.e. '22, 2222, 5402'"))
-        self.parser.add_option("--username", dest="username", metavar="USERNAME",
+        self.parser.add_option("--username", dest="username",
+                metavar="USERNAME",
                 help=_("user name for authenticating against target machine"))
-        self.parser.add_option("--password", dest="password", metavar="PASSWORD",
+        self.parser.add_option("--password", dest="password",
+                metavar="PASSWORD",
                 help=_("password for authenticating against target machine")),
-        self.parser.add_option("--auth", dest="auth", action="append", metavar="AUTH",
+        self.parser.add_option("--auth", dest="auth", action="append",
+                metavar="AUTH",
                 help=_("auth class name to use"))
 
         self.parser.set_defaults(ports="22")
@@ -165,13 +168,14 @@ class ScanCommand(CliCommand):
                                         'type':'ssh'})
             self.config.add_credentials(auth)
             # if we are specifing auth stuff not in the config, add it to
-            # the config class as "clioptions" and set the auth name to the same
+            # the config class as "clioptions" and set the auth name to
+            # the same
             self.options.auth = ["clioptions"]
 
         # this is all temporary, but make the tests pass
         if self.options.ip:
-            # create a temporary profile named "clioptions" for anything specified
-            # on the command line
+            # create a temporary profile named "clioptions" for anything
+            # specified on the command line
             ports = []
             if self.options.ports:
                 ports = self.options.ports.strip().split(",")
@@ -290,7 +294,8 @@ class ProfileAddCommand(CliCommand):
                 help=_("end of ip range"))
         self.parser.add_option("--ports", dest="ports", metavar="PORTS",
                 help=_("list of ssh ports to try i.e. '22, 2222, 5402'")),
-        self.parser.add_option("--auth", dest="auth", metavar="AUTH", action="append",
+        self.parser.add_option("--auth", dest="auth", metavar="AUTH",
+                action="append",
                 help=_("auth class to associate with profile"))
 
         self.parser.set_defaults(ports="22")
@@ -388,9 +393,11 @@ class AuthAddCommand(CliCommand):
                 help=_("auth credential name - REQUIRED"))
         self.parser.add_option("--file", dest="filename", metavar="FILENAME",
                 help=_("file containing SSH key"))
-        self.parser.add_option("--username", dest="username", metavar="USERNAME",
+        self.parser.add_option("--username", dest="username",
+                metavar="USERNAME",
                 help=_("user name for authenticating against target machine"))
-        self.parser.add_option("--password", dest="password", metavar="PASSWORD",
+        self.parser.add_option("--password", dest="password",
+                metavar="PASSWORD",
                 help=_("password for authenticating against target machine"))
 
     def _validate_options(self):
@@ -424,7 +431,8 @@ class AuthAddCommand(CliCommand):
     def _do_command(self):
         if self.options.filename:
             # using sshkey
-            sshkeyfile = open(os.path.expanduser(os.path.expandvars(self.options.filename)), "r")
+            sshkeyfile = open(os.path.expanduser(
+                os.path.expandvars(self.options.filename)), "r")
             sshkey = sshkeyfile.read()
             sshkeyfile.close()
 
