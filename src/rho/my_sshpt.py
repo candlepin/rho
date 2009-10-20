@@ -193,7 +193,7 @@ def paramikoConnect(ssh_job):
             except Exception, detail:
                 # Connecting failed (for whatever reason)
                 #FIXME: log this when the logger is read to log. Log.
-                err = _("connection to %s:%s failed using auth class %s:\n") % (ssh_job.ip, port, auth.name,)
+                err = _("connection to %s:%s failed using auth class %s with error: ") % (ssh_job.ip, port, auth.name,)
                 err = err + str(detail)
                 print err
                 ssh_job.error = err
