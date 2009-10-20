@@ -95,20 +95,27 @@ class SshJobs():
 
         self.report = scanner.ScanReport()
 
+    def queue_jobs(self, ssh_job):
+        self.ssh_connect_queue.put(ssh_job, block=True)
+
+
     def run_jobs(self, ssh_jobs=None, callback=None):
         if ssh_jobs:
             self.ssh_jobs = ssh_jobs
+
+        # no point in spinning up 10 threads for one connection...
+        if len(self.ssh_jobs) < self.max_threads:
+            self.max_threads = len(self.ssh_jobs)
         
         self.output_queue = my_sshpt.startOutputThread(self.verbose, self.output, report=self.report)
         self.ssh_connect_queue = my_sshpt.startSSHQueue(self.output_queue, self.max_threads)
 
         while self.ssh_jobs:
             for ssh_job in self.ssh_jobs:
-                
-                if self.ssh_connect_queue.qsize()  <= self.max_threads:
-                    my_sshpt.queueSSHConnection(self.ssh_connect_queue, ssh_job)
+                # we don't set a cap on Queue size, should we? 
+                if not self.ssh_connect_queue.full():
+                    self.queue_jobs(ssh_job)
                     self.ssh_jobs.remove(ssh_job)
-#            time.sleep(1)
         self.ssh_connect_queue.join()
         return self.output_queue
 
