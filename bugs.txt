@@ -8,15 +8,15 @@ X change prompt of Password: to explain what it's for
 * Password: doesn't make sense
 X bin/rho auth add prints None at the end for no reason
 * ports not validated for valid values i.e. -1 or 333333 is accepted.
-* add ssh port that worked to output report
+X add ssh port that worked to output report
 * rho scan --range needs a decryption password (which it probably shouldn't)
-* --profile is missing from rho scan
+X --profile is missing from rho scan
 * profile add with --auth=[nonexistent auth] gives traceback, should just print 'auth doesn't exist' - same with nonexistent ssh keyfile, etc
 * profile add --ip doesn't work
-* rho scan --help should say "profile" on the usage line. 
+X rho scan --help should say "profile" on the usage line. 
 * rho scan: you can scan using a profile and at the same time specify a
 * --range on the command line.. the scan goes into loops
-* include ip or hostname in connection failed before report is listed
+X include ip or hostname in connection failed before report is listed
 
 * dumpconfig contains a stanza called "groups". For consistency reasons we
 * think it should be called "profiles". 
@@ -33,7 +33,7 @@ X bin/rho auth add prints None at the end for no reason
 * Can not add a private RSA key to authentication
 
 * no dsa keys - can add using 'auth add' but then scan fails with "10.10.77.239,,,,,,,,,,connection failed using auth class: myvm not a valid RSA private key file"
-* "connection failed using auth class: mypw Authentication failed." or "timed out". Need to include what IP this was.
+X * "connection failed using auth class: mypw Authentication failed." or "timed out". Need to include what IP this was.
 X = fixed
 
 -------------------
