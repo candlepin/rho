@@ -158,17 +158,17 @@ class ScanCommand(CliCommand):
         if self.options.auth:
             auths = []
             for auth in self.options.auth:
-                a = self.config.get_credentials(auth)
+                a = self.config.get_auths(auth)
                 if a:
                     auths.append(a)
             
         else:
             # FIXME: need a more abstrct credentials class -akl
-            auth=config.SshCredentials({'name':"clioptions", 
+            auth=config.SshAuth({'name':"clioptions",
                                         'username':self.options.username,
                                         'password':self.options.password,
                                         'type':'ssh'})
-            self.config.add_credentials(auth)
+            self.config.add_auth(auth)
             # if we are specifing auth stuff not in the config, add it to
             # the config class as "clioptions" and set the auth name to
             # the same
@@ -183,7 +183,7 @@ class ScanCommand(CliCommand):
                 ports = self.options.ports.strip().split(",")
 
             g = config.Group(name="clioptions", ranges=self.options.ranges,
-                         credential_names=self.options.auth, ports=ports)
+                         auth_names=self.options.auth, ports=ports)
             self.config.add_group(g)
             self.scanner.scan_profiles(["clioptions"])
             
@@ -288,7 +288,7 @@ class ProfileEditCommand(CliCommand):
         if self.options.ports:
             g.ports = self.options.ports.strip().split(",")
         if self.options.auth:
-            g.credential_names = self.options.auth
+            g.auth_names = self.options.auth
 
         c = config.ConfigBuilder().dump_config(self.config)
         crypto.write_file(self.options.config, c, self.passphrase)
@@ -374,7 +374,7 @@ class ProfileAddCommand(CliCommand):
             auths = self.options.auth
 
         g = config.Group(name=self.options.name, ranges=self.options.ranges,
-                         credential_names=auths, ports=ports)
+                         auth_names=auths, ports=ports)
         self.config.add_group(g)
         c = config.ConfigBuilder().dump_config(self.config)
         crypto.write_file(self.options.config, c, self.passphrase)
@@ -405,9 +405,9 @@ class AuthClearCommand(CliCommand):
 
     def _do_command(self):
         if self.options.name:
-            self.config.remove_credential(self.options.name)
+            self.config.remove_auth(self.options.name)
         elif self.options.all:
-            self.config.clear_credentials()
+            self.config.clear_auths()
 
         c = config.ConfigBuilder().dump_config(self.config)
         crypto.write_file(self.options.config, c, self.passphrase)
@@ -427,10 +427,10 @@ class AuthShowCommand(CliCommand):
                 action="store_true", help=_("shows auth keys"))
 
     def _do_command(self):
-        if not self.config.list_credentials():
+        if not self.config.list_auths():
             print(_("No auth credentials found"))
 
-        for c in self.config.list_credentials():
+        for c in self.config.list_auths():
             # make this a pretty table
             print(c.to_dict())
 
@@ -469,7 +469,7 @@ class AuthAddCommand(CliCommand):
 
     def _save_cred(self, cred):
         try:
-            self.config.add_credentials(cred)
+            self.config.add_auth(cred)
         except config.DuplicateNameError:
             #FIXME: need to handle this better... -akl
             print _("The auth name %s already exists" % cred.name)
@@ -485,7 +485,7 @@ class AuthAddCommand(CliCommand):
             sshkey = sshkeyfile.read()
             sshkeyfile.close()
 
-            cred = config.SshKeyCredentials({"name": self.options.name,
+            cred = config.SshKeyAuth({"name": self.options.name,
                                              "key":sshkey,
                                              "username": self.options.username,
                                              "password": self.options.password,
@@ -496,7 +496,7 @@ class AuthAddCommand(CliCommand):
 
         elif self.options.username and self.options.password:
             # using ssh
-            cred = config.SshCredentials({"name":self.options.name,
+            cred = config.SshAuth({"name":self.options.name,
                                              "username":self.options.username,
                                              "password":self.options.password,
                                              "type":"ssh"})

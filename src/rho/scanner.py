@@ -72,7 +72,7 @@ class Scanner():
         # if we like, maybe?  -akl
         self.missing_auths = []
         for authname in authnames:
-            auth = self.config.get_credentials(authname)
+            auth = self.config.get_auth(authname)
             #FIXME: what do we do if an authname is invalid? 
             # for now, we ignore it
             if auth:
@@ -95,7 +95,7 @@ class Scanner():
                 ipr = rho_ips.RhoIpRange(range_str)
                 ips.extend(ipr.list_ips())
 
-            self._find_auths(profile.credential_names)
+            self._find_auths(profile.auth_names)
             for ip in ips:
                 #FIXME: look up auth -akl
                 sshj = ssh_jobs.SshJob(ip=ip, ports=profile.ports, rho_cmds=self.get_rho_cmds(), auths=self.auths)
@@ -115,7 +115,7 @@ class Scanner():
         return rho_cmds
 
     def scan(self, ip):
-        self._find_auths(profile.credential_names)
+        self._find_auths(profile.auth_names)
         ssh_job = ssh_jobs.SshJob(ip=ip, rho_cmds=self.get_rho_cmds(), auths=self.auths)
         self.ssh_jobs.ssh_jobs.append(ssh_job)
         self.run_scan()

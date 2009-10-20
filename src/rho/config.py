@@ -14,7 +14,7 @@
 import simplejson as json
 
 # Keys used in the configuration JSON:
-CREDENTIALS_KEY = "credentials"
+AUTHS_KEY = "auths"
 GROUPS_KEY = "groups"
 VERSION_KEY = "version"
 NAME_KEY = "name"
@@ -71,65 +71,65 @@ def verify_keys(check_dict, required=[], optional=None):
 class Config(object):
     """ Simple object represeting Rho configuration. """
 
-    def __init__(self, credentials=None, groups=None):
+    def __init__(self, auths=None, groups=None):
         """
-        Create a config object from the given credentials and groups.
+        Create a config object from the given auths and groups.
         """
 
-        self._credentials = []
+        self._auths = []
         self._groups = []
-        # Will map credential key name to the credentials object:
-        self._credential_index = {}
+        # Will map auth key name to the auths object:
+        self._auth_index = {}
         self._group_index = {}
 
-        # Need to iterate credentials first:
-        if credentials:
-            for c in credentials:
-                self.add_credentials(c)
+        # Need to iterate auths first:
+        if auths:
+            for c in auths:
+                self.add_auth(c)
 
         if groups:
-            # Make sure none of the groups reference invalid credential keys:
+            # Make sure none of the groups reference invalid auth keys:
             for group in groups:
                 self.add_group(group)
 
-    def add_credentials(self, c):
+    def add_auth(self, c):
 
-        if c.name in self._credential_index:
+        if c.name in self._auth_index:
             raise DuplicateNameError
 
-        self._credentials.append(c)
-        self._credential_index[c.name] = c
+        self._auths.append(c)
+        self._auth_index[c.name] = c
 
-    def remove_credential(self, cname):
-        if self._credential_index.has_key(cname):
-            c = self._credential_index[cname]
-            self._credentials.remove(c)
-            del self._credential_index[cname]
+    def remove_auth(self, cname):
+        if self._auth_index.has_key(cname):
+            c = self._auth_index[cname]
+            self._auths.remove(c)
+            del self._auth_index[cname]
         # TODO: need to raise error here, user shouldn't see nothing if
-        # they botched their command to remove a credential
+        # they botched their command to remove a auth
 
-    def get_credentials(self, cname):
-        return self._credential_index.get(cname)
+    def get_auth(self, cname):
+        return self._auth_index.get(cname)
 
-    def list_credentials(self):
-        """ Return a list of all credential objects in this configuration. """
+    def list_auths(self):
+        """ Return a list of all auth objects in this configuration. """
         # TODO: Should this return a copy of list? Immutable?
-        return self._credentials
+        return self._auths
 
-    def clear_credentials(self):
-        self._credentials = []
-        self._credential_index = {}
+    def clear_auths(self):
+        self._auths = []
+        self._auth_index = {}
 
     def add_group(self, group):
         """ 
         Add a new group to this configuration, and ensure it references valid
-        credentials.
+        auths.
         """
         if group.name in self._group_index:
             raise DuplicateNameError(group.name)
 
-        for c in group.credential_names:
-            if c not in self._credential_index:
+        for c in group.auth_names:
+            if c not in self._auth_index:
                 raise ConfigError("No such credentials: %s" %
                         c)
 
@@ -157,25 +157,25 @@ class Config(object):
 
     def to_dict(self):
         creds = []
-        for c in self._credentials:
+        for c in self._auths:
             creds.append(c.to_dict())
         groups = []
         for g in self._groups:
             groups.append(g.to_dict())
         return {
                 VERSION_KEY: CONFIG_VERSION,
-                CREDENTIALS_KEY: creds,
+                AUTHS_KEY: creds,
                 GROUPS_KEY: groups
         }
 
 
-class Credentials(object):
+class Auth(object):
 
     def to_dict(self):
         raise NotImplementedError
 
 
-class SshCredentials(Credentials):
+class SshAuth(Auth):
 
     def __init__(self, json_dict):
 
@@ -196,7 +196,7 @@ class SshCredentials(Credentials):
         }
 
 
-class SshKeyCredentials(Credentials):
+class SshKeyAuth(Auth):
 
     def __init__(self, json_dict):
 
@@ -225,35 +225,35 @@ class SshKeyCredentials(Credentials):
 
 class Group(object):
 
-    def __init__(self, name, ranges, credential_names, ports):
+    def __init__(self, name, ranges, auth_names, ports):
         """
         Create a group object.
 
         ranges is a list of strings specifying IP ranges. We just store the
         string.
 
-        credential_names is a list of strings referencing credential *keys*.
+        auth_names is a list of strings referencing auth *keys*.
 
         ports is a list of integers.
         """
         self.name = name
         self.ranges = ranges
-        self.credential_names = credential_names
+        self.auth_names = auth_names
         self.ports = ports
 
     def to_dict(self):
         return {
                 NAME_KEY: self.name,
                 RANGE_KEY: self.ranges,
-                CREDENTIALS_KEY: self.credential_names,
+                AUTHS_KEY: self.auth_names,
                 PORTS_KEY: self.ports
         }
 
 
 # Needs to follow the class definitions:
 CREDENTIAL_TYPES = {
-        SSH_TYPE: SshCredentials,
-        SSH_KEY_TYPE: SshKeyCredentials
+        SSH_TYPE: SshAuth,
+        SSH_KEY_TYPE: SshKeyAuth
 }
 
 
@@ -275,36 +275,36 @@ class ConfigBuilder(object):
         except ValueError:
             raise BadJsonException
 
-        verify_keys(config_dict, required=[VERSION_KEY, CREDENTIALS_KEY,
+        verify_keys(config_dict, required=[VERSION_KEY, AUTHS_KEY,
             GROUPS_KEY], optional=[])
 
         # Credentials needs to be parsed first so we can check that the groups
         # reference valid credential keys.
-        credentials_dict = config_dict[CREDENTIALS_KEY]
-        creds = self.build_credentials(credentials_dict)
+        auths_dict = config_dict[AUTHS_KEY]
+        creds = self.build_auths(auths_dict)
 
         groups_dict = config_dict[GROUPS_KEY]
         groups = self.build_groups(groups_dict)
 
-        config = Config(credentials=creds, groups=groups)
+        config = Config(auths=creds, groups=groups)
 
         return config
 
-    def build_credentials(self, creds_list):
+    def build_auths(self, creds_list):
         """ Create a list of Credentials object. """
         creds = []
-        for credentials_dict in creds_list:
+        for auths_dict in creds_list:
             # Omit optional, will verify these once we know what class to
             # instantiate.
-            verify_keys(credentials_dict, required=[NAME_KEY, TYPE_KEY])
+            verify_keys(auths_dict, required=[NAME_KEY, TYPE_KEY])
 
-            type_key = credentials_dict[TYPE_KEY]
+            type_key = auths_dict[TYPE_KEY]
 
             if type_key not in CREDENTIAL_TYPES:
                 raise ConfigError("Unsupported credential type: %s",
-                        credentials_dict[TYPE_KEY])
+                        auths_dict[TYPE_KEY])
 
-            creds_obj = CREDENTIAL_TYPES[type_key](credentials_dict)
+            creds_obj = CREDENTIAL_TYPES[type_key](auths_dict)
             creds.append(creds_obj)
         return creds
 
@@ -314,10 +314,10 @@ class ConfigBuilder(object):
         groups = []
         for group_dict in groups_list:
             verify_keys(group_dict, required=[NAME_KEY, RANGE_KEY,
-                CREDENTIALS_KEY, PORTS_KEY], optional=[])
+                AUTHS_KEY, PORTS_KEY], optional=[])
             name = group_dict[NAME_KEY]
             ranges = group_dict[RANGE_KEY]
-            credential_names = group_dict[CREDENTIALS_KEY]
+            auth_names = group_dict[AUTHS_KEY]
 
             ports = []
             for p in group_dict[PORTS_KEY]:
@@ -327,7 +327,7 @@ class ConfigBuilder(object):
                 except ValueError:
                     raise ConfigError("Invalid ssh port: %s" % p)
 
-            group_obj = Group(name, ranges, credential_names, ports)
+            group_obj = Group(name, ranges, auth_names, ports)
             groups.append(group_obj)
 
         return groups
