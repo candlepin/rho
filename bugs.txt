@@ -27,7 +27,7 @@ X include ip or hostname in connection failed before report is listed
 
 * rho scan --ip doesnt work
 
-* profile clear --name does not work 
+X profile clear --name does not work 
 
 * Can not add a private RSA key to authentication
 
