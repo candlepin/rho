@@ -376,7 +376,6 @@ class AuthShowCommand(CliCommand):
             # make this a pretty table
             print(c.to_dict())
 
-# TODO not sure if we want to have separate classes for sub/subcommands
 class AuthAddCommand(CliCommand):
     def __init__(self):
         usage = _("usage: %prog auth add [options]")
@@ -399,6 +398,7 @@ class AuthAddCommand(CliCommand):
 
         if not self.options.name:
             print(self.parser.print_help())
+            sys.exit(1)
 
         # need to pass in file or username and password combo
         if self.options.filename:
