@@ -16,6 +16,7 @@ X bin/rho auth add prints None at the end for no reason
 * rho scan --help should say "profile" on the usage line. 
 * rho scan: you can scan using a profile and at the same time specify a
 * --range on the command line.. the scan goes into loops
+* include ip or hostname in connection failed before report is listed
  
 
 X = fixed
