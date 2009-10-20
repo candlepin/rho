@@ -147,6 +147,14 @@ class Config(object):
         self._groups = []
         self._group_index = {}
 
+    def remove_group(self, gname):
+        if self._group_index.has_key(gname):
+            g = self._group_index[gname]
+            self._groups.remove(g)
+            del self._group_index[gname]
+        # TODO: need to raise error here, user shouldn't see nothing if
+        # they botched their command to remove a group
+
     def to_dict(self):
         creds = []
         for c in self._credentials:

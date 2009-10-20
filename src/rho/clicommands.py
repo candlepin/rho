@@ -22,6 +22,8 @@ from optparse import OptionParser
 from getpass import getpass
 import simplejson as json
 
+from rho.log import log, setup_logging
+
 from rho import config
 from rho import crypto
 from rho import scanner
@@ -56,6 +58,11 @@ class CliCommand(object):
         self.parser.add_option("--config", dest="config",
                 help=_("config file name"), default=DEFAULT_RHO_CONF)
 
+        self.parser.add_option("--log", dest="log_file", metavar="FILENAME",
+                help=_("log file name (will be overwritten)"))
+        self.parser.add_option("--log-level", dest="log_level",
+                default="critical", metavar="LEVEL",
+                help=_("log level (debug/info/warning/error/critical)"))
 
     def _validate_options(self):
         """ 
@@ -76,13 +83,19 @@ class CliCommand(object):
             return config.Config()
 
     def main(self):
+
         (self.options, self.args) = self.parser.parse_args()
         # we dont need argv[0] in this list...
         self.args = self.args[1:]
 
+        # Setup logging, this must happen early!
+        setup_logging(self.options.log_file, self.options.log_level)
+        log.debug("Running cli command: %s" % self.name)
+
         # Translate path to config file to something absolute and expanded:
         self.options.config = os.path.abspath(os.path.expanduser(
             self.options.config))
+        log.debug("Absolute config file: %s" % self.options.config)
 
         self._validate_options()
 
@@ -91,6 +104,8 @@ class CliCommand(object):
             sys.exit(1)
 
         if RHO_PASSPHRASE in os.environ:
+            log.info("Using passphrase from %s environment variable." %
+                    RHO_PASSPHRASE)
             self.passphrase = os.environ[RHO_PASSPHRASE]
         else:
             self.passphrase = getpass(_("Config Encryption Password:"))
@@ -236,11 +251,54 @@ class ProfileShowCommand(CliCommand):
             # make this a pretty table
             print(g.to_dict())
 
+class ProfileEditCommand(CliCommand):
+    def __init__(self):
+        usage = _("usage: %prog profile edit [options]")
+        shortdesc = _("edits a given profile")
+        desc = _("edit a given profile")
+
+        CliCommand.__init__(self, "profile edit", usage, shortdesc, desc)
+
+        self.parser.add_option("--name", dest="name", metavar="NAME",
+                help=_("NAME of the profile - REQUIRED"))
+        self.parser.add_option("--range", dest="ranges", action="append",
+                metavar="RANGE", default=[],
+                help=_("IP range to scan. See 'man rho' for supported formats."))
+
+        self.parser.add_option("--ports", dest="ports", metavar="PORTS",
+                help=_("list of ssh ports to try i.e. '22, 2222, 5402'")),
+        self.parser.add_option("--auth", dest="auth", metavar="AUTH",
+                action="append",
+                help=_("auth class to associate with profile"))
+
+        self.parser.set_defaults(ports="22")
+
+    def _validate_options(self):
+        CliCommand._validate_options(self)
+
+        if not self.options.name:
+            self.parser.print_help()
+            sys.exit(1)
+
+    def _do_command(self):
+        g = self.config.get_group(self.options.name)
+
+        if self.options.ranges:
+            g.ranges = self.options.ranges
+        if self.options.ports:
+            g.ports = self.options.ports.strip().split(",")
+        if self.options.auth:
+            g.credential_names = self.options.auth
+
+        c = config.ConfigBuilder().dump_config(self.config)
+        crypto.write_file(self.options.config, c, self.passphrase)
+        print(_("Profile %s edited" % self.options.name))
+
 class ProfileClearCommand(CliCommand):
     def __init__(self):
         usage = _("usage: %prog profile clear [--name | --all] [options]")
-        shortdesc = _("clears profile list")
-        desc = _("add a network profile")
+        shortdesc = _("removes 1 or all profiles from list")
+        desc = _("removes profiles")
 
         CliCommand.__init__(self, "profile clear", usage, shortdesc, desc)
 
@@ -264,7 +322,10 @@ class ProfileClearCommand(CliCommand):
 
     def _do_command(self):
         if self.options.name:
-            raise NotImplementedError
+            self.config.remove_group(self.options.name)
+            c = config.ConfigBuilder().dump_config(self.config)
+            crypto.write_file(self.options.config, c, self.passphrase)
+            print(_("Profile %s removed" % self.options.name))
         elif self.options.all:
             self.config.clear_groups()
             c = config.ConfigBuilder().dump_config(self.config)
