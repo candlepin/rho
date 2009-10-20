@@ -54,7 +54,16 @@ class OutputThread(GenericThread):
             if queueObj == "quit":
                 self.quit()
 
-            self.report.add(queueObj)
+            try:
+                self.report.add(queueObj)
+            except Exception, detail:
+                #FIXME: log this when we get a logger? -akl
+                print _("Exception: %s") % detail
+                print sys.exc_type()
+                print traceback.print_tb(sys.exc_info()[2])
+#                self.output_queue.task_done()
+                self.quit()
+                raise
 #            self.write(queueObj)
             # somewhere in here, we return the data to...?
             self.output_queue.task_done()
@@ -106,7 +115,11 @@ class SSHThread(GenericThread):
                 if queueObj.output_callback:
                     queueObj.output_callback()
         except Exception, detail:
-            print detail
+            print _("Exception: %s") % detail
+            print sys.exc_type()
+            print traceback.print_tb(sys.exc_info()[2])
+#            self.output_queue.task_done()
+#            self.ssh_connect_queue.task_done()
             self.quit()
 
 def startOutputThread(verbose, outfile, report):
@@ -157,6 +170,7 @@ def paramikoConnect(ssh_job):
         try:
             pkey = None
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+#            print "auth.name: %s auth.type: %s auth.password: %s" % (auth.name, auth.type, auth.password)
             if auth.type == config.SSH_KEY_TYPE:
                 fo = StringIO.StringIO(auth.key)
                 pkey = paramiko.RSAKey.from_private_key(fo)
@@ -213,5 +227,5 @@ def attemptConnection(ssh_job):
             print traceback.print_tb(sys.exc_info()[2])
             ssh_job.connection_result = False
             ssh_job.command_output = detail
-            ssh.close()
+#            ssh.close()
 
