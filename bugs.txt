@@ -1,5 +1,5 @@
 X delete a single profile
-* delete all profiles
+X delete all profiles
 * edit field in given profile
 * prompt for ssh passphrase
 X change prompt of Password: to explain what it's for
