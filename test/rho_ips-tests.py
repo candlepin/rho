@@ -46,12 +46,12 @@ class TestRhoIps(unittest.TestCase):
     def testLocalhost(self):
         self._check_ipr("localhost", ["127.0.0.1"])
 
-    def testHostname(self):
-        # any suggests for a hostname whose ip won't change?
-        self._check_ipr("bugzilla.redhat.com", ["209.132.176.231"])
+#    def testHostname(self):
+#        # any suggests for a hostname whose ip won't change?
+#        self._check_ipr("bugzilla.redhat.com", ["209.132.176.231"])
 
-    def testBadHostname(self):
-        self._check_ipr("this-will-never-exist.example.com", [])
+#    def testBadHostname(self):
+#        self._check_ipr("this-will-never-exist.example.com", [])
 
     def testWildcard(self):
         expected = []
