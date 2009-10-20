@@ -14,8 +14,8 @@ import ssh_jobs
 
 class ScanReport():
 
-    format = """%(ip)s,%(uname.os)s,%(uname.processor)s,%(uname.hardware_platform)s,%(redhat-release.name)s,%(redhat-release.version)s,%(redhat-release.release)s,%(auth.type)s,%(auth.username)s,%(auth.name)s,"""
-    error_format = """%(ip)s,,,,,,,,,,%(error)s"""
+    format = """%(ip)s,%(port)s,%(uname.os)s,%(uname.processor)s,%(uname.hardware_platform)s,%(redhat-release.name)s,%(redhat-release.version)s,%(redhat-release.release)s,%(auth.type)s,%(auth.username)s,%(auth.name)s,"""
+    error_format = """%(ip)s,,,,,,,,,,,%(error)s"""
     def __init__(self):
         self.ips = {}
         # ips is a dict of 
@@ -98,7 +98,7 @@ class Scanner():
             self._find_auths(profile.credential_names)
             for ip in ips:
                 #FIXME: look up auth -akl
-                sshj = ssh_jobs.SshJob(ip=ip, rho_cmds=self.get_rho_cmds(), auths=self.auths)
+                sshj = ssh_jobs.SshJob(ip=ip, ports=profile.ports, rho_cmds=self.get_rho_cmds(), auths=self.auths)
                 ssh_job_list.append(sshj)
             self.ssh_jobs.ssh_jobs = ssh_job_list
             self.run_scan()

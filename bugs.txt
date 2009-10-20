@@ -19,5 +19,7 @@ X bin/rho auth add prints None at the end for no reason
 * include ip or hostname in connection failed before report is listed
  
 
+* no dsa keys - can add using 'auth add' but then scan fails with "10.10.77.239,,,,,,,,,,connection failed using auth class: myvm not a valid RSA private key file"
+* "connection failed using auth class: mypw Authentication failed." or "timed out". Need to include what IP this was.
 X = fixed
 

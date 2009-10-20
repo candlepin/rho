@@ -166,33 +166,48 @@ def paramikoConnect(ssh_job):
 #    paramiko.util.log_to_file('paramiko.log')
 
     for auth in ssh_job.auths:
-        ssh = paramiko.SSHClient()
-        try:
-            pkey = None
+        pkey = None
+
+        #print "auth.name: %s auth.type: %s auth.password: %s" % (auth.name, auth.type, auth.password)
+        if auth.type == config.SSH_KEY_TYPE:
+            fo = StringIO.StringIO(auth.key)
+            pkey = paramiko.RSAKey.from_private_key(fo)
+        # ugh...
+        for port in ssh_job.ports:
+            ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-#            print "auth.name: %s auth.type: %s auth.password: %s" % (auth.name, auth.type, auth.password)
-            if auth.type == config.SSH_KEY_TYPE:
-                fo = StringIO.StringIO(auth.key)
-                pkey = paramiko.RSAKey.from_private_key(fo)
-            ssh.connect(ssh_job.ip, port=ssh_job.port, 
-                        username=auth.username,
-                        password=auth.password,
-                        pkey=pkey,
-                        # FIXME: 
-                        # we should probably set this somewhere
-                        #allow_agent=False,
-                        look_for_keys=False,
-                        timeout=ssh_job.timeout)
-            # set the successful auth type
-            ssh_job.auth = auth
+
+            # reset this for each attempt
+            ssh_job.error = None
+            try:
+                ssh.connect(ssh_job.ip, port=int(port), 
+                            username=auth.username,
+                            password=auth.password,
+                            pkey=pkey,
+                            # FIXME: 
+                            # we should probably set this somewhere
+                            #allow_agent=False,
+                            look_for_keys=False,
+                            timeout=ssh_job.timeout)
+                # set the successful auth type and port
+            except Exception, detail:
+                # Connecting failed (for whatever reason)
+                #FIXME: log this when the logger is read to log. Log.
+                err = _("connection to %s:%s failed using auth class %s with error: ") % (ssh_job.ip, port, auth.name,)
+                err = err + str(detail)
+                print err
+                ssh_job.error = err
+                ssh = str(detail)
+#                print _("Exception: %s") % detail
+#                print sys.exc_type()
+#                print sys.exc_info()
+#                print traceback.print_tb(sys.exc_info()[2])
+                continue
+#            ssh_job.auth = auth
+            ssh_job.port = port
             break
-        except Exception, detail:
-            # Connecting failed (for whatever reason)
-            #FIXME: need to popular ssh_job.auth with something when we fail?
-            err = _("connection failed using auth class: %s %s") % (auth.name, str(detail))
-            print err
-            ssh_job.error = err
-            ssh = str(detail)
+        ssh_job.auth = auth
+        break
     return ssh
 
 
