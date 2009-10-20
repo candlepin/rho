@@ -1,11 +1,10 @@
 X delete a single profile
 X delete all profiles
-* edit field in given profile
+X edit field in given profile
 * prompt for ssh passphrase
 X change prompt of Password: to explain what it's for
-* add ability to overwrite a profile/auth
-* dumpconfig should create the file?
-* Password: doesn't make sense
+* edit field in given auth
+X Password: doesn't make sense (changed to Config Encryption Password:)
 X bin/rho auth add prints None at the end for no reason
 * ports not validated for valid values i.e. -1 or 333333 is accepted.
 X add ssh port that worked to output report
