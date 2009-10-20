@@ -11,4 +11,3 @@
 * add ssh port that worked to output report
 * rho scan --range needs a decryption password (which it probably shouldn't)
 * --profile is missing from rho scan
-* rho scan --range host_that_exist_but_doesnt_respond causes reporting error
