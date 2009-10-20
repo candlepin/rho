@@ -1,4 +1,4 @@
-* delete a single profile
+X delete a single profile
 * delete all profiles
 * edit field in given profile
 * prompt for ssh passphrase
