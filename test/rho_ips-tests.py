@@ -31,8 +31,8 @@ class TestRhoIps(unittest.TestCase):
         ips = map(str, list_of_ips)
 #        list_of_ips = self.ipr.list_ips()
         ips.sort()
-    
         expected.sort()
+
 #        print len(ips), len(expected)
 #        print ips[0],ips[-1]
 #        print expected[0], expected[-1]
@@ -45,6 +45,13 @@ class TestRhoIps(unittest.TestCase):
 
     def testLocalhost(self):
         self._check_ipr("localhost", ["127.0.0.1"])
+
+    def testHostname(self):
+        # any suggests for a hostname whose ip won't change?
+        self._check_ipr("bugzilla.redhat.com", ["209.132.176.231"])
+
+    def testBadHostname(self):
+        self._check_ipr("this-will-never-exist.example.com", [])
 
     def testWildcard(self):
         expected = []
