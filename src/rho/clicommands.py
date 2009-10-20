@@ -395,10 +395,12 @@ class AuthAddCommand(CliCommand):
                 help=_("file containing SSH key"))
         self.parser.add_option("--username", dest="username",
                 metavar="USERNAME",
-                help=_("user name for authenticating against target machine"))
+                help=_("user name for authenticating against target machine - REQUIRED"))
         self.parser.add_option("--password", dest="password",
                 metavar="PASSWORD",
                 help=_("password for authenticating against target machine"))
+
+        self.parser.set_defaults(password="")
 
     def _validate_options(self):
         CliCommand._validate_options(self)
@@ -408,12 +410,6 @@ class AuthAddCommand(CliCommand):
             sys.exit(1)
 
         # need to pass in file or username and password combo
-        if self.options.filename:
-            if self.options.password:
-                self.parser.error(
-                    _("can not use --file with --username or --password"))
-            return
-
         if not self.options.username or not self.options.password and not self.options.filename:
             print(self.parser.print_help())
             sys.exit(1)
@@ -436,13 +432,11 @@ class AuthAddCommand(CliCommand):
             sshkey = sshkeyfile.read()
             sshkeyfile.close()
 
-            
             cred = config.SshKeyCredentials({"name": self.options.name,
                                              "key":sshkey,
                                              "username": self.options.username,
+                                             "password": self.options.password,
                                              "type":"ssh"})
-
-
 
             self._save_cred(cred)
 
