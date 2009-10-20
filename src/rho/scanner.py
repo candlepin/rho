@@ -86,7 +86,7 @@ class Scanner():
         missing_profiles = []
         ssh_job_list = []
         for profilename in profilenames:
-            profile = self.config.get_group(profilename)
+            profile = self.config.get_profile(profilename)
             if profile is None:
                 missing_profiles.append(profilename)
                 continue

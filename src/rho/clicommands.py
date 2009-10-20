@@ -182,9 +182,9 @@ class ScanCommand(CliCommand):
             if self.options.ports:
                 ports = self.options.ports.strip().split(",")
 
-            g = config.Group(name="clioptions", ranges=self.options.ranges,
+            g = config.Profile(name="clioptions", ranges=self.options.ranges,
                          auth_names=self.options.auth, ports=ports)
-            self.config.add_group(g)
+            self.config.add_profile(g)
             self.scanner.scan_profiles(["clioptions"])
             
         if self.args or self.options.profiles:
@@ -244,10 +244,10 @@ class ProfileShowCommand(CliCommand):
         CliCommand.__init__(self, "profile show", usage, shortdesc, desc)
 
     def _do_command(self):
-        if not self.config.list_groups():
+        if not self.config.list_profiles():
             print(_("No profiles found"))
 
-        for g in self.config.list_groups():
+        for g in self.config.list_profiles():
             # make this a pretty table
             print(g.to_dict())
 
@@ -281,7 +281,7 @@ class ProfileEditCommand(CliCommand):
             sys.exit(1)
 
     def _do_command(self):
-        g = self.config.get_group(self.options.name)
+        g = self.config.get_profile(self.options.name)
 
         if self.options.ranges:
             g.ranges = self.options.ranges
@@ -322,12 +322,12 @@ class ProfileClearCommand(CliCommand):
 
     def _do_command(self):
         if self.options.name:
-            self.config.remove_group(self.options.name)
+            self.config.remove_profile(self.options.name)
             c = config.ConfigBuilder().dump_config(self.config)
             crypto.write_file(self.options.config, c, self.passphrase)
             print(_("Profile %s removed" % self.options.name))
         elif self.options.all:
-            self.config.clear_groups()
+            self.config.clear_profiles()
             c = config.ConfigBuilder().dump_config(self.config)
             crypto.write_file(self.options.config, c, self.passphrase)
             print(_("All network profiles removed"))
@@ -369,13 +369,13 @@ class ProfileAddCommand(CliCommand):
         if self.options.ports:
             ports = self.options.ports.strip().split(",")
 
-        # self.options.auth can be None, so don't pass it to Group()
+        # self.options.auth can be None, so don't pass it to Profile()
         if self.options.auth:
             auths = self.options.auth
 
-        g = config.Group(name=self.options.name, ranges=self.options.ranges,
+        g = config.Profile(name=self.options.name, ranges=self.options.ranges,
                          auth_names=auths, ports=ports)
-        self.config.add_group(g)
+        self.config.add_profile(g)
         c = config.ConfigBuilder().dump_config(self.config)
         crypto.write_file(self.options.config, c, self.passphrase)
 

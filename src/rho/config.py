@@ -15,7 +15,7 @@ import simplejson as json
 
 # Keys used in the configuration JSON:
 AUTHS_KEY = "auths"
-GROUPS_KEY = "groups"
+PROFILES_KEY = "profiles"
 VERSION_KEY = "version"
 NAME_KEY = "name"
 TYPE_KEY = "type"
@@ -71,26 +71,26 @@ def verify_keys(check_dict, required=[], optional=None):
 class Config(object):
     """ Simple object represeting Rho configuration. """
 
-    def __init__(self, auths=None, groups=None):
+    def __init__(self, auths=None, profiles=None):
         """
-        Create a config object from the given auths and groups.
+        Create a config object from the given auths and profiles.
         """
 
         self._auths = []
-        self._groups = []
+        self._profiles = []
         # Will map auth key name to the auths object:
         self._auth_index = {}
-        self._group_index = {}
+        self._profile_index = {}
 
         # Need to iterate auths first:
         if auths:
             for c in auths:
                 self.add_auth(c)
 
-        if groups:
-            # Make sure none of the groups reference invalid auth keys:
-            for group in groups:
-                self.add_group(group)
+        if profiles:
+            # Make sure none of the profiles reference invalid auth keys:
+            for profile in profiles:
+                self.add_profile(profile)
 
     def add_auth(self, c):
 
@@ -120,52 +120,52 @@ class Config(object):
         self._auths = []
         self._auth_index = {}
 
-    def add_group(self, group):
+    def add_profile(self, profile):
         """ 
-        Add a new group to this configuration, and ensure it references valid
+        Add a new profile to this configuration, and ensure it references valid
         auths.
         """
-        if group.name in self._group_index:
-            raise DuplicateNameError(group.name)
+        if profile.name in self._profile_index:
+            raise DuplicateNameError(profile.name)
 
-        for c in group.auth_names:
+        for c in profile.auth_names:
             if c not in self._auth_index:
                 raise ConfigError("No such credentials: %s" %
                         c)
 
-        self._groups.append(group)
-        self._group_index[group.name] = group
+        self._profiles.append(profile)
+        self._profile_index[profile.name] = profile
 
-    def list_groups(self):
-        """ Return a list of all groups in this configuration. """
-        return self._groups
+    def list_profiles(self):
+        """ Return a list of all profiles in this configuration. """
+        return self._profiles
 
-    def get_group(self, gname):
-        return self._group_index.get(gname)
+    def get_profile(self, gname):
+        return self._profile_index.get(gname)
 
-    def clear_groups(self):
-        self._groups = []
-        self._group_index = {}
+    def clear_profiles(self):
+        self._profiles = []
+        self._profile_index = {}
 
-    def remove_group(self, gname):
-        if self._group_index.has_key(gname):
-            g = self._group_index[gname]
-            self._groups.remove(g)
-            del self._group_index[gname]
+    def remove_profile(self, gname):
+        if self._profile_index.has_key(gname):
+            g = self._profile_index[gname]
+            self._profiles.remove(g)
+            del self._profile_index[gname]
         # TODO: need to raise error here, user shouldn't see nothing if
-        # they botched their command to remove a group
+        # they botched their command to remove a profile
 
     def to_dict(self):
         creds = []
         for c in self._auths:
             creds.append(c.to_dict())
-        groups = []
-        for g in self._groups:
-            groups.append(g.to_dict())
+        profiles = []
+        for g in self._profiles:
+            profiles.append(g.to_dict())
         return {
                 VERSION_KEY: CONFIG_VERSION,
                 AUTHS_KEY: creds,
-                GROUPS_KEY: groups
+                PROFILES_KEY: profiles
         }
 
 
@@ -223,11 +223,11 @@ class SshKeyAuth(Auth):
         }
 
 
-class Group(object):
+class Profile(object):
 
     def __init__(self, name, ranges, auth_names, ports):
         """
-        Create a group object.
+        Create a profile object.
 
         ranges is a list of strings specifying IP ranges. We just store the
         string.
@@ -276,17 +276,17 @@ class ConfigBuilder(object):
             raise BadJsonException
 
         verify_keys(config_dict, required=[VERSION_KEY, AUTHS_KEY,
-            GROUPS_KEY], optional=[])
+            PROFILES_KEY], optional=[])
 
-        # Credentials needs to be parsed first so we can check that the groups
+        # Credentials needs to be parsed first so we can check that the profiles
         # reference valid credential keys.
         auths_dict = config_dict[AUTHS_KEY]
         creds = self.build_auths(auths_dict)
 
-        groups_dict = config_dict[GROUPS_KEY]
-        groups = self.build_groups(groups_dict)
+        profiles_dict = config_dict[PROFILES_KEY]
+        profiles = self.build_profiles(profiles_dict)
 
-        config = Config(auths=creds, groups=groups)
+        config = Config(auths=creds, profiles=profiles)
 
         return config
 
@@ -308,29 +308,29 @@ class ConfigBuilder(object):
             creds.append(creds_obj)
         return creds
 
-    def build_groups(self, groups_list):
+    def build_profiles(self, profiles_list):
         """ Create a list of Credentials object. """
 
-        groups = []
-        for group_dict in groups_list:
-            verify_keys(group_dict, required=[NAME_KEY, RANGE_KEY,
+        profiles = []
+        for profile_dict in profiles_list:
+            verify_keys(profile_dict, required=[NAME_KEY, RANGE_KEY,
                 AUTHS_KEY, PORTS_KEY], optional=[])
-            name = group_dict[NAME_KEY]
-            ranges = group_dict[RANGE_KEY]
-            auth_names = group_dict[AUTHS_KEY]
+            name = profile_dict[NAME_KEY]
+            ranges = profile_dict[RANGE_KEY]
+            auth_names = profile_dict[AUTHS_KEY]
 
             ports = []
-            for p in group_dict[PORTS_KEY]:
+            for p in profile_dict[PORTS_KEY]:
                 # Make sure we can cast to integers:
                 try:
                     ports.append(int(p))
                 except ValueError:
                     raise ConfigError("Invalid ssh port: %s" % p)
 
-            group_obj = Group(name, ranges, auth_names, ports)
-            groups.append(group_obj)
+            profile_obj = Profile(name, ranges, auth_names, ports)
+            profiles.append(profile_obj)
 
-        return groups
+        return profiles
 
     def dump_config(self, config):
         """ Returns JSON text for the given Config object. """

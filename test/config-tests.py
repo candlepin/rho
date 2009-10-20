@@ -34,7 +34,7 @@ SAMPLE_CONFIG1 = """
             "password": "sekurity"
         }
     ],
-    "groups": [
+    "profiles": [
         {
             "name": "accounting",
             "range": [
@@ -67,7 +67,7 @@ BAD_CREDNAME_CONFIG = """
             "password": "sekurity"
         }
     ],
-    "groups": [
+    "profiles": [
         {
             "name": "accounting",
             "range": [
@@ -96,7 +96,7 @@ class ConfigBuilderTests(unittest.TestCase):
     def test_build_config(self):
         config = self.builder.build_config(SAMPLE_CONFIG1)
         self.assertEquals(2, len(config.list_auths()))
-        self.assertEquals(2, len(config.list_groups()))
+        self.assertEquals(2, len(config.list_profiles()))
 
     def test_round_trip(self):
         config = self.builder.build_config(SAMPLE_CONFIG1)
@@ -109,14 +109,14 @@ class ConfigTests(unittest.TestCase):
     def setUp(self):
         self.builder = ConfigBuilder()
 
-    def test_group_references_invalid_auths(self):
+    def test_profile_references_invalid_auths(self):
         self.assertRaises(ConfigError, 
                 self.builder.build_config, BAD_CREDNAME_CONFIG)
 
     def test_new_config(self):
         config = Config()
         self.assertEquals([], config.list_auths())
-        self.assertEquals([], config.list_groups())
+        self.assertEquals([], config.list_profiles())
         json = self.builder.dump_config(config)
         config = self.builder.build_config(json)
 
@@ -126,7 +126,7 @@ class ConfigTests(unittest.TestCase):
         self.assertEquals(3, len(config_dict))
         self.assertEquals(CONFIG_VERSION, config_dict[VERSION_KEY])
         self.assertTrue(AUTHS_KEY in config_dict)
-        self.assertTrue(GROUPS_KEY in config_dict)
+        self.assertTrue(PROFILES_KEY in config_dict)
 
     def test_duplicate_credential_names(self):
         config = self.builder.build_config(SAMPLE_CONFIG1)
@@ -139,12 +139,12 @@ class ConfigTests(unittest.TestCase):
         self.assertRaises(DuplicateNameError, config.add_auth,
                 creds1)
 
-    def test_duplicate_group_names(self):
+    def test_duplicate_profile_names(self):
         config = self.builder.build_config(SAMPLE_CONFIG1)
-        g = Group("accounting", ["192.168.1.1/24"], ["bobslogin"],
+        g = Profile("accounting", ["192.168.1.1/24"], ["bobslogin"],
                 [22])
             
-        self.assertRaises(DuplicateNameError, config.add_group, g)
+        self.assertRaises(DuplicateNameError, config.add_profile, g)
 
 
 class CredentialTests(unittest.TestCase):
@@ -220,11 +220,11 @@ class CredentialTests(unittest.TestCase):
         self.assertEquals("whatever", ssh_dict[SSHKEY_KEY])
 
 
-class GroupTests(unittest.TestCase):
+class ProfileTests(unittest.TestCase):
 
     def setUp(self):
         self.builder = ConfigBuilder()
-        self.group_dict = {
+        self.profile_dict = {
                 NAME_KEY: "accounting",
                 RANGE_KEY: [
                     "192.168.0.0/24",
@@ -235,8 +235,8 @@ class GroupTests(unittest.TestCase):
                 PORTS_KEY: [22, 2222]
             }
 
-    def test_create_group(self):
-        g = self.builder.build_groups([self.group_dict])[0]
+    def test_create_profile(self):
+        g = self.builder.build_profiles([self.profile_dict])[0]
         self.assertEquals("accounting", g.name)
         self.assertEquals(2, len(g.auth_names))
         self.assertEquals(2, len(g.ports))
@@ -244,44 +244,44 @@ class GroupTests(unittest.TestCase):
         self.assertEquals(2222, g.ports[1])
 
     def test_empty_range(self):
-        self.group_dict[RANGE_KEY] = []
+        self.profile_dict[RANGE_KEY] = []
         # Just don't want to see an error:
-        self.builder.build_groups([self.group_dict])
+        self.builder.build_profiles([self.profile_dict])
 
     def test_no_ports(self):
-        self.group_dict[PORTS_KEY] = []
+        self.profile_dict[PORTS_KEY] = []
         # Just don't want to see an error:
-        g = self.builder.build_groups([self.group_dict])
+        g = self.builder.build_profiles([self.profile_dict])
 
     def test_invalid_ports(self):
-        self.group_dict[PORTS_KEY] = ["aslkjdh"]
+        self.profile_dict[PORTS_KEY] = ["aslkjdh"]
         self.assertRaises(ConfigError,
-                self.builder.build_groups, [self.group_dict])
+                self.builder.build_profiles, [self.profile_dict])
 
     def test_name_required(self):
-        self.group_dict.pop(NAME_KEY)
+        self.profile_dict.pop(NAME_KEY)
         self.assertRaises(ConfigError, 
-                self.builder.build_groups, [self.group_dict])
+                self.builder.build_profiles, [self.profile_dict])
 
     def test_to_dict(self):
-        g = self.builder.build_groups([self.group_dict])[0]
+        g = self.builder.build_profiles([self.profile_dict])[0]
         g_dict = g.to_dict()
         self.assertEquals(4, len(g_dict))
         self.assertEquals("accounting", g_dict[NAME_KEY])
 
         ranges = g_dict[RANGE_KEY]
         self.assertEquals(3, len(ranges))
-        self.assertEquals(self.group_dict[RANGE_KEY], 
+        self.assertEquals(self.profile_dict[RANGE_KEY],
                 g_dict[RANGE_KEY])
 
         credential_names = g_dict[AUTHS_KEY]
         self.assertEquals(2, len(credential_names))
-        self.assertEquals(self.group_dict[AUTHS_KEY],
+        self.assertEquals(self.profile_dict[AUTHS_KEY],
                 g_dict[AUTHS_KEY])
 
         ports = g_dict[PORTS_KEY]
         self.assertEquals(2, len(ports))
-        self.assertEquals(self.group_dict[PORTS_KEY], 
+        self.assertEquals(self.profile_dict[PORTS_KEY],
                 g_dict[PORTS_KEY])
 
 
