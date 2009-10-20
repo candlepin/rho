@@ -141,7 +141,6 @@ class Config(object):
         return self._groups
 
     def get_group(self, gname):
-        print gname, self._group_index
         return self._group_index.get(gname)
 
     def clear_groups(self):
