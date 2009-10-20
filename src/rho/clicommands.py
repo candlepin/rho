@@ -264,7 +264,10 @@ class ProfileClearCommand(CliCommand):
 
     def _do_command(self):
         if self.options.name:
-            raise NotImplementedError
+            self.config.remove_group(self.options.name)
+            c = config.ConfigBuilder().dump_config(self.config)
+            crypto.write_file(self.options.config, c, self.passphrase)
+            print(_("Profile %s removed" % self.options.name))
         elif self.options.all:
             self.config.clear_groups()
             c = config.ConfigBuilder().dump_config(self.config)
