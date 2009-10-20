@@ -22,6 +22,8 @@ from optparse import OptionParser
 from getpass import getpass
 import simplejson as json
 
+from rho.log import log, setup_logging
+
 from rho import config
 from rho import crypto
 from rho import scanner
@@ -56,6 +58,11 @@ class CliCommand(object):
         self.parser.add_option("--config", dest="config",
                 help=_("config file name"), default=DEFAULT_RHO_CONF)
 
+        self.parser.add_option("--log", dest="log_file", metavar="FILENAME",
+                help=_("log file name (will be overwritten)"))
+        self.parser.add_option("--log-level", dest="log_level",
+                default="critical", metavar="LEVEL",
+                help=_("log level (debug/info/warning/error/critical)"))
 
     def _validate_options(self):
         """ 
@@ -76,13 +83,19 @@ class CliCommand(object):
             return config.Config()
 
     def main(self):
+
         (self.options, self.args) = self.parser.parse_args()
         # we dont need argv[0] in this list...
         self.args = self.args[1:]
 
+        # Setup logging, this must happen early!
+        setup_logging(self.options.log_file, self.options.log_level)
+        log.debug("Running cli command: %s" % self.name)
+
         # Translate path to config file to something absolute and expanded:
         self.options.config = os.path.abspath(os.path.expanduser(
             self.options.config))
+        log.debug("Absolute config file: %s" % self.options.config)
 
         self._validate_options()
 
@@ -91,6 +104,8 @@ class CliCommand(object):
             sys.exit(1)
 
         if RHO_PASSPHRASE in os.environ:
+            log.info("Using passphrase from %s environment variable." %
+                    RHO_PASSPHRASE)
             self.passphrase = os.environ[RHO_PASSPHRASE]
         else:
             self.passphrase = getpass(_("Config Encryption Password:"))
