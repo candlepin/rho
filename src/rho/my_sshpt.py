@@ -152,9 +152,6 @@ def paramikoConnect(ssh_job):
     # Uncomment this line to turn on Paramiko debugging (good for troubleshooting why some servers report connection failures)
 #    paramiko.util.log_to_file('paramiko.log')
 
-    # FIXME: akl
-    # this is probably the place to try the different auth in order, and set some
-    # value on the ssh_job type so we can update config properly
     for auth in ssh_job.auths:
         ssh = paramiko.SSHClient()
         try:
@@ -162,14 +159,12 @@ def paramikoConnect(ssh_job):
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             if auth.type == config.SSH_KEY_TYPE:
                 fo = StringIO.StringIO(auth.key)
-                #FIXME: paramiko has an abstraction class for rsa/dsa keys, but it
-                # seems to be broken, not sure what to do about it... but this
-                # will work for RSA keys for now
                 pkey = paramiko.RSAKey.from_private_key(fo)
             ssh.connect(ssh_job.ip, port=ssh_job.port, 
                         username=auth.username,
                         password=auth.password,
                         pkey=pkey,
+                        # FIXME: 
                         # we should probably set this somewhere
                         #allow_agent=False,
                         look_for_keys=False,
