@@ -32,6 +32,7 @@ class RhoIpRange(object):
         # try to resolve if it looks like a hostname
         # FIXME: thisis blocky and generally icky and failureprone -akl
         ip = socket.gethostbyname(iprange)
+
         return ip
 
     def parse_iprange(self, iprange):
@@ -39,10 +40,20 @@ class RhoIpRange(object):
         if self.range_str.find(' - ') > -1:
             #looks like a range
             parts = self.range_str.split(' - ')
-            self.start_ip = self._find_ip(parts[0])
-            self.end_ip = self._find_ip(parts[1])
-            ipr = netaddr.IPRange(self.start_ip, self.end_ip)
-            self.ips = list(ipr)
+
+            #FIXME: all of this error handling is crappy -akl
+            try:
+                self.start_ip = self._find_ip(parts[0])
+                self.end_ip = self._find_ip(parts[1])
+            except:
+                #FIXME: catchall execpts are bad
+                print _("unable to find ip for %s") % parts
+                self.start_ip = None
+                self.end_ip = None
+
+            if self.start_ip and self.end_ip:
+                ipr = netaddr.IPRange(self.start_ip, self.end_ip)
+                self.ips = list(ipr)
             return self.ips
         
         # FIXME: not sure what to do about cases like 
