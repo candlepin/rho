@@ -114,10 +114,6 @@ class ScanCommand(CliCommand):
                 metavar="RANGE", default=[],
                 help=_("IP range to scan. See 'man rho' for supported formats."))
 
-        # TODO: remove
-        self.parser.add_option("--ip", dest="ip", metavar="IP",
-                help=_("single ip/hostname to scan"))
-
         self.parser.add_option("--ports", dest="ports", metavar="PORTS",
                 help=_("list of ssh ports to try i.e. '22, 2222, 5402'"))
         self.parser.add_option("--username", dest="username",
@@ -129,12 +125,15 @@ class ScanCommand(CliCommand):
         self.parser.add_option("--auth", dest="auth", action="append",
                 metavar="AUTH",
                 help=_("auth class name to use"))
+        self.parser.add_option("--profile", dest="profiles", action="append",
+               metavar="PROFILE",
+               help=_("profile class to scan")),
 
         self.parser.set_defaults(ports="22")
 
     def _validate_options(self):
         CliCommand._validate_options(self)
-        if len(self.options.ranges) == 0 and not self.args:
+        if len(self.options.ranges) == 0 and not ( self.args or self.options.profiles):
             self.parser.print_help()
             sys.exit(1)
 
@@ -173,8 +172,14 @@ class ScanCommand(CliCommand):
             self.config.add_group(g)
             self.scanner.scan_profiles(["clioptions"])
             
-        if self.args:
-            missing = self.scanner.scan_profiles(self.args)
+        if self.args or self.options.profiles:
+            # seems like a lot of code to cat two possibly None lists...
+            profiles = []
+            if self.args:
+                profiles.extend(self.args)
+            if self.options.profiles:
+                profiles.extend(self.options.profiles)
+            missing = self.scanner.scan_profiles(profiles)
             if missing:
                 print _("The following profile names were not found:")
                 for name in missing:
