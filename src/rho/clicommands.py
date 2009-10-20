@@ -93,7 +93,7 @@ class CliCommand(object):
         if RHO_PASSPHRASE in os.environ:
             self.passphrase = os.environ[RHO_PASSPHRASE]
         else:
-            self.passphrase = getpass()
+            self.passphrase = getpass(_("Config Encryption Password:"))
 
         self.config = self._read_config(self.options.config, self.passphrase)
 
@@ -135,7 +135,7 @@ class ScanCommand(CliCommand):
     def _validate_options(self):
         CliCommand._validate_options(self)
         if len(self.options.ranges) == 0 and not self.args:
-            print(self.parser.print_help())
+            self.parser.print_help()
             sys.exit(1)
 
     def _do_command(self):
@@ -203,7 +203,7 @@ class DumpConfigCommand(CliCommand):
             sys.exit(1)
 
         if (not os.access(self.options.config, os.R_OK)):
-            print(self.parser.print_help())
+            self.parser.print_help()
             sys.exit(1)
 
 
@@ -250,11 +250,11 @@ class ProfileClearCommand(CliCommand):
         CliCommand._validate_options(self)
 
         if not self.options.name and not self.options.all:
-            print(self.parser.print_help())
+            self.parser.print_help()
             sys.exit(1)
 
         if self.options.name and self.options.all:
-            print(self.parser.print_help())
+            self.parser.print_help()
             sys.exit(1)
 
     def _do_command(self):
@@ -292,7 +292,7 @@ class ProfileAddCommand(CliCommand):
         CliCommand._validate_options(self)
 
         if not self.options.name:
-            print(self.parser.print_help())
+            self.parser.print_help()
             sys.exit(1)
 
 
@@ -311,7 +311,6 @@ class ProfileAddCommand(CliCommand):
                          credential_names=auths, ports=ports)
         self.config.add_group(g)
         c = config.ConfigBuilder().dump_config(self.config)
-        print(c)
         crypto.write_file(self.options.config, c, self.passphrase)
 
 class AuthClearCommand(CliCommand):
@@ -331,11 +330,11 @@ class AuthClearCommand(CliCommand):
         CliCommand._validate_options(self)
 
         if not self.options.name and not self.options.all:
-            print(self.parser.print_help())
+            self.parser.print_help()
             sys.exit(1)
 
         if self.options.name and self.options.all:
-            print(self.parser.print_help())
+            self.parser.print_help()
             sys.exit(1)
 
     def _do_command(self):
@@ -394,12 +393,12 @@ class AuthAddCommand(CliCommand):
         CliCommand._validate_options(self)
 
         if not self.options.name:
-            print(self.parser.print_help())
+            self.parser.print_help()
             sys.exit(1)
 
         # need to pass in file or username and password combo
         if not self.options.username or not self.options.password and not self.options.filename:
-            print(self.parser.print_help())
+            self.parser.print_help()
             sys.exit(1)
 
     def _save_cred(self, cred):
