@@ -12,6 +12,7 @@ X bin/rho auth add prints None at the end for no reason
 * rho scan --range needs a decryption password (which it probably shouldn't)
 * --profile is missing from rho scan
 * profile add with --auth=[nonexistent auth] gives traceback, should just print 'auth doesn't exist'
+* profile add --ip doesn't work
 
 X = fixed
 
