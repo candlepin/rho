@@ -38,12 +38,15 @@ class SshAuth(Auth):
 #FIXME: SshJob needs to have a RhoJobsList, where each RhoJob item actually has
 # a list of cli commands to run
 class SshJob():
-    def __init__(self, ip=None, port=22, rho_cmds=None, auths=None, timeout=30):
+    def __init__(self, ip=None, ports=[22], rho_cmds=None, auths=None, timeout=30):
         # rho_cmds really needs to be list like, easy mistake to make...
         assert getattr(rho_cmds, "__iter__")
 
         self.ip = ip
-        self.port = port
+        # list of ports to try
+        self.ports = ports
+        # the port that actually worked
+        self.port = None
 
         # rho commands is RhoCmdList, aka, a list of RhoCmds (duh)
         self.rho_cmds = rho_cmds
