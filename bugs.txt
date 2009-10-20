@@ -1,0 +1,14 @@
+* delete a single profile
+* delete all profiles
+* edit field in given profile
+* prompt for ssh passphrase
+* change prompt of Password: to explain what it's for
+* add ability to overwrite a profile/auth
+* dumpconfig should create the file?
+* Password: doesn't make sense
+* bin/rho auth add prints None at the end for no reason
+* ports not validated for valid values i.e. -1 is accepted.
+* add ssh port that worked to output report
+* rho scan --range needs a decryption password (which it probably shouldn't)
+* --profile is missing from rho scan
+
