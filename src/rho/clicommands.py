@@ -102,9 +102,9 @@ class CliCommand(object):
 
 class ScanCommand(CliCommand):
     def __init__(self):
-        usage = _("usage: %prog scan [ip|ip_range|ip_range_profile|hostname]")
-        shortdesc = _("scan given machines")
-        desc = _("scans the given machines")
+        usage = _("usage: %prog scan [options] PROFILE")
+        shortdesc = _("scan given host profile")
+        desc = _("scans the host profile")
 
         CliCommand.__init__(self, "scan", usage, shortdesc, desc)
 
