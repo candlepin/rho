@@ -52,13 +52,17 @@ what should work
 		(this method doesn't support keys yet)
 
 
+Notes about scanning:
+	By default, currently rho will also use any ssh keys that can be found
+on the normal ssh-agent. So it's probably a good idea to test with it on and
+off.  (either "ssh-add -D" or just kill the agent with "ssh-agent -k"). 
 
 
-What is know not to work
+What is known not to work
 
 	rho auth show --usernames
 	rho auth show --keys
-
+	
 
 
 
