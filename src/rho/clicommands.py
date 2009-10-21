@@ -139,7 +139,7 @@ class ScanCommand(CliCommand):
                 metavar="PASSWORD",
                 help=_("password for authenticating against target machine")),
         self.parser.add_option("--auth", dest="auth", action="append",
-                metavar="AUTH",
+                metavar="AUTH", default=[],
                 help=_("auth class name to use"))
         self.parser.add_option("--output", dest="reportfile",
                 metavar="REPORTFILE",
@@ -161,21 +161,28 @@ class ScanCommand(CliCommand):
 
         hasRanges = len(self.options.ranges) > 0
         hasProfiles = len(self.options.profiles) > 0
+        hasAuths = len(self.options.auth) > 0
 
         if not hasRanges and not hasProfiles:
             self.parser.print_help()
             sys.exit(1)
 
+        if hasRanges and hasProfiles:
+            self.parser.error(_("Cannot scan ranges and profiles at the same time."))
+
+        if hasRanges and not (self.options.username or hasAuths):
+            self.parser.error(_(
+                "--username or --auth required to scan a range."))
+
     def _do_command(self):
         self.scanner = scanner.Scanner(config=self.config)
 
-        if self.options.auth:
+        if len(self.options.auth) > 0:
             auths = []
             for auth in self.options.auth:
                 a = self.config.get_auth(auth)
                 if a:
                     auths.append(a)
-            
         else:
             # FIXME: need a more abstract credentials class -akl
             auth=config.SshAuth({'name':"clioptions",
@@ -281,7 +288,7 @@ class ProfileEditCommand(CliCommand):
         self.parser.add_option("--ports", dest="ports", metavar="PORTS",
                 help=_("list of ssh ports to try i.e. '22, 2222, 5402'")),
         self.parser.add_option("--auth", dest="auth", metavar="AUTH",
-                action="append",
+                action="append", default=[],
                 help=_("auth class to associate with profile"))
 
         self.parser.set_defaults(ports="22")
@@ -300,7 +307,7 @@ class ProfileEditCommand(CliCommand):
             g.ranges = self.options.ranges
         if self.options.ports:
             g.ports = self.options.ports.strip().split(",")
-        if self.options.auth:
+        if len(self.options.auth) > 0:
             g.auth_names = self.options.auth
 
         c = config.ConfigBuilder().dump_config(self.config)
@@ -362,7 +369,7 @@ class ProfileAddCommand(CliCommand):
         self.parser.add_option("--ports", dest="ports", metavar="PORTS",
                 help=_("list of ssh ports to try i.e. '22, 2222, 5402'")),
         self.parser.add_option("--auth", dest="auth", metavar="AUTH",
-                action="append",
+                action="append", default=[],
                 help=_("auth class to associate with profile"))
 
         self.parser.set_defaults(ports="22")
@@ -378,16 +385,11 @@ class ProfileAddCommand(CliCommand):
 
     def _do_command(self):
         ports = []
-        auths = []
         if self.options.ports:
             ports = self.options.ports.strip().split(",")
 
-        # self.options.auth can be None, so don't pass it to Profile()
-        if self.options.auth:
-            auths = self.options.auth
-
         g = config.Profile(name=self.options.name, ranges=self.options.ranges,
-                         auth_names=auths, ports=ports)
+                         auth_names=self.options.auth, ports=ports)
         self.config.add_profile(g)
         c = config.ConfigBuilder().dump_config(self.config)
         crypto.write_file(self.options.config, c, self.passphrase)

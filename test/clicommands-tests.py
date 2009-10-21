@@ -15,6 +15,13 @@ from rho.clicommands import *
 
 import unittest
 import os
+import sys
+
+
+class HushUpStderr(object):
+    def write(self, s):
+        pass
+
 
 class CliCommandsTests(unittest.TestCase):
     conffile = "test/rho.conf.test"
@@ -22,6 +29,15 @@ class CliCommandsTests(unittest.TestCase):
     def setUp(self):
         if os.path.exists(self.conffile):
             os.remove(self.conffile)
+
+        # Temporarily disable stderr for these tests, CLI errors clutter up
+        # nosetests command.
+        self.orig_stderr = sys.stderr
+        sys.stderr = HushUpStderr()
+
+    def tearDown(self):
+        # Restore stderr
+        sys.stderr = self.orig_stderr
 
     def _run_test(self, cmd, args):
         os.environ[RHO_PASSPHRASE] = "blerg"
@@ -61,4 +77,5 @@ class CliCommandsTests(unittest.TestCase):
 
     def test_scan_bad_range_options(self):
         # Should fail scanning range without a username:
-        self._run_test(ScanCommand(), ['scan', '--range=192.168.1.1'])
+        self.assertRaises(SystemExit, self._run_test, ScanCommand(),
+                ['scan', '--range=192.168.1.1'])
