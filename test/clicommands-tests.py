@@ -51,14 +51,14 @@ class CliCommandsTests(unittest.TestCase):
         except SystemExit:
             pass
 
-    def test_profile_show(self):
-        self._run_test(ProfileShowCommand(), ["profile", "show"])
+    def test_profile_list(self):
+        self._run_test(ProfileListCommand(), ["profile", "list"])
 
     def test_profile_add(self):
         self._run_test(ProfileAddCommand(), ["profile", "add", "--name", "profilename"])
 
-    def test_auth_show(self):
-        self._run_test(AuthShowCommand(), ["auth", "show"])
+    def test_auth_list(self):
+        self._run_test(AuthListCommand(), ["auth", "list"])
 
     def test_auth_add(self):
         try:
