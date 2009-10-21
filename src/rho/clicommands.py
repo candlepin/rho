@@ -123,7 +123,9 @@ class CliCommand(object):
         # do the work
         self._do_command()
 
+
 class ScanCommand(CliCommand):
+
     def __init__(self):
         usage = _("usage: %prog scan [options] PROFILE")
         shortdesc = _("scan given host profile")
@@ -140,9 +142,6 @@ class ScanCommand(CliCommand):
         self.parser.add_option("--username", dest="username",
                 metavar="USERNAME",
                 help=_("user name for authenticating against target machine"))
-        self.parser.add_option("--password", dest="password",
-                metavar="PASSWORD",
-                help=_("password for authenticating against target machine")),
         self.parser.add_option("--auth", dest="auth", action="append",
                 metavar="AUTH", default=[],
                 help=_("auth class name to use"))
@@ -185,6 +184,12 @@ class ScanCommand(CliCommand):
     def _do_command(self):
         self.scanner = scanner.Scanner(config=self.config)
 
+        # If username was specified, we need to prompt for a password
+        # to go with it:
+        if self.options.username:
+            user_password = getpass(_("Password for '%s':" %
+                self.options.username))
+
         if len(self.options.auth) > 0:
             auths = []
             for auth in self.options.auth:
@@ -194,9 +199,9 @@ class ScanCommand(CliCommand):
         else:
             # FIXME: need a more abstract credentials class -akl
             auth=config.SshAuth({'name':"clioptions",
-                                        'username':self.options.username,
-                                        'password':self.options.password,
-                                        'type':'ssh'})
+                                        'username': self.options.username,
+                                        'password': user_password,
+                                        'type': 'ssh'})
             self.config.add_auth(auth)
             # if we are specifing auth stuff not in the config, add it to
             # the config class as "clioptions" and set the auth name to
@@ -226,7 +231,8 @@ class ScanCommand(CliCommand):
         
         fileobj = sys.stdout
         if self.options.reportfile:
-            fileobj = open(os.path.expanduser(os.path.expandvars(self.options.reportfile)), "w")
+            fileobj = open(os.path.expanduser(os.path.expandvars(
+                self.options.reportfile)), "w")
         self.scanner.report(fileobj)
 
 class DumpConfigCommand(CliCommand):
