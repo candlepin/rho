@@ -77,7 +77,11 @@ class CliCommand(object):
     def _read_config(self, filename, passphrase):
         if os.path.exists(filename):
             confstr = crypto.read_file(filename, passphrase)
-            return config.ConfigBuilder().build_config(confstr)
+            try:
+                return config.ConfigBuilder().build_config(confstr)
+            except config.BadJsonException:
+                print self.parser.error(_("Cannot parse configuration, check encryption password"))
+
         else:
             print _("Creating new config file: %s" % filename)
             return config.Config()
@@ -101,7 +105,6 @@ class CliCommand(object):
 
         if len(sys.argv) < 2:
             print(self.parser.error(_("Please enter at least 2 args")))
-            sys.exit(1)
 
         if RHO_PASSPHRASE in os.environ:
             log.info("Using passphrase from %s environment variable." %
@@ -151,7 +154,8 @@ class ScanCommand(CliCommand):
 
     def _validate_options(self):
         CliCommand._validate_options(self)
-        if len(self.options.ranges) == 0 and not ( self.args or self.options.profiles):
+        if len(self.options.ranges) == 0 and not (self.args or 
+                self.options.profiles):
             self.parser.print_help()
             sys.exit(1)
 
@@ -161,12 +165,12 @@ class ScanCommand(CliCommand):
         if self.options.auth:
             auths = []
             for auth in self.options.auth:
-                a = self.config.get_auths(auth)
+                a = self.config.get_auth(auth)
                 if a:
                     auths.append(a)
             
         else:
-            # FIXME: need a more abstrct credentials class -akl
+            # FIXME: need a more abstract credentials class -akl
             auth=config.SshAuth({'name':"clioptions",
                                         'username':self.options.username,
                                         'password':self.options.password,
@@ -179,8 +183,8 @@ class ScanCommand(CliCommand):
 
         # this is all temporary, but make the tests pass
         if len(self.options.ranges) > 0:
-            # create a temporary profile named "clioptions" for anything specified
-            # on the command line
+            # create a temporary profile named "clioptions" for anything 
+            # specified on the command line
             ports = []
             if self.options.ports:
                 ports = self.options.ports.strip().split(",")
@@ -214,7 +218,7 @@ class DumpConfigCommand(CliCommand):
     """
 
     def __init__(self):
-        usage = _("usage: %prog dumpconfig [--encrypted-file]")
+        usage = _("usage: %prog dumpconfig [--config]")
         shortdesc = _("dumps the config file to stdout")
         desc = _("dumps the config file to stdout")
 
