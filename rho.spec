@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: rho
-Version: 0.0.1
+Version: 0.0.2
 Release:        1%{?dist}
 Summary: An SSH system profiler
 
@@ -52,5 +52,7 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Oct 21 2009 Devan Goodwin <dgoodwin@redhat.com> 0.0.2-1
+- Beginning to get usable.
 * Thu Oct 15 2009 Devan Goodwin <dgoodwin@redhat.com> 0.0.1-1
 - Initial packaging.
