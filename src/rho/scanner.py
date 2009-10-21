@@ -21,6 +21,7 @@ class ScanReport():
     csv_format = ["ip", "port", "uname.os", "uname.processor", 
                   "uname.hardware_platform", "redhat-release.name",
                   "redhat-release.version", "redhat-release.release",
+                  "systemid.system_id", "systemid.username", 
                   "auth.type", "auth.username", "auth.name", "error"]
     def __init__(self):
         self.ips = {}
