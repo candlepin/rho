@@ -281,13 +281,13 @@ class DumpConfigCommand(CliCommand):
         print(json.dumps(json.loads(content), sort_keys = True, indent = 4))
 
         
-class ProfileShowCommand(CliCommand):
+class ProfileListCommand(CliCommand):
     def __init__(self):
-        usage = _("usage: %prog profile show [options]")
-        shortdesc = _("show the network profiles")
-        desc = _("show the network profiles")
+        usage = _("usage: %prog profile list [options]")
+        shortdesc = _("list the network profiles")
+        desc = _("list the network profiles")
 
-        CliCommand.__init__(self, "profile show", usage, shortdesc, desc)
+        CliCommand.__init__(self, "profile list", usage, shortdesc, desc)
 
     def _do_command(self):
         if not self.config.list_profiles():
@@ -512,18 +512,18 @@ class AuthClearCommand(CliCommand):
         crypto.write_file(self.options.config, c, self.passphrase)
 
 # TODO not sure if we want to have separate classes for sub/subcommands
-class AuthShowCommand(CliCommand):
+class AuthListCommand(CliCommand):
     def __init__(self):
-        usage = _("usage: %prog auth show [options]")
-        shortdesc = _("show auth credentials")
-        desc = _("show authentication crendentials")
+        usage = _("usage: %prog auth list [options]")
+        shortdesc = _("list auth credentials")
+        desc = _("list authentication crendentials")
 
-        CliCommand.__init__(self, "auth show", usage, shortdesc, desc)
+        CliCommand.__init__(self, "auth list", usage, shortdesc, desc)
 
         self.parser.add_option("--keys", dest="keys", action="store_true",
-                help=_("shows auth keys"))
+                help=_("lists auth keys"))
         self.parser.add_option("--usernames", dest="usernames",
-                action="store_true", help=_("shows auth keys"))
+                action="store_true", help=_("lists auth keys"))
 
     def _do_command(self):
         if not self.config.list_auths():
