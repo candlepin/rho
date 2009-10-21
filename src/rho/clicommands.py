@@ -151,7 +151,8 @@ class ScanCommand(CliCommand):
 
     def _validate_options(self):
         CliCommand._validate_options(self)
-        if len(self.options.ranges) == 0 and not ( self.args or self.options.profiles):
+        if len(self.options.ranges) == 0 and not (self.args or 
+                self.options.profiles):
             self.parser.print_help()
             sys.exit(1)
 
@@ -161,12 +162,12 @@ class ScanCommand(CliCommand):
         if self.options.auth:
             auths = []
             for auth in self.options.auth:
-                a = self.config.get_auths(auth)
+                a = self.config.get_auth(auth)
                 if a:
                     auths.append(a)
             
         else:
-            # FIXME: need a more abstrct credentials class -akl
+            # FIXME: need a more abstract credentials class -akl
             auth=config.SshAuth({'name':"clioptions",
                                         'username':self.options.username,
                                         'password':self.options.password,
