@@ -79,3 +79,9 @@ class CliCommandsTests(unittest.TestCase):
         # Should fail scanning range without a username:
         self.assertRaises(SystemExit, self._run_test, ScanCommand(),
                 ['scan', '--range=192.168.1.1'])
+
+    def test_scan_range_auth_and_username(self):
+        # Should fail scanning range without a username:
+        self.assertRaises(SystemExit, self._run_test, ScanCommand(),
+                ['scan', '--range=192.168.1.1', '--auth=blerg',
+                    '--username=bob'])
