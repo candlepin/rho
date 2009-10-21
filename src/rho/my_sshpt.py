@@ -9,6 +9,10 @@
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 #
 
+import gettext
+t = gettext.translation('rho', 'locale', fallback=True)
+_ = t.ugettext
+
 import config
 #import ssh_jobs
 # Import built-in Python modules

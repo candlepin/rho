@@ -58,3 +58,7 @@ class CliCommandsTests(unittest.TestCase):
                                                  'test/data/encrypted.data'])
         except SystemExit:
             pass
+
+    def test_scan_bad_range_options(self):
+        # Should fail scanning range without a username:
+        self._run_test(ScanCommand(), ['scan', '--range=192.168.1.1'])
