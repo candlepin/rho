@@ -16,6 +16,8 @@ import ssh_jobs
 
 class ScanReport():
 
+    # rho_cmds and the list of rho_cmd_classes in scanner.Scanner to get
+    # an idea what fields are available for reports
     csv_format = ["ip", "port", "uname.os", "uname.processor", 
                   "uname.hardware_platform", "redhat-release.name",
                   "redhat-release.version", "redhat-release.release",
@@ -57,8 +59,13 @@ class Scanner():
     def __init__(self, config=None):
         self.config = config
         self.profiles = []
-#        self.default_rho_cmd_classes= [rho_cmds.UnameRhoCmd]
-        self.default_rho_cmd_classes = [rho_cmds.UnameRhoCmd, rho_cmds.RedhatReleaseRhoCmd]
+
+        # FIXME: we could probably hook this via a plugin/module loader to
+        # make it more dynamic... -akl
+        self.default_rho_cmd_classes = [rho_cmds.UnameRhoCmd, 
+                                        rho_cmds.RedhatReleaseRhoCmd,
+                                        rho_cmds.InstnumRhoCmd,
+                                        rho_cmds.SystemIdRhoCmd]
         self.ssh_jobs = ssh_jobs.SshJobs()
         self.output = []
         self.auths = []

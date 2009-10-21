@@ -69,7 +69,6 @@ class UnameRhoCmd(RhoCmd):
         if not self.cmd_results[3][1]:
             self.data['%s.hardware_platform' % self.name] = self.cmd_results[3][0].strip()
 
-
 class RedhatReleaseRhoCmd(RhoCmd):
     name = "redhat-release"
     cmd_strings = ["""rpm -q --queryformat "%{NAME}\n%{VERSION}\n%{RELEASE}\n" --whatprovides redhat-release"""]
@@ -98,6 +97,27 @@ class ScriptRhoCmd(RhoCmd):
         self.data['%s.output' % self.name] = self.cmd_results[0][0]
         self.data['%s.error' % self.name] = self.cmd_results[0][1]
         self.data['%s.command' % self.name] = self.command
+
+class GetFileRhoCmd(RhoCmd):
+    name = "file"
+    cmd_strings = []
+    
+    def __init__(self):
+        self.cmd_string_template = "if [ -f %s ] ; then cat %s ; fi"
+        self.cmd_strings = [self.cmd_string_template % (self.filename, self.filename)]
+        RhoCmd.__init__(self)
+
+    def parse_data(self):
+        self.data["%s.contents" % self.name] = "".join(self.cmd_results[0])
+
+class InstnumRhoCmd(GetFileRhoCmd):
+    name = "instnum"
+    filename = "/etc/syconfig/rhn/instnum"
+
+
+class SystemIdRhoCmd(GetFileRhoCmd):
+    name = "systemid"
+    filename = "/etc/sysconfig/rhn/systemid"
 
 # the list of commands to run on each host
 class RhoCmdList():
