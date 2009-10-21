@@ -10,6 +10,7 @@
 #
 """cmds to run on machines being inventory"""
 
+import string
 # for parsing systemid
 import xmlrpclib
 
@@ -116,8 +117,10 @@ class GetFileRhoCmd(RhoCmd):
 
 class InstnumRhoCmd(GetFileRhoCmd):
     name = "instnum"
-    filename = "/etc/syconfig/rhn/install-num"
+    filename = "/etc/sysconfig/rhn/install-num"
 
+    def parse_data(self):
+        self.data["%s.instnum" % self.name] =  string.strip(self.cmd_results[0][0])
 
 class SystemIdRhoCmd(GetFileRhoCmd):
     name = "systemid"
