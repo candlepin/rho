@@ -126,8 +126,6 @@ class ScanCommand(CliCommand):
 
         CliCommand.__init__(self, "scan", usage, shortdesc, desc)
 
-        self.parser.add_option("--all", dest="all", action="store_true",
-                help=_("remove ALL profiles"))
         self.parser.add_option("--range", dest="ranges", action="append",
                 metavar="RANGE", default=[],
                 help=_("IP range to scan. See 'man rho' for supported formats."))
