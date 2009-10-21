@@ -33,7 +33,12 @@ from rho import ssh_jobs
 RHO_PASSPHRASE = "RHO_PASSPHRASE"
 DEFAULT_RHO_CONF = "~/.rho.conf"
 
-
+def _read_key_file(filename):
+    keyfile = open(os.path.expanduser(
+        os.path.expandvars(filename)), "r")
+    sshkey = keyfile.read()
+    keyfile.close()
+    return sshkey
 
 class CliCommand(object):
     """ Base class for all sub-commands. """
@@ -271,6 +276,64 @@ class ProfileShowCommand(CliCommand):
             # make this a pretty table
             print(g.to_dict())
 
+class AuthEditCommand(CliCommand):
+    def __init__(self):
+        usage = _("usage: %prog auth edit [options]")
+        shortdesc = _("edits a given auth")
+        desc = _("edit a given auth")
+
+        CliCommand.__init__(self, "auth edit", usage, shortdesc, desc)
+
+        self.parser.add_option("--name", dest="name", metavar="NAME",
+                help=_("NAME of the auth - REQUIRED"))
+
+        self.parser.add_option("--file", dest="filename", metavar="FILENAME",
+                help=_("file containing SSH key"))
+        self.parser.add_option("--username", dest="username",
+                metavar="USERNAME",
+                help=_("user name for authenticating against target machine - REQUIRED"))
+        self.parser.add_option("--password", dest="password",
+                metavar="PASSWORD",
+                help=_("password for authenticating against target machine"))
+
+        self.parser.set_defaults(password="")
+
+    def _validate_options(self):
+        CliCommand._validate_options(self)
+
+        if not self.options.name:
+            self.parser.print_help()
+            sys.exit(1)
+
+    def _do_command(self):
+        a = self.config.get_auth(self.options.name)
+
+        if self.options.username:
+            a.username = self.options.username
+
+        if self.options.password:
+            a.password = self.options.password
+
+        if self.options.filename:
+            sshkey = _read_key_file(self.options.filename)
+
+            if a.type == config.SSH_TYPE:
+                cred = config.SshKeyAuth({"name": a.name,
+                                          "key":sshkey,
+                                          "username": a.username,
+                                          "password": a.password,
+                                          "type":"ssh_key"})
+                # remove the old ssh, and new key type
+                self.config.remove_auth(self.options.name)
+                self.config.add_auth(cred)
+
+            elif a.type == config.SSH_KEY_TYPE:
+                a.key = sshkey
+
+        c = config.ConfigBuilder().dump_config(self.config)
+        crypto.write_file(self.options.config, c, self.passphrase)
+        print(_("Auth %s updated" % self.options.name))
+
 class ProfileEditCommand(CliCommand):
     def __init__(self):
         usage = _("usage: %prog profile edit [options]")
@@ -495,24 +558,20 @@ class AuthAddCommand(CliCommand):
     def _do_command(self):
         if self.options.filename:
             # using sshkey
-            sshkeyfile = open(os.path.expanduser(
-                os.path.expandvars(self.options.filename)), "r")
-            sshkey = sshkeyfile.read()
-            sshkeyfile.close()
+            sshkey = _read_key_file(self.options.filename)
 
             cred = config.SshKeyAuth({"name": self.options.name,
-                                             "key":sshkey,
-                                             "username": self.options.username,
-                                             "password": self.options.password,
-                                             "type":"ssh"})
+                                      "key":sshkey,
+                                      "username": self.options.username,
+                                      "password": self.options.password,
+                                      "type":"ssh_key"})
 
             self._save_cred(cred)
-
 
         elif self.options.username and self.options.password:
             # using ssh
             cred = config.SshAuth({"name":self.options.name,
-                                             "username":self.options.username,
-                                             "password":self.options.password,
-                                             "type":"ssh"})
+                                   "username":self.options.username,
+                                   "password":self.options.password,
+                                   "type":"ssh"})
             self._save_cred(cred)
