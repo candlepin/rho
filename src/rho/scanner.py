@@ -6,6 +6,8 @@
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 #
 
+import csv
+
 import config
 import rho_cmds
 import rho_ips
@@ -14,8 +16,10 @@ import ssh_jobs
 
 class ScanReport():
 
-    format = """%(ip)s,%(port)s,%(uname.os)s,%(uname.processor)s,%(uname.hardware_platform)s,%(redhat-release.name)s,%(redhat-release.version)s,%(redhat-release.release)s,%(auth.type)s,%(auth.username)s,%(auth.name)s,"""
-    error_format = """%(ip)s,,,,,,,,,,,%(error)s"""
+    csv_format = ["ip", "port", "uname.os", "uname.processor", 
+                  "uname.hardware_platform", "redhat-release.name",
+                  "redhat-release.version", "redhat-release.release",
+                  "auth.type", "auth.username", "auth.name", "error"]
     def __init__(self):
         self.ips = {}
         # ips is a dict of 
@@ -25,7 +29,6 @@ class ScanReport():
         data = {}
         for rho_cmd in ssh_job.rho_cmds:
             data.update(rho_cmd.data)
-#        print data
         if ssh_job.error:
             self.ips[ssh_job.ip] = {'ip': ssh_job.ip,
                                     'port':ssh_job.port,
@@ -42,19 +45,13 @@ class ScanReport():
                                     'auth.username': ssh_job.auth.username,
                                     'auth.password': ssh_job.auth.password}
         self.ips[ssh_job.ip].update(data)
-                                
 
-    def report(self):
-
-        # hah, need to print out a real header
-        print
-        print "#,%s" % self.format
-        for ip in self.ips.keys():
-            if self.ips[ip].get("error"):
-                print self.error_format % self.ips[ip]
-            else:
-                print self.format % self.ips[ip]
-            # ip, uname.os, uname.process, uname.hardware_platform, redhat-release.name, redhat-release.version, redhat-release.release
+    def report(self, fileobj):
+        dict_writer = csv.DictWriter(fileobj, self.csv_format, extrasaction='ignore')
+        ip_list = self.ips.keys()
+        ip_list.sort()
+        for ip in ip_list:
+            dict_writer.writerow(self.ips[ip])
 
 class Scanner():
     def __init__(self, config=None):
@@ -102,7 +99,6 @@ class Scanner():
                 ssh_job_list.append(sshj)
             self.ssh_jobs.ssh_jobs = ssh_job_list
             self.run_scan()
-            self.report()
 
         return missing_profiles
 
@@ -125,8 +121,8 @@ class Scanner():
         self.out_queue = self.ssh_jobs.run_jobs(callback=self._callback)
         self.out_queue.join()
 
-    def report(self):
-        self.ssh_jobs.report.report()
+    def report(self, fileobj):
+        self.ssh_jobs.report.report(fileobj)
 
     def _callback(self, resultlist=[]):
         for result in resultlist:

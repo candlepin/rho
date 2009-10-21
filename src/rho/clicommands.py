@@ -140,6 +140,9 @@ class ScanCommand(CliCommand):
         self.parser.add_option("--auth", dest="auth", action="append",
                 metavar="AUTH",
                 help=_("auth class name to use"))
+        self.parser.add_option("--output", dest="reportfile",
+                metavar="REPORTFILE",
+                help=_("write out to this file"))
         self.parser.add_option("--profile", dest="profiles", action="append",
                metavar="PROFILE",
                help=_("profile class to scan")),
@@ -199,7 +202,11 @@ class ScanCommand(CliCommand):
                 print _("The following profile names were not found:")
                 for name in missing:
                     print name
-
+        
+        fileobj = sys.stdout
+        if self.options.reportfile:
+            fileobj = open(os.path.expanduser(os.path.expandvars(self.options.reportfile)), "w")
+        self.scanner.report(fileobj)
 
 class DumpConfigCommand(CliCommand):
     """

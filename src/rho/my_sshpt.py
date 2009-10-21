@@ -31,7 +31,7 @@ class OutputThread(GenericThread):
         output_queue: Queue.Queue(): The queue to use for incoming messages.
         verbose - Boolean: Whether or not we should output to stdout.
     """
-    def __init__(self, output_queue, verbose=True, outfile=None, report=None):
+    def __init__(self, output_queue, verbose=True, report=None):
         """Name ourselves and assign the variables we were instanciated with."""
         threading.Thread.__init__(self, name="OutputThread")
         self.output_queue = output_queue
@@ -63,7 +63,6 @@ class OutputThread(GenericThread):
                 print traceback.print_tb(sys.exc_info()[2])
 #                self.output_queue.task_done()
                 self.quit()
-                raise
 #            self.write(queueObj)
             # somewhere in here, we return the data to...?
             self.output_queue.task_done()
@@ -122,10 +121,10 @@ class SSHThread(GenericThread):
 #            self.ssh_connect_queue.task_done()
             self.quit()
 
-def startOutputThread(verbose, outfile, report):
+def startOutputThread(verbose, report):
     """Starts up the OutputThread (which is used by SSHThreads to print/write out results)."""
     output_queue = Queue.Queue()
-    output_thread = OutputThread(output_queue, verbose, outfile, report)
+    output_thread = OutputThread(output_queue, verbose,report)
     output_thread.setDaemon(True)
     output_thread.start()
     return output_queue
@@ -168,13 +167,11 @@ def get_pkey(auth):
     # this is lame, but there doesn't appear to be any API to just
     # DWIM with the the key_data, I have to figure out if its RSA or DSA/DSS myself
     if fo.readline().find("-----BEGIN DSA PRIVATE KEY-----") > -1:
-        print "dsa"
         fo.seek(0)
         pkey = paramiko.DSSKey.from_private_key(fo, password=auth.password)
         return pkey
     fo.seek(0)
     if fo.readline().find("-----BEGIN RSA PRIVATE KEY-----") > -1:
-        print "rsa"
         fo.seek(0)
         pkey = paramiko.RSAKey.from_private_key(fo, password=auth.password)
         return pkey

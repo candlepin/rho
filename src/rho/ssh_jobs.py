@@ -107,7 +107,7 @@ class SshJobs():
         if len(self.ssh_jobs) < self.max_threads:
             self.max_threads = len(self.ssh_jobs)
         
-        self.output_queue = my_sshpt.startOutputThread(self.verbose, self.output, report=self.report)
+        self.output_queue = my_sshpt.startOutputThread(self.verbose, report=self.report)
         self.ssh_connect_queue = my_sshpt.startSSHQueue(self.output_queue, self.max_threads)
 
         while self.ssh_jobs:
