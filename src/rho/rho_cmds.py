@@ -8,9 +8,10 @@
 # along with this software; if not, see
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 #
-
 """cmds to run on machines being inventory"""
 
+# for parsing systemid
+import xmlrpclib
 
 # basic idea, wrapper classes around the cli cmds we run on the machines
 # to be inventories. the rho_cmd class will have a string for the 
@@ -46,7 +47,10 @@ class RhoCmd():
         self.cmd_results = results
         # where do we error check? In the parse_data() step I guess... -akl
         # 
+        # FIXME: how do we handle errors in rho_cmds? we could add a "errors" list
+        # to the ssh_job and include the info about each job that failed? --akl
         self.parse_data()
+
 
     # subclasses need to implement this, this is what parses the output
     # and packs in the self.data.
@@ -112,12 +116,25 @@ class GetFileRhoCmd(RhoCmd):
 
 class InstnumRhoCmd(GetFileRhoCmd):
     name = "instnum"
-    filename = "/etc/syconfig/rhn/instnum"
+    filename = "/etc/syconfig/rhn/install-num"
 
 
 class SystemIdRhoCmd(GetFileRhoCmd):
     name = "systemid"
     filename = "/etc/sysconfig/rhn/systemid"
+
+    def parse_data(self):
+        # if file is empty, or we get errors, skip...
+        if not self.cmd_results[0][0] or self.cmd_results[0][1]:
+            # no file, nothing to parse
+            return
+        blob = "".join(self.cmd_results[0])
+        # loads returns param/methodname, we just want the params
+        # and only the first param at that
+        systemid = xmlrpclib.loads(blob)[0][0]
+        for key in systemid:
+            self.data["%s.%s" % (self.name, key)] = systemid[key]
+        
 
 # the list of commands to run on each host
 class RhoCmdList():
