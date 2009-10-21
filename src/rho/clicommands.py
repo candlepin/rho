@@ -145,15 +145,24 @@ class ScanCommand(CliCommand):
                 metavar="REPORTFILE",
                 help=_("write out to this file"))
         self.parser.add_option("--profile", dest="profiles", action="append",
-               metavar="PROFILE",
+               metavar="PROFILE", default=[],
                help=_("profile class to scan")),
 
         self.parser.set_defaults(ports="22")
 
     def _validate_options(self):
         CliCommand._validate_options(self)
-        if len(self.options.ranges) == 0 and not (self.args or 
-                self.options.profiles):
+
+        # We support two ways to specify profiles, with --profile=blah, or
+        # without --profile= and just list profiles in the command. Hack here
+        # to treat those raw args as --profiles so the subsequent code has just
+        # one path.
+        self.options.profiles.extend(self.args)
+
+        hasRanges = len(self.options.ranges) > 0
+        hasProfiles = len(self.options.profiles) > 0
+
+        if not hasRanges and not hasProfiles:
             self.parser.print_help()
             sys.exit(1)
 
@@ -192,14 +201,9 @@ class ScanCommand(CliCommand):
             self.config.add_profile(g)
             self.scanner.scan_profiles(["clioptions"])
             
-        if self.args or self.options.profiles:
+        if len(self.options.profiles) > 0:
             # seems like a lot of code to cat two possibly None lists...
-            profiles = []
-            if self.args:
-                profiles.extend(self.args)
-            if self.options.profiles:
-                profiles.extend(self.options.profiles)
-            missing = self.scanner.scan_profiles(profiles)
+            missing = self.scanner.scan_profiles(self.options.profiles)
             if missing:
                 print _("The following profile names were not found:")
                 for name in missing:
