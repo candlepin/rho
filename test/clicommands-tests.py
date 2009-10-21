@@ -40,7 +40,7 @@ class CliCommandsTests(unittest.TestCase):
         sys.stderr = self.orig_stderr
 
     def _run_test(self, cmd, args):
-        os.environ[RHO_PASSPHRASE] = "blerg"
+        os.environ[RHO_PASSWORD] = "blerg"
 
         sys.argv = ["bin/rho" ]  + args + ["--config", self.conffile]
         cmd.main()

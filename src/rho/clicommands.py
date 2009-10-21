@@ -30,7 +30,8 @@ from rho import scanner
 from rho import ssh_jobs
 
 
-RHO_PASSPHRASE = "RHO_PASSPHRASE"
+RHO_PASSWORD = "RHO_PASSWORD"
+RHO_AUTH_PASSWORD = "RHO_AUTH_PASSWORD"
 DEFAULT_RHO_CONF = "~/.rho.conf"
 
 def _read_key_file(filename):
@@ -39,6 +40,16 @@ def _read_key_file(filename):
     sshkey = keyfile.read()
     keyfile.close()
     return sshkey
+
+def get_password(for_username, env_var_to_check):
+    password = ""
+    if env_var_to_check in os.environ:
+        log.info("Using password from %s environment variable." %
+                env_var_to_check)
+        password = os.environ[env_var_to_check]
+    else:
+        password = getpass(_("Password for '%s':" % for_username))
+    return password
 
 class CliCommand(object):
     """ Base class for all sub-commands. """
@@ -111,10 +122,10 @@ class CliCommand(object):
         if len(sys.argv) < 2:
             print(self.parser.error(_("Please enter at least 2 args")))
 
-        if RHO_PASSPHRASE in os.environ:
+        if RHO_PASSWORD in os.environ:
             log.info("Using passphrase from %s environment variable." %
-                    RHO_PASSPHRASE)
-            self.passphrase = os.environ[RHO_PASSPHRASE]
+                    RHO_PASSWORD)
+            self.passphrase = os.environ[RHO_PASSWORD]
         else:
             self.passphrase = getpass(_("Config Encryption Password:"))
 
@@ -186,9 +197,10 @@ class ScanCommand(CliCommand):
 
         # If username was specified, we need to prompt for a password
         # to go with it:
+        user_password = ""
         if self.options.username:
-            user_password = getpass(_("Password for '%s':" %
-                self.options.username))
+            user_password = get_password(self.options.username,
+                    RHO_AUTH_PASSWORD)
 
         if len(self.options.auth) > 0:
             auths = []
@@ -536,11 +548,6 @@ class AuthAddCommand(CliCommand):
         self.parser.add_option("--username", dest="username",
                 metavar="USERNAME",
                 help=_("user name for authenticating against target machine - REQUIRED"))
-        self.parser.add_option("--password", dest="password",
-                metavar="PASSWORD",
-                help=_("password for authenticating against target machine"))
-
-        self.parser.set_defaults(password="")
 
     def _validate_options(self):
         CliCommand._validate_options(self)
@@ -549,8 +556,8 @@ class AuthAddCommand(CliCommand):
             self.parser.print_help()
             sys.exit(1)
 
-        # need to pass in file or username and password combo
-        if not self.options.username or not self.options.password and not self.options.filename:
+        # need to pass in file or username:
+        if not self.options.username:
             self.parser.print_help()
             sys.exit(1)
 
@@ -565,22 +572,27 @@ class AuthAddCommand(CliCommand):
         crypto.write_file(self.options.config, c, self.passphrase)
         
     def _do_command(self):
+
+        auth_password = get_password(self.options.username,
+                RHO_AUTH_PASSWORD)
+
         if self.options.filename:
             # using sshkey
             sshkey = _read_key_file(self.options.filename)
 
             cred = config.SshKeyAuth({"name": self.options.name,
-                                      "key":sshkey,
-                                      "username": self.options.username,
-                                      "password": self.options.password,
-                                      "type":"ssh_key"})
+                "key": sshkey,
+                "username": self.options.username,
+                "password": auth_password,
+                "type": "ssh_key"})
 
             self._save_cred(cred)
 
-        elif self.options.username and self.options.password:
+
+        elif self.options.username:
             # using ssh
             cred = config.SshAuth({"name":self.options.name,
-                                   "username":self.options.username,
-                                   "password":self.options.password,
-                                   "type":"ssh"})
+                "username": self.options.username,
+                "password": auth_password,
+                "type": "ssh"})
             self._save_cred(cred)
