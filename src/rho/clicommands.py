@@ -281,6 +281,34 @@ class DumpConfigCommand(CliCommand):
         print(json.dumps(json.loads(content), sort_keys = True, indent = 4))
 
         
+class ProfileShowCommand(CliCommand):
+    def __init__(self):
+        usage = _("usage: %prog profile show [options]")
+        shortdesc = _("show a network profile")
+        desc = _("show a network profile")
+
+        CliCommand.__init__(self, "profile show", usage, shortdesc, desc)
+
+        self.parser.add_option("--name", dest="name", metavar="NAME",
+                help=_("auth credential name - REQUIRED"))
+
+    def _validate_options(self):
+        CliCommand._validate_options(self)
+
+        if not self.options.name:
+            self.parser.print_help()
+            sys.exit(1)
+
+    def _do_command(self):
+        if not self.config.list_profiles():
+            print(_("No profiles found"))
+
+        p = self.config.get_profile(self.options.name)
+        if p:
+            print(p.to_dict())
+        else:
+            print(_("No profile '%s' found.") % self.options.name)
+
 class ProfileListCommand(CliCommand):
     def __init__(self):
         usage = _("usage: %prog profile list [options]")
@@ -511,7 +539,39 @@ class AuthClearCommand(CliCommand):
         c = config.ConfigBuilder().dump_config(self.config)
         crypto.write_file(self.options.config, c, self.passphrase)
 
-# TODO not sure if we want to have separate classes for sub/subcommands
+class AuthShowCommand(CliCommand):
+    def __init__(self):
+        usage = _("usage: %prog auth show [options]")
+        shortdesc = _("show auth credential")
+        desc = _("show authentication crendential")
+
+        CliCommand.__init__(self, "auth show", usage, shortdesc, desc)
+
+        self.parser.add_option("--name", dest="name", metavar="NAME",
+                help=_("auth credential name - REQUIRED"))
+
+    def _validate_options(self):
+        CliCommand._validate_options(self)
+
+        if not self.options.name:
+            self.parser.print_help()
+            sys.exit(1)
+
+    def _do_command(self):
+        if not self.config.list_auths():
+            print(_("No auth credentials found"))
+
+        c = self.config.get_auth(self.options.name)
+        if c:
+            if c.type == "ssh_key":
+                c1 = dict(**c.to_dict())
+                del c1["key"]
+                print(c1)
+            else:
+                print(c.to_dict())
+        else:
+            print(_("No auth '%s' found.") % self.options.name)
+
 class AuthListCommand(CliCommand):
     def __init__(self):
         usage = _("usage: %prog auth list [options]")
