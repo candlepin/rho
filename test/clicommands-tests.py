@@ -57,6 +57,10 @@ class CliCommandsTests(unittest.TestCase):
     def test_profile_add(self):
         self._run_test(ProfileAddCommand(), ["profile", "add", "--name", "profilename"])
 
+    def test_profile_add_duplicate(self):
+        self.test_profile_add()
+        self.test_profile_add()
+
     def test_auth_list(self):
         self._run_test(AuthListCommand(), ["auth", "list"])
 
@@ -66,6 +70,10 @@ class CliCommandsTests(unittest.TestCase):
         except SystemExit:
             # we expect this to throw a optparse.parse.error
             pass
+
+    def test_auth_add_duplicate(self):
+        self.test_auth_add()
+        self.test_auth_add()
 
     def test_dumpconfig(self):
         try:
