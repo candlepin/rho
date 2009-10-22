@@ -25,7 +25,8 @@ Q dumpconfig contains a stanza called "groups". For consistency reasons we
 
 * adding a duplicate profile, causes traceback
 
-* rho scan --ip doesnt work
+X rho scan --ip doesnt work
+(--ip removed)
 
 X profile clear --name does not work 
 
