@@ -18,10 +18,12 @@ class ScanReport():
 
     # rho_cmds and the list of rho_cmd_classes in scanner.Scanner to get
     # an idea what fields are available for reports
-    csv_format = ["ip", "port", "uname.os", "uname.processor", 
+    csv_format = ["ip", "port", "uname.os", "uname.kernel", "uname.processor", 
                   "uname.hardware_platform", "redhat-release.name",
                   "redhat-release.version", "redhat-release.release",
                   "systemid.system_id", "systemid.username", "instnum.instnum", 
+                  "etc-release.etc-release", "cpu.count",
+                  #"etc-issue.etc-issue",
                   "auth.type", "auth.username", "auth.name", "error"]
     def __init__(self):
         self.ips = {}
@@ -66,7 +68,10 @@ class Scanner():
         self.default_rho_cmd_classes = [rho_cmds.UnameRhoCmd, 
                                         rho_cmds.RedhatReleaseRhoCmd,
                                         rho_cmds.InstnumRhoCmd,
-                                        rho_cmds.SystemIdRhoCmd]
+                                        rho_cmds.SystemIdRhoCmd,
+                                        rho_cmds.CpuRhoCmd,
+                                        rho_cmds.EtcReleaseRhoCmd,
+                                        rho_cmds.EtcIssueRhoCmd]
         self.ssh_jobs = ssh_jobs.SshJobs()
         self.output = []
         self.auths = []

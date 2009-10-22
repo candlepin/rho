@@ -65,14 +65,16 @@ class RhoCmd():
     
 class UnameRhoCmd(RhoCmd):
     name = "uname"
-    cmd_strings = ["uname -s", "uname -n", "uname -p", "uname -i"]
+    cmd_strings = ["uname -s", "uname -n", "uname -p", "uname -r", "uname -a", "uname -i"]
 
     def parse_data(self):
         self.data['%s.os' % self.name] = self.cmd_results[0][0].strip()
         self.data['%s.hostname' % self.name] = self.cmd_results[1][0].strip()
         self.data['%s.processor' % self.name] = self.cmd_results[2][0].strip()
+        self.data['%s.kernel' % self.name] = self.cmd_results[3][0].strip()
+        self.data['%s.all' % self.name] = self.cmd_results[4][0].strip()
         if not self.cmd_results[3][1]:
-            self.data['%s.hardware_platform' % self.name] = self.cmd_results[3][0].strip()
+            self.data['%s.hardware_platform' % self.name] = self.cmd_results[5][0].strip()
 
 class RedhatReleaseRhoCmd(RhoCmd):
     name = "redhat-release"
@@ -88,6 +90,22 @@ class RedhatReleaseRhoCmd(RhoCmd):
         self.data['%s.name' % self.name] = fields[0].strip()
         self.data['%s.version' % self.name ] = fields[1].strip()
         self.data['%s.release' % self.name ] = fields[2].strip()
+
+# take a blind drunken flailing stab at guessing the os
+class EtcReleaseRhoCmd(RhoCmd):
+    name = "etc-release"
+    def __init__(self):
+        release_files = ["/etc/redhat-release", "/etc/release",
+                         "/etc/debian_release", "/etc/Suse-release",
+                         "/etc/mandriva-release", "/etc/enterprise-release",
+                         "/etc/ovs-release", "/etc/arch-release"]
+        cmd_string = """for i in %s; do if [ -f "$i" ] ; then cat $i; fi ;  done""" % string.join(release_files, ' ')
+        self.cmd_strings = [cmd_string]
+        RhoCmd.__init__(self)
+ 
+    def parse_data(self):
+        self.data['%s.etc-release' % self.name] = string.join(self.cmd_results[0]).strip()
+
 
 class ScriptRhoCmd(RhoCmd):
     name = "script"
@@ -115,6 +133,30 @@ class GetFileRhoCmd(RhoCmd):
     def parse_data(self):
         self.data["%s.contents" % self.name] = "".join(self.cmd_results[0])
 
+# linux only...
+class CpuRhoCmd(RhoCmd):
+    name = "cpu"
+    
+    def __init__(self):
+        self.cmd_strings = ["cat /proc/cpuinfo"] 
+        RhoCmd.__init__(self)
+
+    def parse_data(self):
+        cpu_count = 0
+        for line in self.cmd_results[0][0].splitlines():
+            if line.find("processor") == 0:
+                cpu_count = cpu_count + 1
+        self.data["%s.count" % self.name] = cpu_count
+
+
+
+class EtcIssueRhoCmd(GetFileRhoCmd):
+    name = "etc-issue"
+    filename = "/etc/issue"
+
+    def parse_data(self):
+        self.data["%s.etc-issue" % self.name] = string.strip(self.cmd_results[0][0])
+    
 class InstnumRhoCmd(GetFileRhoCmd):
     name = "instnum"
     filename = "/etc/sysconfig/rhn/install-num"
