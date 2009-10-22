@@ -33,6 +33,9 @@ X profile clear --name does not work
 
 Q no dsa keys - can add using 'auth add' but then scan fails with "10.10.77.239,,,,,,,,,,connection failed using auth class: myvm not a valid RSA private key file"
 X * "connection failed using auth class: mypw Authentication failed." or "timed out". Need to include what IP this was.
+
+* we write stuff to stdout that shoudl be stderr, needs clean up
+
 ===============
 X = fixed
 Q = dev says it's fixed but noone else has tested it, hahahahaha
