@@ -27,4 +27,4 @@ def setup_logging(filename, level):
     logging.basicConfig(filename=filename, level=log_level, filemode='w',
             format="%(asctime)s %(levelname)s - %(message)s (%(module)s/%(lineno)d)")
 
-log = logging.getLogger()
+log = logging.getLogger("rho")
