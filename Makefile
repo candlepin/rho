@@ -49,11 +49,6 @@ confrestore:
 install: build
 	$(PYTHON) setup.py install -f
 
-install_rpm:
-	-rpm -Uvh rpm-build/func-$(VERSION)-$(RELEASE)$(shell rpm -E "%{?dist}").noarch.rpm
-
-clean_rpms:
-	-rpm -e rho
 
 tests:
 	-nosetests -d -v -a '!slow' 
@@ -68,14 +63,3 @@ pyflakes:
 money: clean
 	-sloccount --addlang "makefile" $(TOPDIR) $(PYDIRS) 
 
-rpms: build sdist
-	mkdir -p rpm-build
-	cp dist/*.gz rpm-build/
-	rpmbuild --define "_topdir %(pwd)/rpm-build" \
-	--define "_builddir %{_topdir}" \
-	--define "_rpmdir %{_topdir}" \
-	--define "_srcrpmdir %{_topdir}" \
-	--define '_rpmfilename %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm' \
-	--define "_specdir %{_topdir}" \
-	--define "_sourcedir  %{_topdir}" \
-	-ba func.spec
