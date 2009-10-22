@@ -188,16 +188,13 @@ def paramikoConnect(ssh_job):
     # Uncomment this line to turn on Paramiko debugging (good for troubleshooting why some servers report connection failures)
 #    paramiko.util.log_to_file('paramiko.log')
 
-    for auth in ssh_job.auths:
-        pkey = None
 
-        # ugh...
-        for port in ssh_job.ports:
+    for port in ssh_job.ports:
+        for auth in ssh_job.auths:
             pkey = get_pkey(auth)
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-            # reset this for each attempt
             ssh_job.error = None
             try:
                 ssh.connect(ssh_job.ip, port=int(port), 
@@ -209,17 +206,18 @@ def paramikoConnect(ssh_job):
                             #allow_agent=False,
                             look_for_keys=False,
                             timeout=ssh_job.timeout)
+                ssh_job.port = port
+                ssh_job.auth = auth
+                break
             except paramiko.PasswordRequiredException, detail:
-                err = _("connection to %s:%s failed using auth class %s with error: ") % (ssh_job.ip, port, auth.name,)
-                err = err + str(detail)
+                err = _("connection to %s:%s failed using auth class \"%s\" with error: \"%s\"") % (ssh_job.ip, port, auth.name, str(detail))
                 ssh_job.error = err
                 ssh = str(detail)
                 # set the successful auth type and port
             except Exception, detail:
                 # Connecting failed (for whatever reason)
                 #FIXME: log this when the logger is read to log. Log.
-                err = _("connection to %s:%s failed using auth class %s with error: ") % (ssh_job.ip, port, auth.name,)
-                err = err + str(detail)
+                err = _("connection to %s:%s failed using auth class \"%s\" with error: \"%s\"") % (ssh_job.ip, port, auth.name,str(detail))
                 print err
                 ssh_job.error = err
                 ssh = str(detail)
@@ -228,13 +226,7 @@ def paramikoConnect(ssh_job):
 #                print sys.exc_info()
 #                print traceback.print_tb(sys.exc_info()[2])
                 continue
-#            ssh_job.auth = auth
-            ssh_job.port = port
-            break
-        ssh_job.auth = auth
-        break
     return ssh
-
 
 def executeCommands(transport, rho_commands):
     host = transport.get_host_keys().keys()[0]
