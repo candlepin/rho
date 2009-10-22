@@ -549,6 +549,8 @@ class AuthShowCommand(CliCommand):
 
         self.parser.add_option("--name", dest="name", metavar="NAME",
                 help=_("auth credential name - REQUIRED"))
+        self.parser.add_option("--showkeys", dest="keys", action="store_true",
+                help=_("show ssh keys in the list"))
 
     def _validate_options(self):
         CliCommand._validate_options(self)
@@ -563,7 +565,7 @@ class AuthShowCommand(CliCommand):
 
         c = self.config.get_auth(self.options.name)
         if c:
-            if c.type == "ssh_key":
+            if c.type == "ssh_key" and not self.options.keys:
                 c1 = dict(**c.to_dict())
                 del c1["key"]
                 print(c1)
@@ -580,10 +582,8 @@ class AuthListCommand(CliCommand):
 
         CliCommand.__init__(self, "auth list", usage, shortdesc, desc)
 
-        self.parser.add_option("--keys", dest="keys", action="store_true",
-                help=_("lists auth keys"))
-        self.parser.add_option("--usernames", dest="usernames",
-                action="store_true", help=_("lists auth keys"))
+        self.parser.add_option("--showkeys", dest="keys", action="store_true",
+                help=_("show ssh keys in the list"))
 
     def _do_command(self):
         if not self.config.list_auths():
@@ -591,7 +591,13 @@ class AuthListCommand(CliCommand):
 
         for c in self.config.list_auths():
             # make this a pretty table
-            print(c.to_dict())
+            if c:
+                if c.type == "ssh_key" and not self.options.keys:
+                    c1 = dict(**c.to_dict())
+                    del c1["key"]
+                    print(c1)
+                else:
+                    print(c.to_dict())
 
 class AuthAddCommand(CliCommand):
     def __init__(self):
