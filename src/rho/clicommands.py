@@ -214,7 +214,7 @@ class ScanCommand(CliCommand):
         """
         cache = {}
         f = open(report_filename)
-        for row in csv.reader(open(report_filename)):
+        for row in csv.reader(f):
 
             if row[1] == '' or row[13] == '':
                 # Looks like we couldn't login to this machine last time.
@@ -227,6 +227,7 @@ class ScanCommand(CliCommand):
             cache[ip] = {'port': port, 'auth': authname}
             log.debug("Found cached results for: %s" % ip)
 
+        f.close()
         return cache
 
     def _do_command(self):
@@ -287,6 +288,7 @@ class ScanCommand(CliCommand):
             fileobj = open(os.path.expanduser(os.path.expandvars(
                 self.options.reportfile)), "w")
         self.scanner.report(fileobj)
+        fileobj.close()
 
 
 class DumpConfigCommand(CliCommand):
