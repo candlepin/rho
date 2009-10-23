@@ -185,11 +185,14 @@ def get_pkey(auth):
     return None
 
 def paramikoConnect(ssh_job):
-    """Connects to 'host' and returns a Paramiko transport object to use in further communications"""
-    # Uncomment this line to turn on Paramiko debugging (good for troubleshooting why some servers report connection failures)
-#    paramiko.util.log_to_file('paramiko.log')
+    """
+    Connects to 'host' and returns a Paramiko transport object to use 
+    in further communications
+    """
 
-
+    # FIXME: are these for loops right? We try to treat a password required
+    # exception differently, but I can't see what we're actually doing with 
+    # it.
     for port in ssh_job.ports:
         for auth in ssh_job.auths:
             pkey = get_pkey(auth)
@@ -217,7 +220,14 @@ def paramikoConnect(ssh_job):
             except paramiko.PasswordRequiredException, detail:
                 err = _("connection to %s:%s failed using auth class \"%s\" with error: \"%s\"") % (ssh_job.ip, port, auth.name, str(detail))
                 ssh_job.error = err
+
+                # FIXME: This is defined as a SSHCLient above, now it 
+                # becomes a string?
                 ssh = str(detail)
+
+                # FIXME: Something seems wrong here too, I added the continue
+                # to get past an issue where only the first auth was tried:
+
                 # set the successful auth type and port
                 continue
             except Exception, detail:
@@ -231,6 +241,9 @@ def paramikoConnect(ssh_job):
 #                print sys.exc_info()
 #                print traceback.print_tb(sys.exc_info()[2])
                 continue
+
+    # FIXME: Returning something here that's only defined in the for loop,
+    # this may be returning None?
     return ssh
 
 def executeCommands(transport, rho_commands):
