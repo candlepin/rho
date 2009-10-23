@@ -14,11 +14,11 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch: noarch
 BuildRequires: python-devel
 BuildRequires: python-setuptools
-BuildRequires: python-paramiko
+Requires: python-paramiko
 # Refactors in 0.7 break backward compat:
-BuildRequires: python-netaddr < 0.7
-BuildRequires: python-simplejson
-BuildRequires: python-crypto
+Requires: python-netaddr < 0.7
+Requires: python-simplejson
+Requires: python-crypto
 
 %description
 Rho is a tool for scanning your network, logging into systems via SSH, and
