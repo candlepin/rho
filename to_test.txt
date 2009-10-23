@@ -1,0 +1,73 @@
+auth types
+
+username/passwd:
+	both good
+	username that doesn't exist
+	bad password
+	username that doesnt exist and bad password
+
+rsa_key
+	rsa_key no passphrase
+		- malformed key
+		- good key, also on target machine
+		- key not on target machine
+		- good key, on target, no user
+		- good key, not on target, no user
+		- "" no shell for user	
+	
+
+	rsa_key with passphrase
+		- malformed key
+		- good key, on target, good passphrase
+		- good key, on target, bad passphrase
+		- good key, on target, good passphrase, no user
+		- good key, on target, bad passphrase, no user 
+		- good key, not on target, good passphrase
+		- good key, not on target, wrong passphrase
+		- "no shell for user"
+
+dsa_key
+        dsa_key no passphrase
+                - malformed key
+                - good key, also on target machine
+                - key not on target machine
+                - good key, on target, no user
+                - good key, not on target, no user
+                - "" no shell for user    
+
+
+        dsa_key with passphrase
+                - malformed key
+                - good key, on target, good passphrase
+                - good key, on target, bad passphrase
+                - good key, on target, good passphrase, no user
+                - good key, on target, bad passphrase, no user 
+                - good key, not on target, good passphrase
+                - good key, not on target, wrong passphrase
+                - "no shell for user"
+
+	
+port
+	- default port 22 working
+	- non default port, configured correctly
+	- non default port, configured incorrectly
+	- default port, configured correctly, firewalled off
+	- non default port, configured correctly, firewalled off
+
+host/ip
+	- host exist, resolves, sshdis listening
+	- host exists, resolves, sshd is not listening (no sshd)
+	- host exists, does not resolv, sshd is listening
+	- host doesn't exist, resolves, sshd is not listening (say, a virt machine thats turned off)
+
+
+sshd config
+	- host exists, resolves, sshd is listening, no root login
+	- host exists, resolves, sshd is listening, low MaxAuthTries, multiple bad auth types
+	- host exists, resolves, sshd is listening, user is in DenyUser/DenyGroups
+	- host exist, resolves, sshd is listening, PasswordAuthentication is turned off, username/password used
+	- ""                                     "", PrintMotd is turn on
+	- ""                                     "", UseDNS is on, rho client ip resolves
+	- ""                                                   "", rho client ip does not reverse lookup
+
+
