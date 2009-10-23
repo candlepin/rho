@@ -31,12 +31,12 @@ class NoSuchFileException(Exception):
 
 class AESEncrypter(object):
     """
-    Simple to use object for AES encryption.
+    Simple to use object for AES-128 encryption.
 
     Based on contribution from Steve Milner.
     """
 
-    def __init__(self, password, key_length=32):
+    def __init__(self, password, key_length=16):
         """
         Creates a new instance of AESEncrypter.
 
@@ -61,7 +61,7 @@ class AESEncrypter(object):
         # FIXME: This isn't great, but not sure how bad it is or what
         # we can do about it...
         salt = 'q9k4mh1K' # os.urandom(8) # 64-bit salt
-        return PBKDF2(password, salt).read(32)
+        return PBKDF2(password, salt).read(self.__key_length)
 
     def encrypt(self, data):
         """
