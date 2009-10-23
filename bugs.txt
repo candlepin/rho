@@ -58,6 +58,19 @@ Traceback (most recent call last):
     c)
 rho.config.ConfigError: No such credentials: rsa_key
 
+
+* if we try to "rho profile edit" a profile that doesnt exist:
+Traceback (most recent call last):
+  File "/home/adrian/src/rho/bin/rho", line 22, in <module>
+    CLI().main()
+  File "/home/adrian/src/rho/src/rho/cli.py", line 95, in main
+    cmd.main()
+  File "/home/adrian/src/rho/src/rho/clicommands.py", line 136, in main
+    self._do_command()
+  File "/home/adrian/src/rho/src/rho/clicommands.py", line 461, in _do_command
+    g.ranges = self.options.ranges
+AttributeError: 'NoneType' object has no attribute 'ranges'
+
 ===============
 X = fixed
 Q = dev says it's fixed but noone else has tested it, hahahahaha
