@@ -195,11 +195,23 @@ def paramikoConnect(ssh_job):
     # it.
     for port in ssh_job.ports:
         for auth in ssh_job.auths:
-            pkey = get_pkey(auth)
+            
+            ssh_job.error = None
+
+            # this checks the case of a passphrase we can't decrypt
+            try:
+                pkey = get_pkey(auth)
+            except paramiko.SSHException, detail:
+                # paramiko throws an SSHException for pretty much everything... ;-<
+                err = _("connection to %s:%s failed using auth class \"%s\" with error: \"%s\"") % (ssh_job.ip, port, auth.name, str(detail))
+                log.error(err)
+                ssh_job.error = err
+                ssh = str(detail)
+                continue
+
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-            ssh_job.error = None
             debug_str = "%s:%s/%s" % (ssh_job.ip, port, auth.name)
             try:
                 log.info("trying: %s" % debug_str)
@@ -217,10 +229,11 @@ def paramikoConnect(ssh_job):
                 ssh_job.auth = auth
                 log.info("success: %s" % debug_str)
                 break
+            # FIXME: we can probably get rid of this case and rely on the catchall, the handling is the same... --akl
             except paramiko.PasswordRequiredException, detail:
                 err = _("connection to %s:%s failed using auth class \"%s\" with error: \"%s\"") % (ssh_job.ip, port, auth.name, str(detail))
                 ssh_job.error = err
-
+                log.error(err)
                 # FIXME: This is defined as a SSHCLient above, now it 
                 # becomes a string?
                 ssh = str(detail)
@@ -236,10 +249,8 @@ def paramikoConnect(ssh_job):
                 log.error(err)
                 ssh_job.error = err
                 ssh = str(detail)
-#                print _("Exception: %s") % detail
-#                print sys.exc_type()
-#                print sys.exc_info()
-#                print traceback.print_tb(sys.exc_info()[2])
+                log.debug(sys.exc_type())
+#                log.debug(traceback.print_tb(sys.exc_info()[2]))
                 continue
 
     # FIXME: Returning something here that's only defined in the for loop,
