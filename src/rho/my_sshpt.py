@@ -15,7 +15,7 @@ _ = t.ugettext
 
 import getpass, threading, Queue, sys, os, re, datetime
 
-from rho.log import log, setup_logging
+from rho.log import log 
 from optparse import OptionParser
 from time import sleep
 import traceback
@@ -197,7 +197,10 @@ def paramikoConnect(ssh_job):
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
             ssh_job.error = None
+            debug_str = "%s:%s/%s" % (ssh_job.ip, port, auth.name)
             try:
+                log.info("trying: %s" % debug_str)
+
                 ssh.connect(ssh_job.ip, port=int(port), 
                             username=auth.username,
                             password=auth.password,
@@ -209,15 +212,16 @@ def paramikoConnect(ssh_job):
                             timeout=ssh_job.timeout)
                 ssh_job.port = port
                 ssh_job.auth = auth
+                log.info("success: %s" % debug_str)
                 break
             except paramiko.PasswordRequiredException, detail:
                 err = _("connection to %s:%s failed using auth class \"%s\" with error: \"%s\"") % (ssh_job.ip, port, auth.name, str(detail))
                 ssh_job.error = err
                 ssh = str(detail)
                 # set the successful auth type and port
+                continue
             except Exception, detail:
                 # Connecting failed (for whatever reason)
-                #FIXME: log this when the logger is read to log. Log.
                 err = _("connection to %s:%s failed using auth class \"%s\" with error: \"%s\"") % (ssh_job.ip, port, auth.name,str(detail))
                 log.error(err)
                 ssh_job.error = err

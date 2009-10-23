@@ -8,7 +8,7 @@
 
 import csv
 
-from rho.log import log, setup_logging
+from rho.log import log
 
 import config
 import rho_cmds
