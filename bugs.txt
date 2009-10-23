@@ -37,6 +37,27 @@ X * "connection failed using auth class: mypw Authentication failed." or "timed 
 
 * we write stuff to stdout that shoudl be stderr, needs clean up
 
+* if we try to add/edit a profile and give it an auth that doesn't exist, we 
+  get an exception, and then the config is busted.
+Profile f11-bogus-multiauth-multiport edited
+[adrian@alikins rho]$ rho dumpconfig
+Traceback (most recent call last):
+  File "/home/adrian/src/rho/bin/rho", line 22, in <module>
+    CLI().main()
+  File "/home/adrian/src/rho/src/rho/cli.py", line 95, in main
+    cmd.main()
+  File "/home/adrian/src/rho/src/rho/clicommands.py", line 133, in main
+    self.config = self._read_config(self.options.config, self.passphrase)
+  File "/home/adrian/src/rho/src/rho/clicommands.py", line 98, in _read_config
+    return config.ConfigBuilder().build_config(confstr)
+  File "/home/adrian/src/rho/src/rho/config.py", line 289, in build_config
+    config = Config(auths=creds, profiles=profiles)
+  File "/home/adrian/src/rho/src/rho/config.py", line 93, in __init__
+    self.add_profile(profile)
+  File "/home/adrian/src/rho/src/rho/config.py", line 134, in add_profile
+    c)
+rho.config.ConfigError: No such credentials: rsa_key
+
 ===============
 X = fixed
 Q = dev says it's fixed but noone else has tested it, hahahahaha
