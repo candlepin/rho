@@ -11,11 +11,14 @@
 
 """ Configuration Encryption Module """
 
+import string
 import os.path
 
 # From the python-crypto package
 from Crypto.Cipher import Blowfish
+from Crypto.Cipher import  AES
 
+from rho.PBKDF2 import PBKDF2
 
 class BadKeyException(Exception):
     pass
@@ -23,6 +26,70 @@ class BadKeyException(Exception):
 
 class NoSuchFileException(Exception):
     pass
+
+
+
+class AESEncrypter(object):
+    """
+    Simple to use object for AES encryption.
+
+    Based on contribution from Steve Milner.
+    """
+
+    def __init__(self, password, key_length=32):
+        """
+        Creates a new instance of AESEncrypter.
+
+        :Parameters:
+            - `key`: encryption/decryption key
+            - `pad_char`: ASCII character to pad with.
+        """
+        self.__key_length = key_length
+        self.__key = self.__create_key(password)
+
+        if self.__key_length != len(self.__key):
+            raise Exception("Key does not match length: %s" %
+                    self.__key_length)
+
+        self.__pad_char = " "
+        self.__cipher_obj = AES.new(self.__key)
+
+    def __create_key(self, password):
+        """
+        Creates a key to use for encryption using the given password.
+        """
+        # FIXME: This isn't great, but not sure how bad it is or what
+        # we can do about it...
+        salt = 'q9k4mh1K' # os.urandom(8) # 64-bit salt
+        return PBKDF2(password, salt).read(32)
+
+    def encrypt(self, data):
+        """
+        Pads and encrypts the data.
+
+        :Parameters:
+           - `data`: pad and data to encrypt.
+        """
+        multiply_by = abs((len(data) % AES.block_size) - AES.block_size)
+        if multiply_by != 16:
+            data += self.__pad_char * multiply_by
+        return self.__cipher_obj.encrypt(data)
+
+    def decrypt(self, ciphertext):
+        """
+        Decrypts data and removes padding.
+
+        :Parameters:
+           - `data`: the data to decrypt and removing padding on.
+        """
+        data = self.__cipher_obj.decrypt(ciphertext)
+        data = string.rstrip(data, self.__pad_char)
+        return data
+
+    # read-only properties
+    pad_char = property(lambda self: self.__pad_char)
+    key = property(lambda self: self.__key)
+    key_length = property(lambda self: self.__key_length)
 
 
 def pad(plaintext):
@@ -91,32 +158,24 @@ def unpad(plaintext):
 def encrypt(plaintext, key):
     """
     Encrypt the plaintext using the given key. 
-
-    Uses the Blowfish algorithm. Plaintext will be padded if required.
     """
-    obj = Blowfish.new(key, Blowfish.MODE_CBC)
+    encrypter = AESEncrypter(key)
 
-    plaintext = pad(plaintext)
-    ciphertext = obj.encrypt(plaintext)
-    return ciphertext
+    return encrypter.encrypt(plaintext)
 
 
 def decrypt(ciphertext, key):
     """
     Decrypt the ciphertext with the given key. 
-    
-    Uses the Blowfish algorithm. Padding bytes (if present) will be removed.
     """
-    obj = Blowfish.new(key, Blowfish.MODE_CBC)
-    decrypted_plaintext = obj.decrypt(ciphertext)
-    return_me = unpad(decrypted_plaintext)
+    encrypter = AESEncrypter(key)
+    decrypted_plaintext = encrypter.decrypt(ciphertext)
+    return decrypted_plaintext
 
     # TODO: is there a way to know decryption failed?
     #if return_me is None:
     #    # Looks like decryption failed, probably a bad key:
     #    raise BadKeyException
-
-    return return_me
 
 
 def write_file(filename, plaintext, key):
