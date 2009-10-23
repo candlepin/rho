@@ -13,16 +13,18 @@ import gettext
 t = gettext.translation('rho', 'locale', fallback=True)
 _ = t.ugettext
 
-import config
-#import ssh_jobs
-# Import built-in Python modules
 import getpass, threading, Queue, sys, os, re, datetime
+
+from rho.log import log, setup_logging
 from optparse import OptionParser
 from time import sleep
 import traceback
 import StringIO
 
 import paramiko
+
+import config
+
 
 class GenericThread(threading.Thread):
     """A baseline thread that includes the functions we want for all our threads so we don't have to duplicate code."""
@@ -61,10 +63,9 @@ class OutputThread(GenericThread):
             try:
                 self.report.add(queueObj)
             except Exception, detail:
-                #FIXME: log this when we get a logger? -akl
-                print _("Exception: %s") % detail
-                print sys.exc_type()
-                print traceback.print_tb(sys.exc_info()[2])
+                log.error("Exception: %s" % detail)
+                log.error(sys.exc_type())
+                log.error(traceback.print_tb(sys.exc_info()[2]))
 #                self.output_queue.task_done()
                 self.quit()
 #            self.write(queueObj)
@@ -118,9 +119,9 @@ class SSHThread(GenericThread):
                 if queueObj.output_callback:
                     queueObj.output_callback()
         except Exception, detail:
-            print _("Exception: %s") % detail
-            print sys.exc_type()
-            print traceback.print_tb(sys.exc_info()[2])
+            log.error("Exception: %s" % detail)
+            log.error(sys.exc_type())
+            log.error(traceback.print_tb(sys.exc_info()[2]))
 #            self.output_queue.task_done()
 #            self.ssh_connect_queue.task_done()
             self.quit()
@@ -218,7 +219,7 @@ def paramikoConnect(ssh_job):
                 # Connecting failed (for whatever reason)
                 #FIXME: log this when the logger is read to log. Log.
                 err = _("connection to %s:%s failed using auth class \"%s\" with error: \"%s\"") % (ssh_job.ip, port, auth.name,str(detail))
-                print err
+                log.error(err)
                 ssh_job.error = err
                 ssh = str(detail)
 #                print _("Exception: %s") % detail

@@ -13,6 +13,7 @@
 
 import sys
 import os
+import csv
 
 import gettext
 t = gettext.translation('rho', 'locale', fallback=True)
@@ -162,6 +163,9 @@ class ScanCommand(CliCommand):
         self.parser.add_option("--profile", dest="profiles", action="append",
                metavar="PROFILE", default=[],
                help=_("profile class to scan")),
+        self.parser.add_option("--cache", dest="cachefile",
+                metavar="PASTREPORTFILE",
+                help=_("past output, used to cache successful credentials and ports"))
 
         self.parser.set_defaults(ports="22")
 
@@ -178,6 +182,13 @@ class ScanCommand(CliCommand):
         hasProfiles = len(self.options.profiles) > 0
         hasAuths = len(self.options.auth) > 0
 
+        if self.options.cachefile:
+            self.options.cachefile = os.path.abspath(os.path.expanduser(
+                self.options.cachefile))
+            log.debug("Using cached output: %s" % self.options.cachefile)
+            if not os.path.exists(self.options.cachefile):
+                self.parser.error(_("No such file: %s" % self.options.cachefile))
+
         if not hasRanges and not hasProfiles:
             self.parser.print_help()
             sys.exit(1)
@@ -192,8 +203,38 @@ class ScanCommand(CliCommand):
             self.parser.error(_(
                 "--username or --auth required to scan a range."))
 
+    def _build_cache(self, report_filename):
+        """
+        Reads in the results of a past report, parses them, and builds a dict
+        such as:
+
+        {
+            "192.168.1.50": {'port': 22, 'authname': 'myauthname'},
+        }
+        """
+        cache = {}
+        f = open(report_filename)
+        for row in csv.reader(open(report_filename)):
+
+            if row[1] == '' or row[13] == '':
+                # Looks like we couldn't login to this machine last time.
+                continue
+
+            # These indexes may be volatile if the output is fluctuating.
+            ip = row[0]
+            port = int(row[1])
+            authname = row[13]
+            cache[ip] = {'port': port, 'auth': authname}
+            log.debug("Found cached results for: %s" % ip)
+
+        return cache
+
     def _do_command(self):
-        self.scanner = scanner.Scanner(config=self.config)
+        cache = {}
+        if self.options.cachefile:
+            cache = self._build_cache(self.options.cachefile)
+
+        self.scanner = scanner.Scanner(config=self.config, cache=cache)
 
         # If username was specified, we need to prompt for a password
         # to go with it:
@@ -246,6 +287,7 @@ class ScanCommand(CliCommand):
             fileobj = open(os.path.expanduser(os.path.expandvars(
                 self.options.reportfile)), "w")
         self.scanner.report(fileobj)
+
 
 class DumpConfigCommand(CliCommand):
     """

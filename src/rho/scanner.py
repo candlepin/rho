@@ -8,6 +8,8 @@
 
 import csv
 
+from rho.log import log, setup_logging
+
 import config
 import rho_cmds
 import rho_ips
@@ -52,16 +54,19 @@ class ScanReport():
         self.ips[ssh_job.ip].update(data)
 
     def report(self, fileobj):
-        dict_writer = csv.DictWriter(fileobj, self.csv_format, extrasaction='ignore')
+        dict_writer = csv.DictWriter(fileobj, self.csv_format,
+                extrasaction='ignore')
         ip_list = self.ips.keys()
         ip_list.sort()
         for ip in ip_list:
             dict_writer.writerow(self.ips[ip])
 
+
 class Scanner():
-    def __init__(self, config=None):
+    def __init__(self, config=None, cache={}):
         self.config = config
         self.profiles = []
+        self.cache = cache
 
         # FIXME: we could probably hook this via a plugin/module loader to
         # make it more dynamic... -akl
@@ -74,21 +79,22 @@ class Scanner():
                                         rho_cmds.EtcIssueRhoCmd]
         self.ssh_jobs = ssh_jobs.SshJobs()
         self.output = []
-        self.auths = []
-        self.missing_auths = []
 
     def _find_auths(self, authnames):
+        """ Return a list of Auth objects for the with the given names. """
         # FIXME: this seems like a reasonable place to plug in a "default" auth
         # if we like, maybe?  -akl
-        self.missing_auths = []
+        auth_objs = []
         for authname in authnames:
             auth = self.config.get_auth(authname)
             #FIXME: what do we do if an authname is invalid? 
             # for now, we ignore it
             if auth:
-                self.auths.append(auth)
+                auth_objs.append(auth)
             else:
-                self.missing_auths.append(authname) 
+                log.warn("No such auth: %s" % authname)
+
+        return auth_objs
 
     # FIXME: auth will go away, look it up based on lists of auth
     # associated with each profile -akl
@@ -105,13 +111,38 @@ class Scanner():
                 ipr = rho_ips.RhoIpRange(range_str)
                 ips.extend(ipr.list_ips())
 
+            # TODO: remove
             self._find_auths(profile.auth_names)
+
             for ip in ips:
                 #FIXME: look up auth -akl
-                sshj = ssh_jobs.SshJob(ip=ip, ports=profile.ports, rho_cmds=self.get_rho_cmds(), auths=self.auths)
+
+                # Create a copy of the list of ports and authnames,
+                # we're going to modify them if we have a cache hit:
+                ports = list(profile.ports)
+                authnames = list(profile.auth_names)
+
+                # If a cache hit, move the port/auth to the start of the list:
+                if ip in self.cache:
+                    log.debug("Cache hit for: %s" % ip)
+                    cached_port = self.cache[ip]['port']
+                    cached_authname = self.cache[ip]['auth']
+                    if cached_port in ports:
+                        ports.remove(cached_port)
+                        ports.insert(0, cached_port)
+                        log.debug("trying port %s first" % cached_port)
+                    if cached_authname in authnames:
+                        authnames.remove(cached_authname)
+                        authnames.insert(0, cached_authname)
+                        log.debug("trying auth %s first" % cached_authname)
+
+                sshj = ssh_jobs.SshJob(ip=ip, ports=ports,
+                        auths=self._find_auths(authnames),
+                        rho_cmds=self.get_rho_cmds())
                 ssh_job_list.append(sshj)
+
             self.ssh_jobs.ssh_jobs = ssh_job_list
-            self.run_scan()
+            self._run_scan()
 
         return missing_profiles
 
@@ -123,14 +154,15 @@ class Scanner():
             rho_cmds.append(rho_cmd_class())
         return rho_cmds
 
-    def scan(self, ip):
-        self._find_auths(profile.auth_names)
-        ssh_job = ssh_jobs.SshJob(ip=ip, rho_cmds=self.get_rho_cmds(), auths=self.auths)
-        self.ssh_jobs.ssh_jobs.append(ssh_job)
-        self.run_scan()
-        self.report()
+    #def scan(self, ip):
+    #    # TODO: Is this used? I can't find any reference to it...
+    #    self._find_auths(profile.auth_names)
+    #    ssh_job = ssh_jobs.SshJob(ip=ip, rho_cmds=self.get_rho_cmds(), auths=self.auths)
+    #    self.ssh_jobs.ssh_jobs.append(ssh_job)
+    #    self._run_scan()
+    #    self.report()
 
-    def run_scan(self):
+    def _run_scan(self):
         self.out_queue = self.ssh_jobs.run_jobs(callback=self._callback)
         self.out_queue.join()
 
