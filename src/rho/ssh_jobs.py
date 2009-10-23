@@ -121,20 +121,3 @@ class SshJobs():
         return self.output_queue
 
 
-if __name__ == "__main__":  
-
-    import rho_cmds
-    ssh_jobs = []
-
-
-    auth = SshAuth(name="adrian", username="adrian")
-
-    ip_range = ["alikins.usersys.redhat.com", "badhost.example.com"]
-    for ip in ip_range:
-        ssh_jobs.append(SshJob(ip=ip, rho_cmds=[rho_cmds.UnameRhoCmd()], auth=auth ))
-        
-    jobs = SshJobs()
-#    jobs.cmds_to_run = ssh_cmds
-    jobs.run_cmds(ssh_jobs = ssh_jobs, callback=callback)
-
-#jobs.read_jobs()
