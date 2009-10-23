@@ -399,6 +399,10 @@ class AuthEditCommand(CliCommand):
     def _do_command(self):
         a = self.config.get_auth(self.options.name)
 
+        if not a:
+            print(_("Auth %s does not exist.") % self.options.name)
+            sys.exit(1)
+
         if self.options.username:
             a.username = self.options.username
 
@@ -456,6 +460,10 @@ class ProfileEditCommand(CliCommand):
 
     def _do_command(self):
         g = self.config.get_profile(self.options.name)
+
+        if not g:
+            print(_("Profile %s does not exist.") % self.options.name)
+            sys.exit(1)
 
         if self.options.ranges:
             g.ranges = self.options.ranges
