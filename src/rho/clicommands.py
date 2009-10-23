@@ -300,8 +300,6 @@ class DumpConfigCommand(CliCommand):
         desc = _("dumps the config file to stdout")
 
         CliCommand.__init__(self, "dumpconfig", usage, shortdesc, desc)
-        self.parser.add_option("--pretty", dest="pretty", metavar="pretty",
-                               help=_("pretty print config output"))
 
     def _validate_options(self):
         CliCommand._validate_options(self)
