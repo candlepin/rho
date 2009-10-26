@@ -223,3 +223,21 @@ __init__
 __set__
     'format!' % value)
 netaddr.AddrFormatError: '24,10.16.76.0' is not a supported address format!
+---------------------
+* trace periodically appears in long scans:
+
+Exception: Channel closed.
+
+(<class 'paramiko.SSHException'>, SSHException('Channel closed.',), <traceback object at 0xb5a1f3ec>)
+  File "build/bdist.linux-i686/egg/rho/ssh_queue.py", line 314, in attemptConnection
+    executeCommands(transport=ssh, rho_commands=ssh_job.rho_cmds)
+  File "build/bdist.linux-i686/egg/rho/ssh_queue.py", line 297, in executeCommands
+    stdin, stdout, stderr = transport.exec_command(cmd_string)
+  File "/usr/lib/python2.6/site-packages/paramiko/client.py", line 350, in exec_command
+    chan.exec_command(command)
+  File "/usr/lib/python2.6/site-packages/paramiko/channel.py", line 212, in exec_command
+    self._wait_for_event()
+  File "/usr/lib/python2.6/site-packages/paramiko/channel.py", line 1077, in _wait_for_event
+    raise e
+None
+
