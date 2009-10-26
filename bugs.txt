@@ -97,3 +97,17 @@ Config Encryption Password:
 [whayutin@thinkdoe rho]$
 
 ------------------
+
+profile list, and profile show --name"" seem to list the same output.  We may
+want to just show profile names when "rho profile list" is called"
+[whayutin@thinkdoe rho]$ rho profile show --name whayutin.rdu.redhat.com
+Config Encryption Password:
+{'auths': ['keys'], 'range': ['whayutin.rdu.redhat.com'], 'name':
+'whayutin.rdu.redhat.com', 'ports': [22]}
+
+[whayutin@thinkdoe rho]$ rho profile list
+Config Encryption Password:
+{'auths': ['keys'], 'range': ['whayutin.rdu.redhat.com'], 'name':
+'whayutin.rdu.redhat.com', 'ports': [22]}
+[whayutin@thinkdoe rho]$ 
+-------------------------------------------------------
