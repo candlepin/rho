@@ -119,12 +119,12 @@ Q
 Q Please change the txt for passwd prompt to say passphrase
 Q Q-------------------------------------------------------
 
--------------------------
-clarify ssh error... getting similar error for ssh not running ,and bad
-passphrase
-Config Encryption Password:
-10.11.228.65,,,,,,,,,,,,,,,,,no ssh
---------------------------
+Q -------------------------
+Q clarify ssh error... getting similar error for ssh not running ,and bad
+Q passphrase
+Q Config Encryption Password:
+Q 10.11.228.65,,,,,,,,,,,,,,,,,no ssh
+Q --------------------------
 
 * if we try to specify an auth at scantime:
 
@@ -174,16 +174,16 @@ Profile busted1 edited
 [whayutin@thinkdoe .ssh]$ 
 -----------------------------------------------------
 
-* if user adds malformed range, python trace occurs:
-[thesteve04@cinemashow rho]$ rho profile add --name=hax0r --auth=redhat
---range=10.10.76.0/24,10.16.76.0/24
-Config Encryption Password:
-[thesteve04@cinemashow rho]$ rho profile list
-Config Encryption Password:
-name          	range                    	ports          	auth
---------------	-------------------------	---------------	----
+ * if user adds malformed range, python trace occurs:
+ [thesteve04@cinemashow rho]$ rho profile add --name=hax0r --auth=redhat
+ --range=10.10.76.0/24,10.16.76.0/24
+  Config Encryption Password:
+ [thesteve04@cinemashow rho]$ rho profile list
+  Config Encryption Password:
+  name          	range                    	ports          	auth
+  --------------	-------------------------	---------------	----
 idm           	10.16.76.0/24            	22             
-hax0r         	10.10.76.0/24,10.16.76.0/24	22             
+ hax0r         	10.10.76.0/24,10.16.76.0/24	22             
 
 [thesteve04@cinemashow rho]$ rho scan hax0r
 Config Encryption Password:
@@ -240,6 +240,8 @@ Exception: Channel closed.
   File "/usr/lib/python2.6/site-packages/paramiko/channel.py", line 1077, in _wait_for_event
     raise e
 None
+(looks to be a parmiko bug... https://bugs.launchpad.net/paramiko/+bug/413850)
+
 ----------------------------------------
 rho profile clear on a profiles that dont exist..
 [whayutin@thinkdoe ~]$ rho profile clear --name=DOESNOTEXIST
