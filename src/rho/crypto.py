@@ -14,6 +14,8 @@
 import string
 import os.path
 
+from rho.log import log
+
 # From the python-crypto package
 from Crypto.Cipher import Blowfish
 from Crypto.Cipher import  AES
@@ -36,7 +38,7 @@ class AESEncrypter(object):
     Based on contribution from Steve Milner.
     """
 
-    def __init__(self, password, key_length=16):
+    def __init__(self, password, salt, key_length=16):
         """
         Creates a new instance of AESEncrypter.
 
@@ -45,7 +47,7 @@ class AESEncrypter(object):
             - `pad_char`: ASCII character to pad with.
         """
         self.__key_length = key_length
-        self.__key = self.__create_key(password)
+        self.__key = self.__create_key(salt, password)
 
         if self.__key_length != len(self.__key):
             raise Exception("Key does not match length: %s" %
@@ -54,13 +56,10 @@ class AESEncrypter(object):
         self.__pad_char = " "
         self.__cipher_obj = AES.new(self.__key)
 
-    def __create_key(self, password):
+    def __create_key(self, salt, password):
         """
         Creates a key to use for encryption using the given password.
         """
-        # FIXME: This isn't great, but not sure how bad it is or what
-        # we can do about it...
-        salt = 'q9k4mh1K' # os.urandom(8) # 64-bit salt
         return PBKDF2(password, salt).read(self.__key_length)
 
     def encrypt(self, data):
@@ -155,20 +154,20 @@ def unpad(plaintext):
     return return_me
 
 
-def encrypt(plaintext, key):
+def encrypt(plaintext, key, salt):
     """
     Encrypt the plaintext using the given key. 
     """
-    encrypter = AESEncrypter(key)
+    encrypter = AESEncrypter(key, salt)
 
     return encrypter.encrypt(plaintext)
 
 
-def decrypt(ciphertext, key):
+def decrypt(ciphertext, key, salt):
     """
     Decrypt the ciphertext with the given key. 
     """
-    encrypter = AESEncrypter(key)
+    encrypter = AESEncrypter(key, salt)
     decrypted_plaintext = encrypter.decrypt(ciphertext)
     return decrypted_plaintext
 
@@ -178,29 +177,40 @@ def decrypt(ciphertext, key):
     #    raise BadKeyException
 
 
-def write_file(filename, plaintext, key):
+def write_file(filename, plaintext, key, salt):
     """ 
     Encrypt plaintext with the given key and write to file. 
     
     Existing file will be overwritten so be careful. 
     """
     f = open(filename, 'w')
-    f.write(encrypt(plaintext, key))
+    f.write(salt)
+    f.write(encrypt(plaintext, key, salt))
     f.close()
 
 
-def read_file(filename, key):
+def read_file(filename, password):
     """
     Decrypt contents of file with the given key, and return as a string.
 
     Assume that we're reading files that we encrypted. (i.e. we're not trying
     to read files encrypted manually with gpg)
+
+    Also note that the password here is the user password, not the actual
+    AES key. To get that we must read the first 8 bytes of the file to get
+    the correct salt to use to convert the password to the key.
+
+    Returns a tuple of (salt, json)
     """
     if not os.path.exists(filename):
         raise NoSuchFileException()
 
     f = open(filename, 'r')
-    return_me = decrypt(f.read(), key)
+    contents = f.read()
+    salt = contents[0:8]
+    log.debug("Read salt: %s" % salt)
+
+    return_me = decrypt(contents[8:], password, salt)
     f.close()
-    return return_me
+    return (salt, return_me)
 

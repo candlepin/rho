@@ -72,8 +72,6 @@ class TestRhoIps(unittest.TestCase):
             expected.append("10.0.0.%s" % i)
         self._check_ipr("10.0.0.0/24", expected)
         
-
-
     def testIpRangeLarge(self):
         expected = []
         for i in range(0,4):

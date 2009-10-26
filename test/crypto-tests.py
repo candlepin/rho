@@ -19,6 +19,9 @@ import rho.config
 
 class CryptoTests(unittest.TestCase):
 
+    def setUp(self):
+        self.salt = os.urandom(8)
+
     def test_padding(self):
         plaintext = "some plaintext" # 14 bytes long
         expected = plaintext + str(0x02) + str(0x02)
@@ -73,15 +76,15 @@ class CryptoTests(unittest.TestCase):
     def test_encryption_padding_required(self):
         plaintext = "hey look at my text $"
         key = "sekurity is alsome"
-        ciphertext = rho.crypto.encrypt(plaintext, key)
-        decrypted = rho.crypto.decrypt(ciphertext, key)
+        ciphertext = rho.crypto.encrypt(plaintext, key, self.salt)
+        decrypted = rho.crypto.decrypt(ciphertext, key, self.salt)
         self.assertEquals(plaintext, decrypted)
 
     def test_encryption_no_padding_required(self):
         plaintext = "hey look at my text $"
         key = "sekurity is alsome"
-        ciphertext = rho.crypto.encrypt(plaintext, key)
-        decrypted = rho.crypto.decrypt(ciphertext, key)
+        ciphertext = rho.crypto.encrypt(plaintext, key, self.salt)
+        decrypted = rho.crypto.decrypt(ciphertext, key, self.salt)
         self.assertEquals(plaintext, decrypted)
 
     def test_encryption_big_key(self):
@@ -91,15 +94,15 @@ class CryptoTests(unittest.TestCase):
                 klajsdhakjsdhlakjsdhalksjdhalkjsdhlkasjhdlkajshdlkajsdhla
                 alskdhalksjdlakdhlakjsdhlakjsdhlkajshdlkjasdhlkjafhiouryg
                 """
-        ciphertext = rho.crypto.encrypt(plaintext, key)
-        decrypted = rho.crypto.decrypt(ciphertext, key)
+        ciphertext = rho.crypto.encrypt(plaintext, key, self.salt)
+        decrypted = rho.crypto.decrypt(ciphertext, key, self.salt)
         self.assertEquals(plaintext, decrypted)
 
     def test_decryption_bad_key(self):
         plaintext = "hey look at my text $"
         key = "sekurity is alsome"
-        ciphertext = rho.crypto.encrypt(plaintext, key)
-        result = rho.crypto.decrypt(ciphertext, 'badkey')
+        ciphertext = rho.crypto.encrypt(plaintext, key, self.salt)
+        result = rho.crypto.decrypt(ciphertext, 'badkey', self.salt)
         # TODO: Guess we can't really verify if decryption failed:
         #self.assertRaises(rho.crypto.BadKeyException,
         #        rho.crypto.decrypt, ciphertext, 'badkey')
@@ -109,6 +112,9 @@ class CryptoTests(unittest.TestCase):
 
 class FileCryptoTests(unittest.TestCase):
 
+    def setUp(self):
+        self.salt = os.urandom(8)
+
     # NOTE: Not a true unit test, does write a temp file, comment out?
     def test_encrypt_file(self):
         """ Test file encryption/decryption. """
@@ -116,8 +122,9 @@ class FileCryptoTests(unittest.TestCase):
         key = "sekurity!"
         temp_file = '/tmp/rho-crypto-test.txt'
         try:
-            rho.crypto.write_file(temp_file, plaintext, key)
-            result = rho.crypto.read_file(temp_file, key)
+            rho.crypto.write_file(temp_file, plaintext, key, self.salt)
+            (salt, result) = rho.crypto.read_file(temp_file, key)
+            self.assertEquals(self.salt, salt)
             self.assertEquals(plaintext, result)
         finally:
             try:
@@ -133,8 +140,9 @@ class FileCryptoTests(unittest.TestCase):
         key = "sekurity!"
         temp_file = '/tmp/rho-crypto-test.txt'
         try:
-            rho.crypto.write_file(temp_file, text, key)
-            result = rho.crypto.read_file(temp_file, key)
+            rho.crypto.write_file(temp_file, text, key, self.salt)
+            (salt_result, result) = rho.crypto.read_file(temp_file, key)
+            self.assertEquals(self.salt, salt_result)
             self.assertEquals(text, result)
         finally:
             try:
@@ -144,7 +152,7 @@ class FileCryptoTests(unittest.TestCase):
 
     def test_bad_file_location(self):
         self.assertRaises(IOError, rho.crypto.write_file,
-                "/nosuchdir/nosuchfile.txt", 'blah', 'blah')
+                "/nosuchdir/nosuchfile.txt", 'blah', 'blah', self.salt)
         self.assertRaises(rho.crypto.NoSuchFileException, 
                 rho.crypto.read_file,
                 "/nosuchfile.txt", 'blah')
