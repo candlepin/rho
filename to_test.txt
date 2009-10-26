@@ -8,23 +8,23 @@ username/passwd:
 
 rsa_key
 	rsa_key no passphrase
-		- malformed key
-		- good key, also on target machine
-		- key not on target machine
-		- good key, on target, no user
-		- good key, not on target, no user
-		- "" no shell for user	
+		- malformed key (works, appropriate error reported)
+		- good key, also on target machine (works)
+		- key not on target machine (works)
+		- good key, on target, no user (pass, username required to add auth)
+		- good key, not on target, no user (pass, username required to add auth)
+		- "" no shell for user (pass)
 	
 
 	rsa_key with passphrase
-		- malformed key
-		- good key, on target, good passphrase
-		- good key, on target, bad passphrase
-		- good key, on target, good passphrase, no user
-		- good key, on target, bad passphrase, no user 
-		- good key, not on target, good passphrase
-		- good key, not on target, wrong passphrase
-		- "no shell for user"
+		- malformed key (works)
+		- good key, on target, good passphrase (works)
+		- good key, on target, bad passphrase (pass conditional, reports Not a valid RSA private key file (bad ber encoding))
+		- good key, on target, good passphrase, no user (pass, username required to add auth)
+		- good key, on target, bad passphrase, no user (pass, username required to add auth)
+		- good key, not on target, good passphrase (pass conditional, connection to 10.10.76.144:22 failed using auth class ""goodkey2"" with error: ""Authentication failed."")
+		- good key, not on target, wrong passphrase (pass conditional, connection to 10.10.76.144:22 failed using auth class ""badpp"" with error: ""Unable to parse key file"")
+		- "no shell for user" (pass)
 
 dsa_key
         dsa_key no passphrase
