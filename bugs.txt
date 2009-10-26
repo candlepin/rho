@@ -142,3 +142,25 @@ None
     self.report.add(queueObj)
   File "build/bdist.linux-i686/egg/rho/scanner.py", line 50, in add
     'auth.type': ssh_job.auth.type,
+
+--------------------------------------------------
+Add a profile w/ a range but no auth...
+
+[whayutin@thinkdoe .ssh]$ rho profile add --name=busted1
+--range=whayutin.rdu.redhat.com 
+Config Encryption Password:
+[whayutin@thinkdoe .ssh]$ rho scan --profile=busted1
+Config Encryption Password:
+Exception: local variable 'ssh' referenced before assignment
+
+(<type 'exceptions.UnboundLocalError'>, UnboundLocalError("local variable
+'ssh' referenced before assignment",), <traceback object at 0x9b995a4>)
+  File "/home/whayutin/workspace/rho/src/rho/ssh_queue.py", line 308, in
+attemptConnection
+    ssh = paramikoConnect(ssh_job)
+  File "/home/whayutin/workspace/rho/src/rho/ssh_queue.py", line 290, in
+paramikoConnect
+    return ssh
+None
+10.11.228.65,,,,,,,,,,,,,,,,,no ssh
+-----------------------------------------------------
