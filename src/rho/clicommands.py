@@ -36,8 +36,6 @@ from rho import ssh_jobs
 RHO_PASSWORD = "RHO_PASSWORD"
 RHO_AUTH_PASSWORD = "RHO_AUTH_PASSWORD"
 DEFAULT_RHO_CONF = "~/.rho.conf"
-PAD = " " * 10
-WIDEPAD = " " * 20
 
 def _read_key_file(filename):
     keyfile = open(os.path.expanduser(
@@ -61,31 +59,52 @@ def get_password(for_username, env_var_to_check):
         password = getpass(_("Password for '%s':" % for_username))
     return password
 
-def print_header(keys):
-    writer = csv.writer(sys.stdout, delimiter="\t")
+class OutputPrinter(object):
+    def __init__(self, keys, delimeter="\t", pad=2):
+        self.keys = keys
+        # seed the rows with the header
+        self.writer = csv.writer(sys.stdout, delimiter=delimeter)
 
-    if not keys:
-        return
+        sepline = []
+        for k in keys:
+            sepline.append("-" * len(k))
 
-    writer.writerow(keys)
-    sepline = []
-    for k in keys:
-        sepline.append("-" * len(k))
-    writer.writerow(sepline)
+        self.rows = [keys,sepline]
+        self.pad = pad
 
-def print_row(hdr, data):
-    writer = csv.writer(sys.stdout, delimiter="\t")
-
-    line = []
-    for k in hdr:
-        key = k.strip()
-        if data.has_key(key):
-            if isinstance(data[key], list):
-                line.append(", ".join(["%s" % i for i in data[key]]).ljust(len(k)))
+    def add_row(self, row):
+        line = []
+        for k in self.keys:
+            if row.has_key(k):
+                if isinstance(row[k], list):
+                    line.append(", ".join(["%s" % i for i in row[k]]))
+                else:
+                    line.append(str(row[k]))
             else:
-                line.append(str(data[key]).ljust(len(k)))
+                line.append("")
 
-    writer.writerow(line)
+        self.rows.append(line)
+
+    def write(self):
+        # find the max length of each column
+        # store them in order in collens.
+        collens = []
+
+        for i in range(0, len(self.keys)):
+            length = max(len(r[i]) for r in self.rows) + self.pad
+            collens.append(length)
+
+        # for each row pad the column to the value in
+        # collens[i]
+
+        for row in self.rows:
+            line = []
+            lenidx = 0
+            for col in row:
+                line.append(col.ljust(collens[lenidx]))
+                lenidx += 1
+
+            self.writer.writerow(line)
 
 class CliCommand(object):
     """ Base class for all sub-commands. """
@@ -463,18 +482,20 @@ class ProfileShowCommand(CliCommand):
             sys.exit(1)
 
     def _do_command(self):
-        keys = ["name" + PAD, "range" + PAD, "ports" + PAD, "auth"]
-        print_header(keys)
+        keys = ["name", "range", "ports", "auth"]
+        out = OutputPrinter(keys)
 
         if not self.config.list_profiles():
             print(_("No profiles found"))
 
         p = self.config.get_profile(self.options.name)
         if p:
-            print_row(keys, p.to_dict())
+            out.add_row(p.to_dict())
+            out.write()
             print("")
         else:
             print(_("No profile '%s' found.") % self.options.name)
+
 
 class ProfileListCommand(CliCommand):
     def __init__(self):
@@ -490,11 +511,13 @@ class ProfileListCommand(CliCommand):
             print(_("No profiles found"))
             return
 
-        keys = ["name" + PAD, "range" + WIDEPAD, "ports" + PAD, "auth"]
-        print_header(keys)
+        keys = ["name", "range", "ports", "auth"]
+        out = OutputPrinter(keys)
 
-        for g in self.config.list_profiles():
-            print_row(keys, g.to_dict())
+        for p in self.config.list_profiles():
+            out.add_row(p.to_dict())
+
+        out.write()
         print("")
 
 class AuthEditCommand(CliCommand):
@@ -747,8 +770,8 @@ class AuthShowCommand(CliCommand):
         if not self.config.list_auths():
             print(_("No auth credentials found"))
 
-        keys = ["name" + PAD, "type", "username", "password", "key"]
-        print_header(keys)
+        keys = ["name", "type", "username", "password", "key"]
+        out = OutputPrinter(keys)
 
         c = self.config.get_auth(self.options.name)
         if c:
@@ -759,7 +782,8 @@ class AuthShowCommand(CliCommand):
             if c.type == "ssh_key" and not self.options.keys:
                 c1["key"] = "*******"
 
-            print_row(keys, c1)
+            out.add_row(c1)
+            out.write()
             print("")
 
         else:
@@ -782,8 +806,8 @@ class AuthListCommand(CliCommand):
             return
 
 
-        keys = ["name" + PAD, "type", "username", "password", "key"]
-        print_header(keys)
+        keys = ["name", "type", "username", "password", "key"]
+        out = OutputPrinter(keys)
 
         for c in self.config.list_auths():
             # copy it
@@ -794,7 +818,8 @@ class AuthListCommand(CliCommand):
             if c.type == "ssh_key" and not self.options.keys:
                 c1["key"] = "*******"
 
-            print_row(keys, c1)
+            out.add_row(c1)
+        out.write()
         print("")
 
 class AuthAddCommand(CliCommand):
