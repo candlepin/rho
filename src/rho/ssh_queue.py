@@ -213,8 +213,8 @@ def paramikoConnect(ssh_job):
             break
 
         if len(ports_to_try) == 0:
-            log.debug("Could not find ssh listening on: %s" % ssh_job.ip)
-            err = _("no ssh")
+            log.debug("Could not find/connect to ssh on: %s" % ssh_job.ip)
+            err = _("unable to connect")
             ssh_job.error = err
             break
 
@@ -224,21 +224,19 @@ def paramikoConnect(ssh_job):
             
             ssh_job.error = None
 
+            debug_str = "%s:%s/%s" % (ssh_job.ip, port, auth.name)
             # this checks the case of a passphrase we can't decrypt
             try:
                 pkey = get_pkey(auth)
             except paramiko.SSHException, detail:
                 # paramiko throws an SSHException for pretty much everything... ;-<
-                err = _("""connection to %s:%s failed using auth class "%s" with error: "%s" """) % (ssh_job.ip, port, auth.name, str(detail))
-                log.error(err)
-                ssh_job.error = err
+                log.error("ssh key error for %s: %s" % (debug_str, str(detail)))
                 ssh = str(detail)
                 continue
 
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-            debug_str = "%s:%s/%s" % (ssh_job.ip, port, auth.name)
             try:
                 log.info("trying: %s" % debug_str)
 
