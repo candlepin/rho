@@ -74,8 +74,10 @@ class RhoIpRange(object):
 
         if range_str.find('/') > -1:
             # looks like a cidr
-            cidr = netaddr.CIDR(range_str)
-            ips = list(cidr)
+            # the netaddr.CIDR object is picky about being 
+            # "true" CIDR which isn't really something we need to care about
+            cidr = netaddr.IP(range_str)
+            ips = list(cidr.iprange())
             return ips
 
         if range_str.find('*') > -1:

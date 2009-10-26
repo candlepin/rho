@@ -57,7 +57,7 @@ class TestRhoIps(unittest.TestCase):
         self._check_ipr("10.0.0.1 - 10.0.0.2, 10.0.1.1 - 10.0.1.2", 
                         ["10.0.0.1", "10.0.0.2", "10.0.1.1", "10.0.1.2"])
 
-    def testCommaSeperatedCIDR(self):
+    def testCommaSeperatedTrueCIDR(self):
         self._check_ipr("10.0.0.0/31, 10.0.1.0/31", 
                         ["10.0.0.0", "10.0.0.1", "10.0.1.0", "10.0.1.1"])
         
@@ -86,6 +86,10 @@ class TestRhoIps(unittest.TestCase):
         for i in range(0,256):
             expected.append("10.0.0.%s" % i)
         self._check_ipr("10.0.0.0/24", expected)
+
+    def testCider(self):
+        self._check_ipr("10.0.0.1/31", ["10.0.0.0", "10.0.0.1"])
+
         
     def testIpRangeLarge(self):
         expected = []
