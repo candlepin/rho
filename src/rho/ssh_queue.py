@@ -207,15 +207,15 @@ def paramikoConnect(ssh_job):
         if found_auth:
             break
 
+        if found_port != None:
+            log.warn("Found ssh on %s:%s, but no auths worked." %
+                    (ssh_job.ip, found_port))
+            break
+
         if len(ports_to_try) == 0:
             log.debug("Could not find ssh listening on: %s" % ssh_job.ip)
             err = _("no ssh")
             ssh_job.error = err
-            break
-
-        if found_port != None:
-            log.warn("Found ssh on %s:%s, but no auths worked." %
-                    (ssh_job.ip, found_port))
             break
 
         port = ports_to_try.pop(0)
