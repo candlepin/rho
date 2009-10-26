@@ -332,6 +332,58 @@ class DumpConfigCommand(CliCommand):
         print(json.dumps(json.loads(content), sort_keys = True, indent = 4))
 
         
+class ImportConfigCommand(CliCommand):
+    """
+    Import a plaintext config file.
+    """
+
+    def __init__(self):
+        usage = _("usage: %prog importconfig [--from-file]")
+        shortdesc = _("import a plaintext config file")
+        desc = _("imports a plaintext config file, encrypts it, and write to the destination config file.")
+
+        CliCommand.__init__(self, "importconfig", usage, shortdesc, desc)
+
+        self.parser.add_option("--from-file", dest="sourcefile", 
+                metavar="FROMFILE",
+                help=_("import configuration from raw json file"))
+
+        # Generate a new salt as we're writing a new file here:
+        self.salt = os.urandom(8)
+
+    def _validate_options(self):
+        CliCommand._validate_options(self)
+
+        if not self.options.sourcefile:
+            self.parser.error(_(
+                "--from-file is required"))
+
+        self.options.sourcefile = os.path.abspath(os.path.expanduser(
+            self.options.sourcefile))
+
+        # Ensure the source file exists:
+        if not os.path.exists(self.options.sourcefile):
+            self.parser.error(_("File does not exist") % 
+                    self.options.sourcefile)
+
+        # Make sure destination config file *doesn't* already exist, don't
+        # want to accidentally overwrite config with this command.
+        if os.path.exists(self.options.config):
+            self.parser.error(_("Destination config file already exists: %s") %
+                    self.options.config)
+
+    def _do_command(self):
+        """
+        Executes the command.
+        """
+        f = open(self.options.sourcefile, 'r')
+        json = f.read()
+        imported_config = config.ConfigBuilder().build_config(json)
+        c = config.ConfigBuilder().dump_config(imported_config)
+
+        crypto.write_file(self.options.config, c, self.passphrase, self.salt)
+        
+
 class ProfileShowCommand(CliCommand):
     def __init__(self):
         usage = _("usage: %prog profile show [options]")
