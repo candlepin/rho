@@ -67,7 +67,7 @@ class OutputPrinter(object):
 
         sepline = []
         for k in keys:
-            sepline.append("-" * len(k))
+            sepline.append("-" * (len(k) + pad))
 
         self.rows = [keys,sepline]
         self.pad = pad
