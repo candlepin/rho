@@ -54,6 +54,25 @@ def get_password(for_username, env_var_to_check):
         password = getpass(_("Password for '%s':" % for_username))
     return password
 
+def print_table(data):
+    # +------+-------+------+
+    # |      |       |      |
+    # +------+-------+------+
+    # |      |       |      |
+    # +------+-------+------+
+
+    # find the longest string in the column
+    if not data:
+        print()
+        return
+
+    table = "|"
+    divider = "+"
+    for k in data.keys():
+        table += "%-10s |"
+        divider += "%-10s +"
+
+    print(table % tuple(data.keys()))
 
 class CliCommand(object):
     """ Base class for all sub-commands. """
@@ -711,9 +730,11 @@ class AuthShowCommand(CliCommand):
         if c:
             if c.type == "ssh_key" and not self.options.keys:
                 c1 = dict(**c.to_dict())
+                c1["password"] = "********"
                 del c1["key"]
                 print(c1)
             else:
+                c["password"] = "********"
                 print(c.to_dict())
         else:
             print(_("No auth '%s' found.") % self.options.name)
@@ -733,15 +754,18 @@ class AuthListCommand(CliCommand):
         if not self.config.list_auths():
             print(_("No auth credentials found"))
 
+        writer = csv.writer(sys.stdout, delimiter="\t")
+
         for c in self.config.list_auths():
             # make this a pretty table
             if c:
                 if c.type == "ssh_key" and not self.options.keys:
                     c1 = dict(**c.to_dict())
                     del c1["key"]
-                    print(c1)
+                    writer.writerow(c1.items())
                 else:
-                    print(c.to_dict())
+                    #print_table(c.to_dict())
+                    writer.writerow(c.to_dict().items())
 
 class AuthAddCommand(CliCommand):
     def __init__(self):
