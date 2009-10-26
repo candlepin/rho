@@ -174,3 +174,52 @@ Profile busted1 edited
 [whayutin@thinkdoe .ssh]$ 
 -----------------------------------------------------
 
+* if user adds malformed range, python trace occurs:
+[thesteve04@cinemashow rho]$ rho profile add --name=hax0r --auth=redhat
+--range=10.10.76.0/24,10.16.76.0/24
+Config Encryption Password:
+[thesteve04@cinemashow rho]$ rho profile list
+Config Encryption Password:
+name          	range                    	ports          	auth
+--------------	-------------------------	---------------	----
+idm           	10.16.76.0/24            	22             
+hax0r         	10.10.76.0/24,10.16.76.0/24	22             
+
+[thesteve04@cinemashow rho]$ rho scan hax0r
+Config Encryption Password:
+Traceback (most recent call last):
+  File "/usr/bin/rho", line 5, in <module>
+    pkg_resources.run_script('rho==0.1', 'rho')
+  File "/usr/lib/python2.6/site-packages/pkg_resources.py", line 448, in
+run_script
+    self.require(requires)[0].run_script(script_name, ns)
+  File "/usr/lib/python2.6/site-packages/pkg_resources.py", line 1173, in
+run_script
+    exec script_code in namespace, namespace
+  File
+"/usr/lib/python2.6/site-packages/rho-0.1-py2.6.egg/EGG-INFO/scripts/rho",
+line 22, in <module>
+    
+  File "build/bdist.linux-i686/egg/rho/cli.py", line 95, in main
+  File "build/bdist.linux-i686/egg/rho/clicommands.py", line 198, in main
+  File "build/bdist.linux-i686/egg/rho/clicommands.py", line 349, in
+_do_command
+  File "build/bdist.linux-i686/egg/rho/scanner.py", line 111, in scan_profiles
+  File "build/bdist.linux-i686/egg/rho/rho_ips.py", line 27, in __init__
+  File "build/bdist.linux-i686/egg/rho/rho_ips.py", line 67, in parse_iprange
+  File "/usr/lib/python2.6/site-packages/netaddr/address.py", line 2113, in
+__init__
+    self.prefixlen = mask
+  File "/usr/lib/python2.6/site-packages/netaddr/address.py", line 150, in
+__set__
+    ip = IP(value)
+  File "/usr/lib/python2.6/site-packages/netaddr/address.py", line 725, in
+__init__
+    super(IP, self).__init__(addr, addr_type)
+  File "/usr/lib/python2.6/site-packages/netaddr/address.py", line 237, in
+__init__
+    self.value = addr
+  File "/usr/lib/python2.6/site-packages/netaddr/address.py", line 92, in
+__set__
+    'format!' % value)
+netaddr.AddrFormatError: '24,10.16.76.0' is not a supported address format!
