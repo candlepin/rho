@@ -13,7 +13,7 @@ Q --profile is missing from rho scan
 Q profile add with --auth=[nonexistent auth] gives traceback, should just print 'auth doesn't exist' - same with nonexistent ssh keyfile, etc
 X profile add --ip doesn't work
 Q rho scan --help should say "profile" on the usage line. 
-* rho scan: you can scan using a profile and at the same time specify a
+Q rho scan: you can scan using a profile and at the same time specify a
   --range on the command line.. the scan goes into loops
 X include ip or hostname in connection failed before report is listed
 
