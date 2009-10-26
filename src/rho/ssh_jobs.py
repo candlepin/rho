@@ -9,7 +9,7 @@
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 #
 
-import my_sshpt
+import ssh_queue
 import scanner
 import config
 
@@ -108,8 +108,8 @@ class SshJobs():
         if len(self.ssh_jobs) < self.max_threads:
             self.max_threads = len(self.ssh_jobs)
         
-        self.output_queue = my_sshpt.startOutputThread(self.verbose, report=self.report)
-        self.ssh_connect_queue = my_sshpt.startSSHQueue(self.output_queue, self.max_threads)
+        self.output_queue = ssh_queue.startOutputThread(self.verbose, report=self.report)
+        self.ssh_connect_queue = ssh_queue.startSSHQueue(self.output_queue, self.max_threads)
 
         while self.ssh_jobs:
             for ssh_job in self.ssh_jobs:
