@@ -9,17 +9,23 @@
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 #
 
+# this is based on "sshpt"  http://code.google.com/p/sshpt/
+
 import gettext
 t = gettext.translation('rho', 'locale', fallback=True)
 _ = t.ugettext
 
-import getpass, threading, Queue, sys, os, re, datetime
 
 from rho.log import log 
+
 from optparse import OptionParser
-from time import sleep
-import traceback
+import os
+import re
 import StringIO
+import sys
+import threading
+import traceback
+import Queue
 
 import paramiko
 
