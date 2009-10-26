@@ -13,6 +13,10 @@
 import string
 # for parsing systemid
 import xmlrpclib
+# for expat exceptions...
+import xml
+
+from rho.log import log
 
 # basic idea, wrapper classes around the cli cmds we run on the machines
 # to be inventories. the rho_cmd class will have a string for the 
@@ -87,9 +91,11 @@ class RedhatReleaseRhoCmd(RhoCmd):
             self.data = {'name':'error', 'version':'error', 'release':'error'}
             return
         fields = self.cmd_results[0][0].splitlines()
-        self.data['%s.name' % self.name] = fields[0].strip()
-        self.data['%s.version' % self.name ] = fields[1].strip()
-        self.data['%s.release' % self.name ] = fields[2].strip()
+        # no shell gives a single bogus line of output, we expect 3
+        if len(fields) == 0:
+            self.data['%s.name' % self.name] = fields[0].strip()
+            self.data['%s.version' % self.name ] = fields[1].strip()
+            self.data['%s.release' % self.name ] = fields[2].strip()
 
 # take a blind drunken flailing stab at guessing the os
 class EtcReleaseRhoCmd(RhoCmd):
@@ -176,7 +182,11 @@ class SystemIdRhoCmd(GetFileRhoCmd):
         blob = "".join(self.cmd_results[0])
         # loads returns param/methodname, we just want the params
         # and only the first param at that
-        systemid = xmlrpclib.loads(blob)[0][0]
+        try:
+            systemid = xmlrpclib.loads(blob)[0][0]
+        except xml.parsers.expat.ExpatError:
+            # log here? not sure it would help...
+            return
         for key in systemid:
             self.data["%s.%s" % (self.name, key)] = systemid[key]
         
