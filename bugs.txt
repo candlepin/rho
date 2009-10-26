@@ -10,8 +10,8 @@ Q ports not validated for valid values i.e. -1 or 333333 is accepted.
 Q add ssh port that worked to output report
 * rho scan --range needs a decryption password (which it probably shouldn't)
 Q --profile is missing from rho scan
-* profile add with --auth=[nonexistent auth] gives traceback, should just print 'auth doesn't exist' - same with nonexistent ssh keyfile, etc
-* profile add --ip doesn't work
+Q profile add with --auth=[nonexistent auth] gives traceback, should just print 'auth doesn't exist' - same with nonexistent ssh keyfile, etc
+X profile add --ip doesn't work
 Q rho scan --help should say "profile" on the usage line. 
 * rho scan: you can scan using a profile and at the same time specify a
   --range on the command line.. the scan goes into loops
