@@ -271,7 +271,10 @@ class ScanCommand(CliCommand):
                help=_("profile class to scan")),
         self.parser.add_option("--cache", dest="cachefile",
                 metavar="PASTREPORTFILE",
-                help=_("past output, used to cache successful credentials and ports"))
+                help=_("past output, used to cache successful credentials and ports")),
+        self.parser.add_option("--allow-agent", dest="allowagent", action="store_true", 
+               metavar="ALLOWAGENT", default=False,
+               help=_("Use keys from local ssh-agent"))
 
         self.parser.set_defaults(ports="22")
 
@@ -344,7 +347,8 @@ class ScanCommand(CliCommand):
         if self.options.cachefile:
             cache = self._build_cache(self.options.cachefile)
 
-        self.scanner = scanner.Scanner(config=self.config, cache=cache)
+        self.scanner = scanner.Scanner(config=self.config, cache=cache, 
+                                       allow_agent=self.options.allowagent)
 
         # If username was specified, we need to prompt for a password
         # to go with it:
