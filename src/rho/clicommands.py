@@ -11,9 +11,11 @@
 
 """ Rho CLI Commands """
 
-import sys
-import os
 import csv
+import os
+import string
+import sys
+
 
 import gettext
 t = gettext.translation('rho', 'locale', fallback=True)
@@ -82,6 +84,23 @@ class CliCommand(object):
         self.parser.add_option("--log-level", dest="log_level",
                 default="critical", metavar="LEVEL",
                 help=_("log level (debug/info/warning/error/critical)"))
+
+    def _validate_port(self, port):
+        try:
+            port_int = int(port)
+        except ValueError:
+            # aka, we get a string here...
+            return False
+        if int(port) < 1 or int(port) >65535:
+            return False
+        return True
+
+    def _validate_ports(self, ports):
+        # magic numbers, but this are valid tcp port ranges
+        for port in ports:
+            if not self._validate_port(port):
+                print _("%s includes an invalid port number. Ports should be between 1 and 65535") % string.join(ports, ",")
+                sys.exit(1)
 
     def _validate_options(self):
         """ 
@@ -286,6 +305,7 @@ class ScanCommand(CliCommand):
             ports = []
             if self.options.ports:
                 ports = self.options.ports.strip().split(",")
+                self._validate_ports(ports)
 
             g = config.Profile(name="clioptions", ranges=self.options.ranges,
                          auth_names=self.options.auth, ports=ports)
@@ -525,6 +545,7 @@ class ProfileEditCommand(CliCommand):
     def _validate_options(self):
         CliCommand._validate_options(self)
 
+
         if not self.options.name:
             self.parser.print_help()
             sys.exit(1)
@@ -540,6 +561,7 @@ class ProfileEditCommand(CliCommand):
             g.ranges = self.options.ranges
         if self.options.ports:
             g.ports = self.options.ports.strip().split(",")
+            self._validate_ports(g.ports)
         if len(self.options.auth) > 0:
             g.auth_names = self.options.auth
 
@@ -620,7 +642,8 @@ class ProfileAddCommand(CliCommand):
         ports = []
         if self.options.ports:
             ports = self.options.ports.strip().split(",")
-
+            self._validate_ports(ports)
+            
         g = config.Profile(name=self.options.name, ranges=self.options.ranges,
                          auth_names=self.options.auth, ports=ports)
         self.config.add_profile(g)
