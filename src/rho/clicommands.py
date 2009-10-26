@@ -29,6 +29,7 @@ from rho.log import log, setup_logging
 
 from rho import config
 from rho import crypto
+from rho import rho_ips
 from rho import scanner
 from rho import ssh_jobs
 
@@ -157,10 +158,18 @@ class CliCommand(object):
         return True
 
     def _validate_ports(self, ports):
-        # magic numbers, but this are valid tcp port ranges
+        # magic numbers, but these are valid tcp port ranges
         for port in ports:
             if not self._validate_port(port):
                 print _("%s includes an invalid port number. Ports should be between 1 and 65535") % string.join(ports, ",")
+                sys.exit(1)
+
+    # see if the ip address we are given are at least sort of valid...
+    def _validate_ranges(self, ipranges):
+        for iprange in ipranges:
+            ipr =  rho_ips.RhoIpRange(iprange)
+            if not ipr.valid:
+                print _("""ip range "%s" is invalid""" % string.join(ipranges, ','))
                 sys.exit(1)
 
     def _validate_options(self):
@@ -285,6 +294,9 @@ class ScanCommand(CliCommand):
             log.debug("Using cached output: %s" % self.options.cachefile)
             if not os.path.exists(self.options.cachefile):
                 self.parser.error(_("No such file: %s" % self.options.cachefile))
+                
+        if hasRanges:
+            self._validate_ranges(self.options.ranges)
 
         if not hasRanges and not hasProfiles:
             self.parser.print_help()
@@ -367,6 +379,7 @@ class ScanCommand(CliCommand):
             if self.options.ports:
                 ports = self.options.ports.strip().split(",")
                 self._validate_ports(ports)
+            
 
             g = config.Profile(name="clioptions", ranges=self.options.ranges,
                          auth_names=self.options.auth, ports=ports)
@@ -618,6 +631,8 @@ class ProfileEditCommand(CliCommand):
     def _validate_options(self):
         CliCommand._validate_options(self)
 
+        if self.options.ranges:
+            self._validate_ranges(self.options.ranges)
 
         if not self.options.name:
             self.parser.print_help()
@@ -632,6 +647,7 @@ class ProfileEditCommand(CliCommand):
 
         if self.options.ranges:
             g.ranges = self.options.ranges
+
         if self.options.ports:
             g.ports = self.options.ports.strip().split(",")
             self._validate_ports(g.ports)
@@ -706,6 +722,9 @@ class ProfileAddCommand(CliCommand):
 
     def _validate_options(self):
         CliCommand._validate_options(self)
+        
+        if self.options.ranges:
+            self._validate_ranges(self.options.ranges)
 
         if not self.options.name:
             self.parser.print_help()
@@ -716,7 +735,7 @@ class ProfileAddCommand(CliCommand):
         if self.options.ports:
             ports = self.options.ports.strip().split(",")
             self._validate_ports(ports)
-            
+
         g = config.Profile(name=self.options.name, ranges=self.options.ranges,
                          auth_names=self.options.auth, ports=ports)
         self.config.add_profile(g)

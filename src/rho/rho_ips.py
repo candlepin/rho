@@ -20,22 +20,34 @@ ip_regex = re.compile(r'\d+\.\d+\.\d+\.\d+')
 
 class RhoIpRange(object):
     def __init__(self, ipranges):
-        self.range_str = ipranges
 
         # Iterator that returns netaddr.IP objects:
         self.ips = []
 
-        self.ipranges = self._comma_split(ipranges) 
-        for iprange in self.ipranges:
-            ret = self.parse_iprange(iprange)
+        self.valid = True
+        sub_ipranges = self._comma_split(ipranges) 
+        for sub_iprange in sub_ipranges:
+            ret = self.parse_iprange(sub_iprange)
+            if ret is None:
+                self.valid = False
+                return None
             self.ips.extend(ret)
         # list of netaddr.IP() objects
+            
+    # FIXME: only works on ipv4 -akl
+    def _is_ip(self, ip):
+        is_ip = True
+        try:
+            socket.inet_aton(ip)
+        except socket.error:
+            is_ip = False
+        return is_ip
 
     # make sure we end up with an ip
     def _find_ip(self, iprange):
-        # try to guess if this is an ip or a hostname
         if ip_regex.search(iprange):
             return iprange
+
         # try to resolve if it looks like a hostname
         # FIXME: thisis blocky and generally icky and failureprone -akl
         ip = socket.gethostbyname(iprange)
@@ -85,7 +97,7 @@ class RhoIpRange(object):
             ips = list(wildcard)
             return ips
 
-        if ip_regex.search(range_str):
+        if ip_regex.search(range_str) and self._is_ip(range_str):
             # must be a single ip
             self.start_ip = self._find_ip(range_str)
             ips = [netaddr.IP(self.start_ip)]
