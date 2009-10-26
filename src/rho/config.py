@@ -41,7 +41,9 @@ class ConfigError(Exception):
 
 
 class DuplicateNameError(Exception):
-    pass
+
+    def __init__(self, value):
+        self.dupe_name = value
 
 
 def verify_keys(check_dict, required=[], optional=None):
@@ -95,7 +97,7 @@ class Config(object):
     def add_auth(self, c):
 
         if c.name in self._auth_index:
-            raise DuplicateNameError
+            raise DuplicateNameError(c.name)
 
         self._auths.append(c)
         self._auth_index[c.name] = c

@@ -59,7 +59,7 @@ class CliCommandsTests(unittest.TestCase):
 
     def test_profile_add_duplicate(self):
         self.test_profile_add()
-        self.test_profile_add()
+        self.assertRaises(SystemExit, self.test_profile_add)
 
     def test_auth_list(self):
         self._run_test(AuthListCommand(), ["auth", "list"])
@@ -76,7 +76,7 @@ class CliCommandsTests(unittest.TestCase):
         self.test_auth_add()
 
     def test_profile_add_nonexistent_auth(self):
-        self._run_test(ProfileAddCommand(), ["profile", "add", "--name", "profile", "--auth", "thisshouldnteverexistorthetestdoesntwork"])
+        self.assertRaises(SystemExit, self._run_test, ProfileAddCommand(), ["profile", "add", "--name", "profile", "--auth", "thisshouldnteverexistorthetestdoesntwork"])
 
     def test_dumpconfig(self):
         try:

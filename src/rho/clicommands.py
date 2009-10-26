@@ -52,6 +52,7 @@ def get_password(for_username, env_var_to_check):
         password = getpass(_("Password for '%s':" % for_username))
     return password
 
+
 class CliCommand(object):
     """ Base class for all sub-commands. """
 
@@ -142,7 +143,11 @@ class CliCommand(object):
         self.config = self._read_config(self.options.config, self.passphrase)
 
         # do the work
-        self._do_command()
+        try:
+            self._do_command()
+        except config.DuplicateNameError, e:
+            print _("ERROR: Name already exists: %s") % e.dupe_name
+            sys.exit(1)
 
 
 class ScanCommand(CliCommand):
