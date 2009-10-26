@@ -46,6 +46,11 @@ def _read_key_file(filename):
     keyfile.close()
     return sshkey
 
+def get_passphrase(for_key):
+    passphrase = ""
+    passphrase = getpass(_("Passphrase for '%s':" % for_key))
+    return passphrase
+
 def get_password(for_username, env_var_to_check):
     password = ""
     if env_var_to_check in os.environ:
@@ -817,23 +822,25 @@ class AuthAddCommand(CliCommand):
         
     def _do_command(self):
 
-        auth_password = get_password(self.options.username,
-                RHO_AUTH_PASSWORD)
-
         if self.options.filename:
+            auth_passphrase = get_passphrase(self.options.filename)
+
             # using sshkey
             sshkey = _read_key_file(self.options.filename)
 
             cred = config.SshKeyAuth({"name": self.options.name,
                 "key": sshkey,
                 "username": self.options.username,
-                "password": auth_password,
+                "password": auth_passphrase,
                 "type": "ssh_key"})
 
             self._save_cred(cred)
 
 
         elif self.options.username:
+            auth_password = get_password(self.options.username,
+                                         RHO_AUTH_PASSWORD)
+
             # using ssh
             cred = config.SshAuth({"name":self.options.name,
                 "username": self.options.username,
