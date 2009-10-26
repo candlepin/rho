@@ -26,6 +26,7 @@ import sys
 import threading
 import traceback
 import Queue
+import socket
 
 import paramiko
 
@@ -196,11 +197,29 @@ def paramikoConnect(ssh_job):
     in further communications
     """
 
-    # FIXME: are these for loops right? We try to treat a password required
-    # exception differently, but I can't see what we're actually doing with 
-    # it.
-#    paramiko.util.log_to_file('paramiko.log')
-    for port in ssh_job.ports:
+    # Copy the list of ports, we'll modify it as we go:
+    ports_to_try = list(ssh_job.ports)
+
+    found_port = None # we'll set this once we identify a port that works
+    found_auth = False
+
+    while True:
+        if found_auth:
+            break
+
+        if len(ports_to_try) == 0:
+            log.debug("Could not find ssh listening on: %s" % ssh_job.ip)
+            err = _("no ssh")
+            ssh_job.error = err
+            break
+
+        if found_port != None:
+            log.warn("Found ssh on %s:%s, but no auths worked." %
+                    (ssh_job.ip, found_port))
+            break
+
+        port = ports_to_try.pop(0)
+
         for auth in ssh_job.auths:
             
             ssh_job.error = None
@@ -234,35 +253,40 @@ def paramikoConnect(ssh_job):
                             timeout=ssh_job.timeout)
                 ssh_job.port = port
                 ssh_job.auth = auth
+                found_port = port
+                found_auth = True
                 log.info("success: %s" % debug_str)
                 break
-            # FIXME: we can probably get rid of this case and rely on the catchall, the handling is the same... --akl
-            except paramiko.PasswordRequiredException, detail:
-                err = _("""connection to %s:%s failed using auth class "%s" with error: "%s" """) % (ssh_job.ip, port, auth.name, str(detail))
-                ssh_job.error = err
-                log.error(err)
-                # FIXME: This is defined as a SSHCLient above, now it 
-                # becomes a string?
-                ssh = str(detail)
-                log.debug(sys.exc_type())
-                log.debug(traceback.print_tb(sys.exc_info()[2]))
-                # FIXME: Something seems wrong here too, I added the continue
-                # to get past an issue where only the first auth was tried:
 
-                # set the successful auth type and port
-#                continue
+            # Implies we've found an SSH server listening:
+            except paramiko.AuthenticationException, e:
+                # Because we stop checking ports once we find one where ssh
+                # is listening, we can report the error message here and it
+                # will end up in the final report correctly:
+                err = _("login failed")
+                log.error(err)
+                ssh_job.error = err
+                ssh = str(e)
+                found_port = port
+                continue
+
+            # No route to host:
+            except socket.error, e:
+                log.warn("No route to host, skipping port: %s" % debug_str)
+                ssh = str(e)
+                break
+
+            # TODO: Hitting a live port that isn't ssh will result in
+            # paramiko.SSHException, do we need to handle this explicitly?
+
+            # Something else happened:
             except Exception, detail:
-                # Connecting failed (for whatever reason)
-                err = _("""connection to %s:%s failed using auth class "%s" with error: "%s""") % (ssh_job.ip, port, auth.name,str(detail))
-                log.error(err)
-                ssh_job.error = err
+                log.warn("Connection error: %s - %s" % (debug_str,
+                    str(detail)))
                 ssh = str(detail)
-#                log.debug(sys.exc_type())
-#                log.debug(traceback.print_tb(sys.exc_info()[2]))
- #               continue
+                continue
 
-    # FIXME: Returning something here that's only defined in the for loop,
-    # this may be returning None?
+
     return ssh
 
 def executeCommands(transport, rho_commands):
