@@ -118,3 +118,10 @@ Q but its really prompting for the ssh passphrase.
 Q
 Q Please change the txt for passwd prompt to say passphrase
 Q Q-------------------------------------------------------
+
+-------------------------
+clarify ssh error... getting similar error for ssh not running ,and bad
+passphrase
+Config Encryption Password:
+10.11.228.65,,,,,,,,,,,,,,,,,no ssh
+--------------------------
