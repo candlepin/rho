@@ -80,7 +80,10 @@ def print_row(hdr, data):
     for k in hdr:
         key = k.strip()
         if data.has_key(key):
-            line.append(str(data[key]).ljust(len(k)))
+            if isinstance(data[key], list):
+                line.append(", ".join(["%s" % i for i in data[key]]).ljust(len(k)))
+            else:
+                line.append(str(data[key]).ljust(len(k)))
 
     writer.writerow(line)
 
@@ -469,6 +472,7 @@ class ProfileShowCommand(CliCommand):
         p = self.config.get_profile(self.options.name)
         if p:
             print_row(keys, p.to_dict())
+            print("")
         else:
             print(_("No profile '%s' found.") % self.options.name)
 
@@ -481,14 +485,17 @@ class ProfileListCommand(CliCommand):
         CliCommand.__init__(self, "profile list", usage, shortdesc, desc)
 
     def _do_command(self):
-        keys = ["name" + PAD, "range" + WIDEPAD, "ports" + PAD, "auth"]
-        print_header(keys)
 
         if not self.config.list_profiles():
             print(_("No profiles found"))
+            return
+
+        keys = ["name" + PAD, "range" + WIDEPAD, "ports" + PAD, "auth"]
+        print_header(keys)
 
         for g in self.config.list_profiles():
             print_row(keys, g.to_dict())
+        print("")
 
 class AuthEditCommand(CliCommand):
     def __init__(self):
@@ -753,6 +760,7 @@ class AuthShowCommand(CliCommand):
                 c1["key"] = "*******"
 
             print_row(keys, c1)
+            print("")
 
         else:
             print(_("No auth '%s' found.") % self.options.name)
@@ -771,6 +779,7 @@ class AuthListCommand(CliCommand):
     def _do_command(self):
         if not self.config.list_auths():
             print(_("No auth credentials found"))
+            return
 
 
         keys = ["name" + PAD, "type", "username", "password", "key"]
@@ -786,6 +795,7 @@ class AuthListCommand(CliCommand):
                 c1["key"] = "*******"
 
             print_row(keys, c1)
+        print("")
 
 class AuthAddCommand(CliCommand):
     def __init__(self):
