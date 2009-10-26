@@ -314,10 +314,10 @@ def attemptConnection(ssh_job):
 
         except Exception, detail:
             # Connection failed
-            print _("Exception: %s") % detail
-            print sys.exc_type()
-            print sys.exc_info()
-            print traceback.print_tb(sys.exc_info()[2])
+            logger.error("Exception on %s: %s" % (ssh_job.ip, detail))
+            logger.error(sys.exc_type())
+            logger.error(sys.exc_info())
+            logger.error(traceback.print_tb(sys.exc_info()[2]))
             ssh_job.connection_result = False
             ssh_job.command_output = detail
 #            ssh.close()
