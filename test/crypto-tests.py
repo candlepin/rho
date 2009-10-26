@@ -22,65 +22,14 @@ class CryptoTests(unittest.TestCase):
     def setUp(self):
         self.salt = os.urandom(8)
 
-    def test_padding(self):
-        plaintext = "some plaintext" # 14 bytes long
-        expected = plaintext + str(0x02) + str(0x02)
-        padded = rho.crypto.pad(plaintext)
-        self.assertEquals(expected, padded)
-
-    def test_padding_none_required(self):
-        plaintext = "12345678" 
-        padded = rho.crypto.pad(plaintext)
-        self.assertEquals(plaintext, padded)
-
-    def test_padding_unicode_exception(self):
-        """ Ensure only strings can be padded. """
-        plaintext = u'12345678'
-        self.assertRaises(Exception, rho.crypto.pad, plaintext)
-
-    def test_unpad_4_bytes(self):
-        plaintext = "1234" # 14 bytes long
-        padded = "12344444"
-        result = rho.crypto.unpad(padded)
-        self.assertEquals(plaintext, result)
-
-    def test_unpad_1_bytes(self):
-        plaintext = "1234567"
-        padded = "12345671"
-        result = rho.crypto.unpad(padded)
-        self.assertEquals(plaintext, result)
-
-    def test_unpad_integer_plaintext(self):
-        plaintext = "12345677"
-        result = rho.crypto.unpad(plaintext)
-        self.assertEquals(plaintext, result)
-
-    def test_unpad_invalid_length(self):
-        self.assertRaises(Exception, rho.crypto.unpad, "1234")
-
-    def test_unpad_nonstring(self):
-        self.assertRaises(Exception, rho.crypto.unpad, u'khasd')
-
-    def test_unpad_worst_case_scenario(self):
-        # Actually testing for incorrect behavior here, see method doc on 
-        # unpad for more info.
-        plaintext = "77777777" # no padding required
-        result = rho.crypto.unpad(plaintext)
-        self.assertEquals("7", result) # should be unchanged but isn't...
-
-    def test_unpad_unpadded_string(self):
-        plaintext = "abcdefgh"
-        result = rho.crypto.unpad(plaintext)
-        self.assertEquals(plaintext, result)
-
-    def test_encryption_padding_required(self):
+    def test_encryption1(self):
         plaintext = "hey look at my text $"
         key = "sekurity is alsome"
         ciphertext = rho.crypto.encrypt(plaintext, key, self.salt)
         decrypted = rho.crypto.decrypt(ciphertext, key, self.salt)
         self.assertEquals(plaintext, decrypted)
 
-    def test_encryption_no_padding_required(self):
+    def test_encryption2(self):
         plaintext = "hey look at my text $"
         key = "sekurity is alsome"
         ciphertext = rho.crypto.encrypt(plaintext, key, self.salt)
@@ -107,7 +56,6 @@ class CryptoTests(unittest.TestCase):
         #self.assertRaises(rho.crypto.BadKeyException,
         #        rho.crypto.decrypt, ciphertext, 'badkey')
         self.assertNotEqual(plaintext, result)
-
 
 
 class FileCryptoTests(unittest.TestCase):
