@@ -29,7 +29,7 @@ rsa_key
 dsa_key
         dsa_key no passphrase
                 - malformed key
-                - good key, also on target machine
+                - good key, also on target machine PASS:Wes
                 - key not on target machine
                 - good key, on target, no user
                 - good key, not on target, no user
@@ -38,7 +38,7 @@ dsa_key
 
         dsa_key with passphrase
                 - malformed key
-                - good key, on target, good passphrase
+                - good key, on target, good passphrase PASS:wes hayutin
                 - good key, on target, bad passphrase
                 - good key, on target, good passphrase, no user
                 - good key, on target, bad passphrase, no user 
