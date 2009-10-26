@@ -80,7 +80,9 @@ class CliCommandsTests(unittest.TestCase):
                 ["auth", "add", "--name=bill", "--username=bill"])
 
     def test_profile_add_nonexistent_auth(self):
-        self.assertRaises(SystemExit, self._run_test, ProfileAddCommand(), ["profile", "add", "--name", "profile", "--auth", "thisshouldnteverexistorthetestdoesntwork"])
+        self.assertRaises(SystemExit, self._run_test, ProfileAddCommand(), 
+                ["profile", "add", "--name", "profile", "--auth", 
+                    "doesnotexist"])
 
     def test_dumpconfig(self):
         try:

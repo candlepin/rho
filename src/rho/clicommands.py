@@ -142,11 +142,14 @@ class CliCommand(object):
 
         self.config = self._read_config(self.options.config, self.passphrase)
 
-        # do the work
+        # do the work, catch most common errors here:
         try:
             self._do_command()
         except config.DuplicateNameError, e:
             print _("ERROR: Name already exists: %s") % e.dupe_name
+            sys.exit(1)
+        except config.NoSuchAuthError, e:
+            print _("ERROR: No such auth: %s") % e.authname
             sys.exit(1)
 
 

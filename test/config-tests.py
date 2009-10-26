@@ -110,7 +110,7 @@ class ConfigTests(unittest.TestCase):
         self.builder = ConfigBuilder()
 
     def test_profile_references_invalid_auths(self):
-        self.assertRaises(ConfigError, 
+        self.assertRaises(NoSuchAuthError, 
                 self.builder.build_config, BAD_CREDNAME_CONFIG)
 
     def test_new_config(self):

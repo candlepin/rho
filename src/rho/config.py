@@ -46,6 +46,12 @@ class DuplicateNameError(Exception):
         self.dupe_name = value
 
 
+class NoSuchAuthError(Exception):
+
+    def __init__(self, value):
+        self.authname = value
+
+
 def verify_keys(check_dict, required=[], optional=None):
     """
     Verify that all required keys are present in the dict, and nothing
@@ -111,6 +117,8 @@ class Config(object):
         # they botched their command to remove a auth
 
     def get_auth(self, cname):
+        if cname not in self._auth_index:
+            raise NoSuchAuthError(cname)
         return self._auth_index.get(cname)
 
     def list_auths(self):
@@ -132,8 +140,7 @@ class Config(object):
 
         for c in profile.auth_names:
             if c not in self._auth_index:
-                raise ConfigError("No such credentials: %s" %
-                        c)
+                raise NoSuchAuthError(c)
 
         self._profiles.append(profile)
         self._profile_index[profile.name] = profile
