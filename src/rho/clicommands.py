@@ -746,12 +746,7 @@ class AuthAddCommand(CliCommand):
             sys.exit(1)
 
     def _save_cred(self, cred):
-        try:
-            self.config.add_auth(cred)
-        except config.DuplicateNameError:
-            #FIXME: need to handle this better... -akl
-            print _("The auth name %s already exists" % cred.name)
-            return
+        self.config.add_auth(cred)
         c = config.ConfigBuilder().dump_config(self.config)
         crypto.write_file(self.options.config, c, self.passphrase, self.salt)
         

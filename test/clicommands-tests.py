@@ -41,6 +41,7 @@ class CliCommandsTests(unittest.TestCase):
 
     def _run_test(self, cmd, args):
         os.environ[RHO_PASSWORD] = "blerg"
+        os.environ[RHO_AUTH_PASSWORD] = "somepass"
 
         sys.argv = ["bin/rho" ]  + args + ["--config", self.conffile]
         cmd.main()
@@ -55,7 +56,8 @@ class CliCommandsTests(unittest.TestCase):
         self._run_test(ProfileListCommand(), ["profile", "list"])
 
     def test_profile_add(self):
-        self._run_test(ProfileAddCommand(), ["profile", "add", "--name", "profilename"])
+        self._run_test(ProfileAddCommand(), ["profile", "add", "--name", 
+            "profilename"])
 
     def test_profile_add_duplicate(self):
         self.test_profile_add()
@@ -72,8 +74,10 @@ class CliCommandsTests(unittest.TestCase):
             pass
 
     def test_auth_add_duplicate(self):
-        self.test_auth_add()
-        self.test_auth_add()
+        self._run_test(AuthAddCommand(), ["auth", "add", "--name=bill",
+            "--username=bill"])
+        self.assertRaises(SystemExit, self._run_test, AuthAddCommand(), 
+                ["auth", "add", "--name=bill", "--username=bill"])
 
     def test_profile_add_nonexistent_auth(self):
         self.assertRaises(SystemExit, self._run_test, ProfileAddCommand(), ["profile", "add", "--name", "profile", "--auth", "thisshouldnteverexistorthetestdoesntwork"])
