@@ -63,10 +63,11 @@ class ScanReport():
 
 
 class Scanner():
-    def __init__(self, config=None, cache={}):
+    def __init__(self, config=None, cache={}, allow_agent=False):
         self.config = config
         self.profiles = []
         self.cache = cache
+        self.allow_agent = allow_agent
 
         # FIXME: we could probably hook this via a plugin/module loader to
         # make it more dynamic... -akl
@@ -96,8 +97,6 @@ class Scanner():
 
         return auth_objs
 
-    # FIXME: auth will go away, look it up based on lists of auth
-    # associated with each profile -akl
     def scan_profiles(self, profilenames):
         missing_profiles = []
         ssh_job_list = []
@@ -115,7 +114,6 @@ class Scanner():
             self._find_auths(profile.auth_names)
 
             for ip in ips:
-                #FIXME: look up auth -akl
 
                 # Create a copy of the list of ports and authnames,
                 # we're going to modify them if we have a cache hit:
@@ -137,8 +135,9 @@ class Scanner():
                         log.debug("trying auth %s first" % cached_authname)
 
                 sshj = ssh_jobs.SshJob(ip=ip, ports=ports,
-                        auths=self._find_auths(authnames),
-                        rho_cmds=self.get_rho_cmds())
+                                       auths=self._find_auths(authnames),
+                                       rho_cmds=self.get_rho_cmds(),
+                                       allow_agent=self.allow_agent)
                 ssh_job_list.append(sshj)
 
             self.ssh_jobs.ssh_jobs = ssh_job_list
@@ -153,14 +152,6 @@ class Scanner():
         for rho_cmd_class in self.rho_cmd_classes:
             rho_cmds.append(rho_cmd_class())
         return rho_cmds
-
-    #def scan(self, ip):
-    #    # TODO: Is this used? I can't find any reference to it...
-    #    self._find_auths(profile.auth_names)
-    #    ssh_job = ssh_jobs.SshJob(ip=ip, rho_cmds=self.get_rho_cmds(), auths=self.auths)
-    #    self.ssh_jobs.ssh_jobs.append(ssh_job)
-    #    self._run_scan()
-    #    self.report()
 
     def _run_scan(self):
         self.out_queue = self.ssh_jobs.run_jobs(callback=self._callback)

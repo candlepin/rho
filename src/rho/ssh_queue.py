@@ -240,14 +240,15 @@ def paramikoConnect(ssh_job):
             try:
                 log.info("trying: %s" % debug_str)
 
+                print ssh_job.allow_agent
                 ssh.connect(ssh_job.ip, port=int(port), 
                             username=auth.username,
                             password=auth.password,
                             pkey=pkey,
                             # FIXME: 
                             # we should probably set this somewhere
-                            #allow_agent=False,
-                            look_for_keys=False,
+                            allow_agent=ssh_job.allow_agent,
+                            look_for_keys=ssh_job.look_for_keys,
                             timeout=ssh_job.timeout)
                 ssh_job.port = port
                 ssh_job.auth = auth

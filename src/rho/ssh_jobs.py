@@ -39,7 +39,7 @@ class SshAuth(Auth):
 # a list of cli commands to run
 class SshJob():
     def __init__(self, ip=None, ports=[22], rho_cmds=None, auths=None,
-            timeout=30, cache={}):
+            timeout=30, cache={}, allow_agent=False):
         # rho_cmds really needs to be list like, easy mistake to make...
         assert getattr(rho_cmds, "__iter__")
 
@@ -57,6 +57,13 @@ class SshJob():
         
         # the auth we actually used
         self.auth = None
+
+        # do we try to use an ssh-agent for this connection?
+        self.allow_agent = allow_agent
+
+        # do we try to let paramiko search for ssh keys for
+        # this connection?
+        self.look_for_keys = False
 
         self.timeout = timeout
         self.command_output = None
