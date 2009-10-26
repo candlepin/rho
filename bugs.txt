@@ -240,4 +240,8 @@ Exception: Channel closed.
   File "/usr/lib/python2.6/site-packages/paramiko/channel.py", line 1077, in _wait_for_event
     raise e
 None
-
+----------------------------------------
+rho profile clear on a profiles that dont exist..
+[whayutin@thinkdoe ~]$ rho profile clear --name=DOESNOTEXIST
+Profile DOESNOTEXIST removed
+------------------------------
