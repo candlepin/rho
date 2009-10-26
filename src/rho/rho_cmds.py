@@ -92,7 +92,8 @@ class RedhatReleaseRhoCmd(RhoCmd):
             return
         fields = self.cmd_results[0][0].splitlines()
         # no shell gives a single bogus line of output, we expect 3
-        if len(fields) == 0:
+        print fields
+        if len(fields) >= 3:
             self.data['%s.name' % self.name] = fields[0].strip()
             self.data['%s.version' % self.name ] = fields[1].strip()
             self.data['%s.release' % self.name ] = fields[2].strip()
