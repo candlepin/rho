@@ -46,6 +46,21 @@ class TestRhoIps(unittest.TestCase):
     def testLocalhost(self):
         self._check_ipr("localhost", ["127.0.0.1"])
 
+    def testCommaSeperatedIps(self):
+        self._check_ipr("10.0.0.1,10.0.0.2", ["10.0.0.1", "10.0.0.2"])
+
+    def testCommaSeperatedIpsWithSpaces(self):
+        self._check_ipr("10.0.0.1 , 10.0.0.2 ", ["10.0.0.1", "10.0.0.2"])
+
+
+    def testCommaSeperatedRanges(self):
+        self._check_ipr("10.0.0.1 - 10.0.0.2, 10.0.1.1 - 10.0.1.2", 
+                        ["10.0.0.1", "10.0.0.2", "10.0.1.1", "10.0.1.2"])
+
+    def testCommaSeperatedCIDR(self):
+        self._check_ipr("10.0.0.0/31, 10.0.1.0/31", 
+                        ["10.0.0.0", "10.0.0.1", "10.0.1.0", "10.0.1.1"])
+        
 #    def testHostname(self):
 #        # any suggests for a hostname whose ip won't change?
 #        self._check_ipr("bugzilla.redhat.com", ["209.132.176.231"])

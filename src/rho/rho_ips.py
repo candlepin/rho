@@ -10,6 +10,7 @@
 
 import re
 import socket
+import string
 
 import netaddr
 
@@ -18,13 +19,16 @@ ip_regex = re.compile(r'\d+\.\d+\.\d+\.\d+')
 
 
 class RhoIpRange(object):
-    def __init__(self, iprange):
-        self.range_str = iprange
+    def __init__(self, ipranges):
+        self.range_str = ipranges
 
         # Iterator that returns netaddr.IP objects:
         self.ips = []
 
-        self.parse_iprange(iprange)
+        self.ipranges = self._comma_split(ipranges) 
+        for iprange in self.ipranges:
+            ret = self.parse_iprange(iprange)
+            self.ips.extend(ret)
         # list of netaddr.IP() objects
 
     # make sure we end up with an ip
@@ -38,11 +42,17 @@ class RhoIpRange(object):
 
         return ip
 
-    def parse_iprange(self, iprange):
+    def _comma_split(self, iprange):
+        ranges = iprange.split(',')
+        ranges = map(string.strip, ranges)
+        return ranges
+
+    def parse_iprange(self, range_str):
+        ips = []
         # FIXME: NOTE: all of this stuff is pretty much untested ;-> -akl
-        if self.range_str.find(' - ') > -1:
+        if range_str.find(' - ') > -1:
             #looks like a range
-            parts = self.range_str.split(' - ')
+            parts = range_str.split(' - ')
 
             #FIXME: all of this error handling is crappy -akl
             try:
@@ -56,32 +66,34 @@ class RhoIpRange(object):
 
             if self.start_ip and self.end_ip:
                 ipr = netaddr.IPRange(self.start_ip, self.end_ip)
-                self.ips = list(ipr)
-            return self.ips
+                ips = list(ipr)
+            return ips
         
         # FIXME: not sure what to do about cases like 
         # foo.example.com/24 or "*.example.com". punt? -akl
 
-        if self.range_str.find('/') > -1:
+        if range_str.find('/') > -1:
             # looks like a cidr
-            cidr = netaddr.CIDR(self.range_str)
-            self.ips = list(cidr)
-            return self.ips
+            cidr = netaddr.CIDR(range_str)
+            ips = list(cidr)
+            return ips
 
-        if self.range_str.find('*') > -1:
-            wildcard = netaddr.Wildcard(self.range_str)
-            self.ips = list(wildcard)
-            return self.ips
+        if range_str.find('*') > -1:
+            wildcard = netaddr.Wildcard(range_str)
+            ips = list(wildcard)
+            return ips
 
-        if ip_regex.search(self.range_str):
+        if ip_regex.search(range_str):
             # must be a single ip
-            self.start_ip = self._find_ip(self.range_str)
-            self.ips = [netaddr.IP(self.start_ip)]
+            self.start_ip = self._find_ip(range_str)
+            ips = [netaddr.IP(self.start_ip)]
+            return ips
         
         # doesn't look like anything else, try treating it as a hostname
         try:
-            self.start_ip = self._find_ip(self.range_str)
-            self.ips = [netaddr.IP(self.start_ip)]
+            self.start_ip = self._find_ip(range_str)
+            ips = [netaddr.IP(self.start_ip)]
+            return ips
         except:
             return None
 
