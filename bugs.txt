@@ -110,11 +110,11 @@ Config Encryption Password:
 {'auths': ['keys'], 'range': ['whayutin.rdu.redhat.com'], 'name':
 'whayutin.rdu.redhat.com', 'ports': [22]}
 [whayutin@thinkdoe rho]$ 
--------------------------------------------------------
-
-add an auth that is only using an sshkey w/ a passphrase
-add a profile that uses the auth.  run a scan.. rho prompts for a password,
-but its really prompting for the ssh passphrase.  
-
-Please change the txt for passwd prompt to say passphrase
--------------------------------------------------------
+Q -------------------------------------------------------
+Q
+Q add an auth that is only using an sshkey w/ a passphrase
+Q add a profile that uses the auth.  run a scan.. rho prompts for a password,
+Q but its really prompting for the ssh passphrase.  
+Q
+Q Please change the txt for passwd prompt to say passphrase
+Q Q-------------------------------------------------------
