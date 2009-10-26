@@ -30,10 +30,12 @@ dsa_key
         dsa_key no passphrase
                 - malformed key
                 - good key, also on target machine PASS:Wes
-                - key not on target machine
+                - key not on target machine PASS:Wes
                 - good key, on target, no user
                 - good key, not on target, no user
-                - "" no shell for user    
+                - "" no shell for user  PASS:Wes ['This account is currently
+                  not available.']
+   
 
 
         dsa_key with passphrase
