@@ -49,7 +49,7 @@ class RhoIpRange(object):
                 self.start_ip = self._find_ip(parts[0])
                 self.end_ip = self._find_ip(parts[1])
             except:
-                #FIXME: catchall execpts are bad
+                #FIXME: catchall excepts are bad
                 print _("unable to find ip for %s") % parts
                 self.start_ip = None
                 self.end_ip = None
