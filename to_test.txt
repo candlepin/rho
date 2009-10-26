@@ -28,39 +28,39 @@ rsa_key
 
 dsa_key
         dsa_key no passphrase
-                - malformed key
+                - malformed key PASS: wes
                 - good key, also on target machine PASS:Wes
                 - key not on target machine PASS:Wes
-                - good key, on target, no user
-                - good key, not on target, no user
+                - good key, on target, no user PASS : wes
+                - good key, not on target, no user PASS : wes
                 - "" no shell for user  PASS:Wes ['This account is currently
                   not available.']
    
 
 
         dsa_key with passphrase
-                - malformed key
+                - malformed key PASS: wes
                 - good key, on target, good passphrase PASS:wes hayutin
-                - good key, on target, bad passphrase
-                - good key, on target, good passphrase, no user
-                - good key, on target, bad passphrase, no user 
-                - good key, not on target, good passphrase
-                - good key, not on target, wrong passphrase
+                - good key, on target, bad passphrase PASS: wes
+                - good key, on target, good passphrase, no user  PASS: wes
+                - good key, on target, bad passphrase, no user  PASS: wes
+                - good key, not on target, good passphrase PASS
+                - good key, not on target, wrong passphrase PASS
                 - "no shell for user"
 
 	
 port
-	- default port 22 working
-	- non default port, configured correctly
-	- non default port, configured incorrectly
-	- default port, configured correctly, firewalled off
-	- non default port, configured correctly, firewalled off
+	- default port 22 working    PASS
+	- non default port, configured correctly PASS
+	- non default port, configured incorrectly SKIP
+	- default port, configured correctly, firewalled off PASS
+	- non default port, configured correctly, firewalled off PASS
 
 host/ip
-	- host exist, resolves, sshdis listening
-	- host exists, resolves, sshd is not listening (no sshd)
-	- host exists, does not resolv, sshd is listening
-	- host doesn't exist, resolves, sshd is not listening (say, a virt machine thats turned off)
+	- host exist, resolves, sshdis listening  PASS
+	- host exists, resolves, sshd is not listening (no sshd) PASS
+	- host exists, does not resolv, sshd is listening PASS
+	- host doesn't exist, resolves, sshd is not listening (say, a virt machine thats turned off) PASS
 
 
 sshd config

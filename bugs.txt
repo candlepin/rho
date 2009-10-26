@@ -164,3 +164,13 @@ paramikoConnect
 None
 10.11.228.65,,,,,,,,,,,,,,,,,no ssh
 -----------------------------------------------------
+Profile edit, lame bug
+If you make no edits to a profile, the command return should not say the
+profile was edited
+
+[whayutin@thinkdoe .ssh]$ rho profile edit --name=busted1 
+Config Encryption Password:
+Profile busted1 edited
+[whayutin@thinkdoe .ssh]$ 
+-----------------------------------------------------
+
