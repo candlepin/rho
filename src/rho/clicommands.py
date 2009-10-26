@@ -60,7 +60,7 @@ def get_password(for_username, env_var_to_check):
     return password
 
 class OutputPrinter(object):
-    def __init__(self, keys, delimeter="\t", pad=2):
+    def __init__(self, keys, delimeter="\t", pad=2, dontpad=[]):
         self.keys = keys
         # seed the rows with the header
         self.writer = csv.writer(sys.stdout, delimiter=delimeter)
@@ -71,6 +71,7 @@ class OutputPrinter(object):
 
         self.rows = [keys,sepline]
         self.pad = pad
+        self.dontpad = dontpad
 
     def add_row(self, row):
         line = []
@@ -89,6 +90,15 @@ class OutputPrinter(object):
         # find the max length of each column
         # store them in order in collens.
         collens = []
+        
+        i = 0
+        for key in self.keys:
+            length = len(key) + self.pad
+            if key not in self.dontpad:
+                length = max(len(r[i]) for r in self.rows) + self.pad
+
+            collens.append(length)
+            i += 1
 
         for i in range(0, len(self.keys)):
             length = max(len(r[i]) for r in self.rows) + self.pad
@@ -482,7 +492,7 @@ class ProfileShowCommand(CliCommand):
             sys.exit(1)
 
     def _do_command(self):
-        keys = ["name", "range", "ports", "auth"]
+        keys = ["name", "range", "ports", "auths"]
         out = OutputPrinter(keys)
 
         if not self.config.list_profiles():
@@ -511,7 +521,7 @@ class ProfileListCommand(CliCommand):
             print(_("No profiles found"))
             return
 
-        keys = ["name", "range", "ports", "auth"]
+        keys = ["name", "range", "ports", "auths"]
         out = OutputPrinter(keys)
 
         for p in self.config.list_profiles():
@@ -771,7 +781,7 @@ class AuthShowCommand(CliCommand):
             print(_("No auth credentials found"))
 
         keys = ["name", "type", "username", "password", "key"]
-        out = OutputPrinter(keys)
+        out = OutputPrinter(keys, dontpad=["key"])
 
         c = self.config.get_auth(self.options.name)
         if c:
@@ -807,7 +817,7 @@ class AuthListCommand(CliCommand):
 
 
         keys = ["name", "type", "username", "password", "key"]
-        out = OutputPrinter(keys)
+        out = OutputPrinter(keys, dontpad=["key"])
 
         for c in self.config.list_auths():
             # copy it
