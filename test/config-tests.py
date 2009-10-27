@@ -146,6 +146,20 @@ class ConfigTests(unittest.TestCase):
             
         self.assertRaises(DuplicateNameError, config.add_profile, g)
 
+    def test_delete_auth_used_in_profile(self):
+        config = self.builder.build_config(SAMPLE_CONFIG1)
+        config.remove_auth("bobskey")
+        config = self.builder.build_config(
+                self.builder.dump_config(config))
+        self.assertEquals(1, len(config.list_auths()))
+        self.assertEquals(1, len(config.get_profile("accounting").auth_names))
+        self.assertEquals(0, len(config.get_profile("it").auth_names))
+
+    def test_remove_no_such_auth(self):
+        config = self.builder.build_config(SAMPLE_CONFIG1)
+        self.assertRaises(NoSuchAuthError, config.remove_auth,
+                "nosuchname")
+
 
 class CredentialTests(unittest.TestCase):
 
@@ -242,6 +256,13 @@ class ProfileTests(unittest.TestCase):
         self.assertEquals(2, len(g.ports))
         self.assertEquals(22, g.ports[0])
         self.assertEquals(2222, g.ports[1])
+
+    def test_remove_auth(self):
+        g = self.builder.build_profiles([self.profile_dict])[0]
+        g.remove_auth_name("bobskey")
+        self.assertEquals(1, len(g.auth_names))
+        g.remove_auth_name("notthere")
+        self.assertEquals(1, len(g.auth_names))
 
     def test_empty_range(self):
         self.profile_dict[RANGE_KEY] = []

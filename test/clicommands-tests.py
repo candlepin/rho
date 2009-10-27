@@ -73,6 +73,14 @@ class CliCommandsTests(unittest.TestCase):
             # we expect this to throw a optparse.parse.error
             pass
 
+    def test_delete_in_use_auth(self):
+        self._run_test(AuthAddCommand(), ["auth", "add", "--name=bill",
+            "--username=bill"])
+        self._run_test(ProfileAddCommand(), ["profile", "add", "--name",
+            "profilename", "--auth=bill"])
+        self._run_test(ProfileClearCommand(), ["auth", "clear", "--name=bill"])
+        self._run_test(DumpConfigCommand(), ["dumpconfig"])
+
     def test_auth_add_duplicate(self):
         self._run_test(AuthAddCommand(), ["auth", "add", "--name=bill",
             "--username=bill"])
@@ -84,6 +92,7 @@ class CliCommandsTests(unittest.TestCase):
                 ["profile", "add", "--name", "profile", "--auth", 
                     "doesnotexist"])
 
+    # TODO: This test looks bad, don't think it tests anything.
     def test_dumpconfig(self):
         try:
             self._run_test(DumpConfigCommand(), ['dumpconfig',
