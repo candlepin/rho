@@ -198,10 +198,12 @@ class Scanner():
     def report(self, fileobj, report_format=None):
         self.ssh_jobs.report.report(fileobj, report_format=report_format)
 
-    def _callback(self, resultlist=[]):
-        for result in resultlist:
+    def _callback(self, *args):
+        print args
+#        for result in resultlist:
+#            print result
 #            print "%s:%s %s" % (result.ip, result.returncode, result.output)
-            self.output.append((result.ip, result.returncode, result.output))
+#            self.output.append((result.ip, result.returncode, result.output))
 
 # import profiles
 # profile = profiles.get("webservers")
