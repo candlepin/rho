@@ -275,7 +275,7 @@ class ScanCommand(CliCommand):
         self.parser.add_option("--allow-agent", dest="allowagent", action="store_true", 
                metavar="ALLOWAGENT", default=False,
                help=_("Use keys from local ssh-agent"))
-        self.parser.add_option("--show-fields", dest="showfields", 
+        self.parser.add_option("--show-fields", dest="showfields",action="store_true", 
               metavar="SHOWFIELDS", 
               help=_("show fields available for reports"))
         self.parser.add_option("--report-format", dest="reportformat",
