@@ -253,7 +253,12 @@ Exception: Channel closed.
   File "/usr/lib/python2.6/site-packages/paramiko/channel.py", line 1077, in _wait_for_event
     raise e
 None
+
 (looks to be a parmiko bug... https://bugs.launchpad.net/paramiko/+bug/413850)
+
+Strangely enough these two hosts that are failing are EL4 and EL3. However, I
+can scan them locally and do not hit the exception, in both cases we're using
+F11...
 
 
 
