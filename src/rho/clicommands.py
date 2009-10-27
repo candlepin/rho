@@ -623,70 +623,6 @@ class ProfileListCommand(CliCommand):
         printer.write()
 
 
-class AuthEditCommand(CliCommand):
-    def __init__(self):
-        usage = _("usage: %prog auth edit [options]")
-        shortdesc = _("edits a given auth")
-        desc = _("edit a given auth")
-
-        CliCommand.__init__(self, "auth edit", usage, shortdesc, desc)
-
-        self.parser.add_option("--name", dest="name", metavar="NAME",
-                help=_("NAME of the auth - REQUIRED"))
-
-        self.parser.add_option("--file", dest="filename", metavar="FILENAME",
-                help=_("file containing SSH key"))
-        self.parser.add_option("--username", dest="username",
-                metavar="USERNAME",
-                help=_("user name for authenticating against target machine - REQUIRED"))
-        self.parser.add_option("--password", dest="password",
-                action="store_true",
-                help=_("password for authenticating against target machine"))
-
-        self.parser.set_defaults(password=False)
-
-    def _validate_options(self):
-        CliCommand._validate_options(self)
-
-        if not self.options.name:
-            self.parser.print_help()
-            sys.exit(1)
-
-    def _do_command(self):
-        a = self.config.get_auth(self.options.name)
-
-        if not a:
-            print(_("Auth %s does not exist.") % self.options.name)
-            sys.exit(1)
-
-        if self.options.username:
-            a.username = self.options.username
-
-        if self.options.password:
-            a.password = get_password(a.username, RHO_AUTH_PASSWORD)
-
-        if self.options.filename:
-
-            sshkey = _read_key_file(self.options.filename)
-
-            if a.type == config.SSH_TYPE:
-                cred = config.SshKeyAuth({"name": a.name,
-                                          "key":sshkey,
-                                          "username": a.username,
-                                          "password": a.password,
-                                          "type":"ssh_key"})
-                # remove the old ssh, and new key type
-                self.config.remove_auth(self.options.name)
-                self.config.add_auth(cred)
-
-            elif a.type == config.SSH_KEY_TYPE:
-                a.key = sshkey
-
-        c = config.ConfigBuilder().dump_config(self.config)
-        crypto.write_file(self.options.config, c, self.passphrase, self.salt)
-        print(_("Auth %s updated" % self.options.name))
-
-
 class ProfileEditCommand(CliCommand):
     def __init__(self):
         usage = _("usage: %prog profile edit [options]")
@@ -854,6 +790,72 @@ class ProfileAddCommand(CliCommand):
         c = config.ConfigBuilder().dump_config(self.config)
         crypto.write_file(self.options.config, c, self.passphrase, self.salt)
 
+
+class AuthEditCommand(CliCommand):
+    def __init__(self):
+        usage = _("usage: %prog auth edit [options]")
+        shortdesc = _("edits a given auth")
+        desc = _("edit a given auth")
+
+        CliCommand.__init__(self, "auth edit", usage, shortdesc, desc)
+
+        self.parser.add_option("--name", dest="name", metavar="NAME",
+                help=_("NAME of the auth - REQUIRED"))
+
+        self.parser.add_option("--file", dest="filename", metavar="FILENAME",
+                help=_("file containing SSH key"))
+        self.parser.add_option("--username", dest="username",
+                metavar="USERNAME",
+                help=_("user name for authenticating against target machine - REQUIRED"))
+        self.parser.add_option("--password", dest="password",
+                action="store_true",
+                help=_("password for authenticating against target machine"))
+
+        self.parser.set_defaults(password=False)
+
+    def _validate_options(self):
+        CliCommand._validate_options(self)
+
+        if not self.options.name:
+            self.parser.print_help()
+            sys.exit(1)
+
+    def _do_command(self):
+        a = self.config.get_auth(self.options.name)
+
+        if not a:
+            print(_("Auth %s does not exist.") % self.options.name)
+            sys.exit(1)
+
+        if self.options.username:
+            a.username = self.options.username
+
+        if self.options.password:
+            a.password = get_password(a.username, RHO_AUTH_PASSWORD)
+
+        if self.options.filename:
+
+            sshkey = _read_key_file(self.options.filename)
+
+            if a.type == config.SSH_TYPE:
+                cred = config.SshKeyAuth({"name": a.name,
+                                          "key":sshkey,
+                                          "username": a.username,
+                                          "password": a.password,
+                                          "type":"ssh_key"})
+                # remove the old ssh, and new key type
+                self.config.remove_auth(self.options.name)
+                self.config.add_auth(cred)
+
+            elif a.type == config.SSH_KEY_TYPE:
+                a.key = sshkey
+
+        c = config.ConfigBuilder().dump_config(self.config)
+        crypto.write_file(self.options.config, c, self.passphrase, self.salt)
+        print(_("Auth %s updated" % self.options.name))
+
+
+
 class AuthClearCommand(CliCommand):
     def __init__(self):
         usage = _("usage: %prog auth clear")
@@ -1007,7 +1009,6 @@ class AuthAddCommand(CliCommand):
 
 
     def _do_command(self):
-
         if self.options.filename:
             # using sshkey
             self._validate_key_and_passphrase(self.options.filename)
