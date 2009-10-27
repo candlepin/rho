@@ -112,9 +112,9 @@ class Scanner():
 
     def get_cmd_fields(self):
         fields = {}
-	for cmd in self.default_rho_cmd_classes:
-	    if cmd.fields:
-                fields.update(cmd.fields)
+        for cmd in self.default_rho_cmd_classes:
+            if cmd.fields:
+                    fields.update(cmd.fields)
         return fields
 
     def _find_auths(self, authnames):
@@ -160,6 +160,8 @@ class Scanner():
                 if ip in self.cache:
                     log.debug("Cache hit for: %s" % ip)
                     cached_port = self.cache[ip]['port']
+                    log.debug("Cached port: %s %s" % (cached_port,
+                        type(cached_port)))
                     cached_authname = self.cache[ip]['auth']
                     if cached_port in ports:
                         ports.remove(cached_port)
