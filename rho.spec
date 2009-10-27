@@ -35,6 +35,10 @@ retrieving information about them.
 %install
 rm -rf $RPM_BUILD_ROOT
 %{__python} setup.py install -O1 --skip-build --root $RPM_BUILD_ROOT
+cd doc/
+gzip rho.1
+mkdir -p $RPM_BUILD_ROOT%{_mandir}/man1/
+mv rho.1.gz $RPM_BUILD_ROOT%{_mandir}/man1/
 rm -f $RPM_BUILD_ROOT%{python_sitelib}/*egg-info/requires.txt
 
 
@@ -49,6 +53,7 @@ rm -rf $RPM_BUILD_ROOT
 %dir %{python_sitelib}/rho
 %{python_sitelib}/rho/*
 %{python_sitelib}/rho-*.egg-info
+%{_mandir}/man1/rho.1.gz
 
 
 %changelog
