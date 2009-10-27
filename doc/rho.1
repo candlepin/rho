@@ -21,9 +21,6 @@ discovery tool, so there is no need to install anything on multiple systems. OS 
 .PP
 This man page covers the commands, subcommands and options for rho with basic usage information. For more detailed information and examples, including best practices, see the rho README.
 
-.SH SEE ALSO
-See the RHQ user and developer documentation at http://jopr.org/confluence/display/RHQ/Home.
-
 .SH USAGE
 rho performs three major tasks:
 .PP
@@ -340,7 +337,7 @@ Alternatively, the scan can be run without using any profile and just passing al
 
 
 .SS VIEWING AND LOADING CONFIGURATION
-The configuration for using 'rho' is stored in the .rho.conf file. This file is automatically created and AES-256 encrypted when the first auth entry or profile is created.
+The configuration for using 'rho' is stored in the .rho.conf file. This file is automatically created and AES-128 encrypted when the first auth entry or profile is created.
 .PP
 The .rho.conf file is basically a simple JSON file, so it is possible to create a .conf file and then load the configuration all at once, rather than using 'rho' to create the file. This file has to be a plaintext, raw JSON file; when it is loaded, 'rho' will properly read and encrypt it. This is done using the 'importconfig' command.
 .PP
@@ -369,7 +366,7 @@ A handful of options are allowed with every command for rho.
 .PP
 .TP
 --config file
-By default, rho reads its configuration from $HOME/.rho.conf. rho.conf is an AES-256 encrypted JSON file created by the rho utility. This option points the tool to a different location. The file does not need to exist first; the rho tool automatically creates and encrypts the specified config file the first time it is referenced.
+By default, rho reads its configuration from $HOME/.rho.conf. rho.conf is an AES-128 encrypted JSON file created by the rho utility. This option points the tool to a different location. The file does not need to exist first; the rho tool automatically creates and encrypts the specified config file the first time it is referenced.
 .PP
 .TP
 --log file
