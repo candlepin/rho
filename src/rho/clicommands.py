@@ -556,9 +556,6 @@ class ProfileShowCommand(CliCommand):
             sys.exit(1)
 
     def _do_command(self):
-        keys = ["name", "range", "ports", "auths"]
-        out = OutputPrinter(keys)
-
         if not self.config.list_profiles():
             print(_("No profiles found"))
 
