@@ -267,8 +267,8 @@ class ScanCommand(CliCommand):
                 metavar="REPORTFILE",
                 help=_("write out to this file"))
         self.parser.add_option("--profile", dest="profiles", action="append",
-               metavar="PROFILE", default=[],
-               help=_("profile class to scan"))
+                metavar="PROFILE", default=[],
+                help=_("profile class to scan")),
         self.parser.add_option("--cache", dest="cachefile",
                 metavar="PASTREPORTFILE",
                 help=_("past output, used to cache successful credentials and ports"))
@@ -684,13 +684,24 @@ class ProfileEditCommand(CliCommand):
             g.ports = self.options.ports.strip().split(",")
             self._validate_ports(g.ports)
         if len(self.options.auth) > 0:
-            g.auth_names = self.options.auth
+            g.auth_names = []
+            for auth in self.options.auth:
+                for a in auth.strip().split(","):
+                    g.auth_names.append(a)
+
+        # unfortunately can't valid these in _validate_options
+        # as we don't have a config at that point
+        for auth in self.options.auth:
+            for a in auth.strip().split(","):
+                try:
+                    self.config.get_auth(a)
+                except config.NoSuchAuthError, e:
+                    print(_("No auth '%s' found.") % auth)
+                    sys.exit(1)
 
         c = config.ConfigBuilder().dump_config(self.config)
         crypto.write_file(self.options.config, c, self.passphrase, self.salt)
         print(_("Profile %s edited" % self.options.name))
-
-
 
 class ProfileClearCommand(CliCommand):
     def __init__(self):
@@ -768,8 +779,23 @@ class ProfileAddCommand(CliCommand):
             ports = self.options.ports.strip().split(",")
             self._validate_ports(ports)
 
+        auth_names = []
+        for auth in self.options.auth:
+            for a in auth.strip().split(","):
+                auth_names.append(a)
+
+        # unfortunately can't valid these in _validate_options
+        # as we don't have a config at that point
+        for auth in self.options.auth:
+            for a in auth.strip().split(","):
+                try:
+                    self.config.get_auth(a)
+                except config.NoSuchAuthError, e:
+                    print(_("No auth '%s' found.") % auth)
+                    sys.exit(1)
+
         g = config.Profile(name=self.options.name, ranges=self.options.ranges,
-                         auth_names=self.options.auth, ports=ports)
+                         auth_names=auth_names, ports=ports)
         self.config.add_profile(g)
         c = config.ConfigBuilder().dump_config(self.config)
         crypto.write_file(self.options.config, c, self.passphrase, self.salt)
