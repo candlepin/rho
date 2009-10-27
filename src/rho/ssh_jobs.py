@@ -116,7 +116,9 @@ class SshJobs():
             self.max_threads = len(self.ssh_jobs)
         
         self.output_queue = ssh_queue.startOutputThread(self.verbose, report=self.report)
-        self.ssh_connect_queue = ssh_queue.startSSHQueue(self.output_queue, self.max_threads)
+        self.ssh_connect_queue = ssh_queue.startSSHQueue(self.output_queue, 
+                                                         self.max_threads,
+                                                         callback=callback)
 
         while self.ssh_jobs:
             for ssh_job in self.ssh_jobs:

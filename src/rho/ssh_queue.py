@@ -31,7 +31,7 @@ import socket
 import paramiko
 
 import config
-
+import time
 
 class GenericThread(threading.Thread):
     """A baseline thread that includes the functions we want for all our threads so we don't have to duplicate code."""
@@ -94,14 +94,16 @@ class SSHThread(GenericThread):
         queueObj['connection_result'] - String: 'SUCCESS'/'FAILED'
         queueObj['command_output'] - String: Textual output of commands after execution
     """
-    def __init__ (self, id, ssh_connect_queue, output_queue):
+    def __init__ (self, id, ssh_connect_queue, output_queue, callback=None):
         threading.Thread.__init__(self, name="SSHThread-%d" % (id,))
         self.ssh_connect_queue = ssh_connect_queue
         self.output_queue = output_queue
         self.id = id
         self.quitting = False
+        self.callback = callback
 
     def quit(self):
+	print "quitting"
         self.quitting = True
 
     def run (self):
@@ -109,10 +111,13 @@ class SSHThread(GenericThread):
             while not self.quitting:
                 queueObj = self.ssh_connect_queue.get()
                 if queueObj == 'quit':
+		    print "foo", self.id
                     self.quit()
                     
+#                if callback:
+#                    callback(queueObj)
 #                success, command_output = attemptConnection(host, username, password, timeout, commands)
-                attemptConnection(queueObj)
+                attemptConnection(queueObj, progress_callback=self.callback)
 
                 #hmm, this is weird...
                 if queueObj.connection_result:
@@ -148,11 +153,14 @@ def stopOutputThread():
             t.quit()
     return True
 
-def startSSHQueue(output_queue, max_threads):
+def startSSHQueue(output_queue, max_threads, callback=None):
     """Setup concurrent threads for testing SSH connectivity.  Must be passed a Queue (output_queue) for writing results."""
     ssh_connect_queue = Queue.Queue()
     for thread_num in range(max_threads):
-        ssh_thread = SSHThread(thread_num, ssh_connect_queue, output_queue)
+        ssh_thread = SSHThread(thread_num, 
+                               ssh_connect_queue,
+                               output_queue,
+                               callback=callback)
         ssh_thread.setDaemon(True)
         ssh_thread.start()
     return ssh_connect_queue
@@ -287,18 +295,26 @@ def paramikoConnect(ssh_job):
 
     return ssh
 
-def executeCommands(transport, rho_commands):
+def executeCommands(transport, rho_commands, progress_callback=None):
     host = transport.get_host_keys().keys()[0]
+    cmd_len = len(rho_commands)
+    cmd_count = 1
     for rho_cmd in rho_commands:
         output = []
-        for cmd_string in rho_cmd.cmd_strings:
+#        if progress_callback:
+#            progress_callback("task #%s of %s" % (cmd_count, cmd_len))
+        len_cmd_strings = len(rho_cmd.cmd_strings)
+        for (cmd_string_count, cmd_string) in enumerate(rho_cmd.cmd_strings):
+#            if progress_callback:
+#                progress_callback("       cmd #%s of %s" % (cmd_string_count+1,len_cmd_strings))
             stdin, stdout, stderr = transport.exec_command(cmd_string)
             # one item in the list for each cmd stdout
             output.append((stdout.read(), stderr.read()))
         rho_cmd.populate_data(output)
+        cmd_count = cmd_count + 1
     return rho_commands
 
-def attemptConnection(ssh_job):
+def attemptConnection(ssh_job, progress_callback=None):
     # ssh_job is a SshJob object
 
     if ssh_job.ip != "":
@@ -309,7 +325,11 @@ def attemptConnection(ssh_job):
                 ssh_job.connection_result = False
                 return
             command_output = []
-            executeCommands(transport=ssh, rho_commands=ssh_job.rho_cmds)
+            if progress_callback:
+                progress_callback("connecting to:", ssh_job.ip)
+            executeCommands(transport=ssh, 
+                            rho_commands=ssh_job.rho_cmds,
+                            progress_callback=progress_callback)
             ssh.close()
 
         except Exception, detail:
