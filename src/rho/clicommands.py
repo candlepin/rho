@@ -117,6 +117,26 @@ class OutputPrinter(object):
 
             self.writer.writerow(line)
 
+class ProfilePrinter(object):
+    def __init__(self, profiles):
+        self.profiles = profiles
+
+    def write(self):
+        for p in self.profiles:
+            print("\nname: %s" % p.name)
+
+            print("    auths:")
+            for auth in p.auth_names:
+                print("        %s" % auth)
+
+            print("    ports:")
+            for port in p.ports:
+                print("        %s" % port)
+
+            print("    ranges:")
+            for range in p.ranges:
+                print("        %s" % range)
+
 class CliCommand(object):
     """ Base class for all sub-commands. """
 
@@ -542,13 +562,17 @@ class ProfileShowCommand(CliCommand):
         if not self.config.list_profiles():
             print(_("No profiles found"))
 
+
         p = self.config.get_profile(self.options.name)
-        if p:
-            out.add_row(p.to_dict())
-            out.write()
-            print("")
-        else:
+
+        if not p:
             print(_("No profile '%s' found.") % self.options.name)
+            return
+
+        # using OutputPrinter didn't look so
+        # nice for profiles
+        printer = ProfilePrinter([p])
+        printer.write()
 
 
 class ProfileListCommand(CliCommand):
@@ -565,14 +589,10 @@ class ProfileListCommand(CliCommand):
             print(_("No profiles found"))
             return
 
-        keys = ["name", "range", "ports", "auths"]
-        out = OutputPrinter(keys)
-
-        for p in self.config.list_profiles():
-            out.add_row(p.to_dict())
-
-        out.write()
-        print("")
+        # using OutputPrinter didn't look so
+        # nice for profiles
+        printer = ProfilePrinter(self.config.list_profiles())
+        printer.write()
 
 class AuthEditCommand(CliCommand):
     def __init__(self):
