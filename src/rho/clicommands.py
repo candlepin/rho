@@ -336,18 +336,14 @@ class ScanCommand(CliCommand):
         """
         cache = {}
         f = open(report_filename)
-        for row in csv.reader(f):
-
-            if row[1] == '' or row[13] == '':
+        reader = csv.DictReader(f)
+        for row in reader:
+            if row['ip'] == '' or row['auth.name'] == '':
                 # Looks like we couldn't login to this machine last time.
                 continue
 
-            # These indexes may be volatile if the output is fluctuating.
-            ip = row[0]
-            port = int(row[1])
-            authname = row[13]
-            cache[ip] = {'port': port, 'auth': authname}
-            log.debug("Found cached results for: %s" % ip)
+            cache[row['ip']] = {'port': row['port'], 'auth': row['auth.name']}
+            log.debug("Found cached results for: %s" % row['ip'])
 
         f.close()
         return cache
