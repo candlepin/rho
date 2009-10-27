@@ -19,6 +19,8 @@ import gettext
 t = gettext.translation('rho', 'locale', fallback=True)
 _ = t.ugettext
 
+import sys
+
 # report fields we can use. Add them here so we can show them
 # with --report-fields
 # FIXME: i18n?
@@ -37,7 +39,8 @@ class ScanReport():
                   "uname.hardware_platform", "redhat-release.name",
                   "redhat-release.version", "redhat-release.release",
                   "systemid.system_id", "systemid.username", "instnum.instnum", 
-                  "etc-release.etc-release", "cpu.count",
+                  "etc-release.etc-release", "cpu.count", 
+                  "cpu.vendor_id", "cpu.model_name",
                   #"etc-issue.etc-issue",
                   "auth.type", "auth.username", "auth.name", "error"]
     def __init__(self):
@@ -66,6 +69,13 @@ class ScanReport():
                                     'auth.password': ssh_job.auth.password}
         self.ips[ssh_job.ip].update(data)
 
+    # generate a dict to feed to writerow to print a csv header
+    def gen_header(self, fields):
+        d = {}
+        for field in fields:
+            d[field] = field
+        return d
+
     def report(self, fileobj, report_format=None):
         csv_format = self.csv_format
         if report_format:
@@ -75,6 +85,8 @@ class ScanReport():
                 extrasaction='ignore')
         ip_list = self.ips.keys()
         ip_list.sort()
+        if fileobj is not sys.stdout:
+            dict_writer.writerow(self.gen_header(self.csv_format))
         for ip in ip_list:
             dict_writer.writerow(self.ips[ip])
 
