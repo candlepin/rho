@@ -112,9 +112,9 @@ class Scanner():
 
     def get_cmd_fields(self):
         fields = {}
-	for cmd in self.default_rho_cmd_classes:
-	    if cmd.fields:
-                fields.update(cmd.fields)
+        for cmd in self.default_rho_cmd_classes:
+            if cmd.fields:
+                    fields.update(cmd.fields)
         return fields
 
     def _find_auths(self, authnames):
