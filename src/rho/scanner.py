@@ -16,6 +16,16 @@ import rho_ips
 import ssh_jobs
 
 
+# report fields we can use. Add them here so we can show them
+# with --report-fields
+# FIXME: i18n?
+fields = {'ip':'ip address',
+          'port':'ssh port',
+          'auth.type':'type of ssh authentication used',
+          'auth.username':'username ssh',
+          'auth.name':'name of authentication class',
+          'error':'any errors that are found'}
+
 class ScanReport():
 
     # rho_cmds and the list of rho_cmd_classes in scanner.Scanner to get
@@ -53,8 +63,12 @@ class ScanReport():
                                     'auth.password': ssh_job.auth.password}
         self.ips[ssh_job.ip].update(data)
 
-    def report(self, fileobj):
-        dict_writer = csv.DictWriter(fileobj, self.csv_format,
+    def report(self, fileobj, report_format=None):
+        csv_format = self.csv_format
+        if report_format:
+            csv_format = report_format
+            
+        dict_writer = csv.DictWriter(fileobj, csv_format,
                 extrasaction='ignore')
         ip_list = self.ips.keys()
         ip_list.sort()
@@ -80,6 +94,13 @@ class Scanner():
                                         rho_cmds.EtcIssueRhoCmd]
         self.ssh_jobs = ssh_jobs.SshJobs()
         self.output = []
+
+    def get_cmd_fields(self):
+        fields = {}
+	for cmd in self.default_rho_cmd_classes:
+	    if cmd.fields:
+                fields.update(cmd.fields)
+        return fields
 
     def _find_auths(self, authnames):
         """ Return a list of Auth objects for the with the given names. """
@@ -157,8 +178,8 @@ class Scanner():
         self.out_queue = self.ssh_jobs.run_jobs(callback=self._callback)
         self.out_queue.join()
 
-    def report(self, fileobj):
-        self.ssh_jobs.report.report(fileobj)
+    def report(self, fileobj, report_format=None):
+        self.ssh_jobs.report.report(fileobj, report_format=report_format)
 
     def _callback(self, resultlist=[]):
         for result in resultlist:

@@ -268,13 +268,19 @@ class ScanCommand(CliCommand):
                 help=_("write out to this file"))
         self.parser.add_option("--profile", dest="profiles", action="append",
                metavar="PROFILE", default=[],
-               help=_("profile class to scan")),
+               help=_("profile class to scan"))
         self.parser.add_option("--cache", dest="cachefile",
                 metavar="PASTREPORTFILE",
-                help=_("past output, used to cache successful credentials and ports")),
+                help=_("past output, used to cache successful credentials and ports"))
         self.parser.add_option("--allow-agent", dest="allowagent", action="store_true", 
                metavar="ALLOWAGENT", default=False,
                help=_("Use keys from local ssh-agent"))
+        self.parser.add_option("--show-fields", dest="showfields", 
+              metavar="SHOWFIELDS", 
+              help=_("show fields available for reports"))
+        self.parser.add_option("--report-format", dest="reportformat",
+              metavar="REPORTFORMAT", 
+              help=_("specify report format (see --show-fields for options)"))
 
         self.parser.set_defaults(ports="22")
 
@@ -291,6 +297,7 @@ class ScanCommand(CliCommand):
         hasProfiles = len(self.options.profiles) > 0
         hasAuths = len(self.options.auth) > 0
 
+
         if self.options.cachefile:
             self.options.cachefile = os.path.abspath(os.path.expanduser(
                 self.options.cachefile))
@@ -301,7 +308,7 @@ class ScanCommand(CliCommand):
         if hasRanges:
             self._validate_ranges(self.options.ranges)
 
-        if not hasRanges and not hasProfiles:
+        if not hasRanges and not hasProfiles and not self.options.showfields:
             self.parser.print_help()
             sys.exit(1)
 
@@ -357,6 +364,16 @@ class ScanCommand(CliCommand):
             user_password = get_password(self.options.username,
                     RHO_AUTH_PASSWORD)
 
+        # hmm, some possible report values don't come from cmds...
+        if self.options.showfields:
+            fields = self.scanner.get_cmd_fields()
+            fields.update(scanner.fields)
+            field_keys = fields.keys()
+            field_keys.sort()
+            for field_key in field_keys:
+                print "%s:%s" % (field_key, fields[field_key]) 
+            
+
         if len(self.options.auth) > 0:
             auths = []
             for auth in self.options.auth:
@@ -387,7 +404,7 @@ class ScanCommand(CliCommand):
 
             g = config.Profile(name="clioptions", ranges=self.options.ranges,
                          auth_names=self.options.auth, ports=ports)
-            self.config.add_profile(g)
+
             self.scanner.scan_profiles(["clioptions"])
             
         if len(self.options.profiles) > 0:
@@ -402,7 +419,11 @@ class ScanCommand(CliCommand):
         if self.options.reportfile:
             fileobj = open(os.path.expanduser(os.path.expandvars(
                 self.options.reportfile)), "w")
-        self.scanner.report(fileobj)
+
+        fields = None
+        if self.options.reportformat:
+            fields = string.split(self.options.reportformat, ',')
+        self.scanner.report(fileobj, report_format=fields)
         fileobj.close()
 
 

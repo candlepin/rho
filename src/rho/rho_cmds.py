@@ -36,11 +36,12 @@ from rho.log import log
 
 class RhoCmd():
     name = "base"
+    fields = {}
     def __init__(self):
 #        self.cmd_strings = cmd
         self.cmd_results = []
         self.data = {}
-
+    
 
     # we're not actually running the class on the hosts, so
     # we will need to populate it with the output of the ssh stuff
@@ -71,18 +72,28 @@ class UnameRhoCmd(RhoCmd):
     name = "uname"
     cmd_strings = ["uname -s", "uname -n", "uname -p", "uname -r", "uname -a", "uname -i"]
 
+    fields = {'uname.os':'uname -s (os)',
+              'uname.hostname':'uname -n (hostname)',
+              'uname.processor':'uname -p (processor)',
+              'uname.kernel':'uname -r (kernel)',
+              'uname.all':'uname -a (all)',
+              'uname.hardware_platform':'uname -i (hardware_platform)'}
+
     def parse_data(self):
-        self.data['%s.os' % self.name] = self.cmd_results[0][0].strip()
-        self.data['%s.hostname' % self.name] = self.cmd_results[1][0].strip()
-        self.data['%s.processor' % self.name] = self.cmd_results[2][0].strip()
-        self.data['%s.kernel' % self.name] = self.cmd_results[3][0].strip()
-        self.data['%s.all' % self.name] = self.cmd_results[4][0].strip()
+        self.data['uname.os'] = self.cmd_results[0][0].strip()
+        self.data['uname.hostname'] = self.cmd_results[1][0].strip()
+        self.data['uname.processor'] = self.cmd_results[2][0].strip()
+        self.data['uname.kernel'] = self.cmd_results[3][0].strip()
+        self.data['uname.all'] = self.cmd_results[4][0].strip()
         if not self.cmd_results[3][1]:
-            self.data['%s.hardware_platform' % self.name] = self.cmd_results[5][0].strip()
+            self.data['uname.hardware_platform'] = self.cmd_results[5][0].strip()
 
 class RedhatReleaseRhoCmd(RhoCmd):
     name = "redhat-release"
     cmd_strings = ["""rpm -q --queryformat "%{NAME}\n%{VERSION}\n%{RELEASE}\n" --whatprovides redhat-release"""]
+    fields = {'redhat-release.name':"name of package that provides 'redhat-release'",
+              'redhat-release.version':"version of package that provides 'redhat-release'",
+              'redhat-release.release':"release of package that provides 'redhat-release'"}
 
     def parse_data(self):
         # new line seperated string, one result only
@@ -93,13 +104,14 @@ class RedhatReleaseRhoCmd(RhoCmd):
         fields = self.cmd_results[0][0].splitlines()
         # no shell gives a single bogus line of output, we expect 3
         if len(fields) >= 3:
-            self.data['%s.name' % self.name] = fields[0].strip()
-            self.data['%s.version' % self.name ] = fields[1].strip()
-            self.data['%s.release' % self.name ] = fields[2].strip()
+            self.data['redhat-release.name'] = fields[0].strip()
+            self.data['redhat-release.version'] = fields[1].strip()
+            self.data['redhat-release.release'] = fields[2].strip()
 
 # take a blind drunken flailing stab at guessing the os
 class EtcReleaseRhoCmd(RhoCmd):
     name = "etc-release"
+    fields = {'etc-release.etc-release':'contents of /etc/release (or equilivent)'}
     def __init__(self):
         release_files = ["/etc/redhat-release", "/etc/release",
                          "/etc/debian_release", "/etc/Suse-release",
@@ -110,12 +122,15 @@ class EtcReleaseRhoCmd(RhoCmd):
         RhoCmd.__init__(self)
  
     def parse_data(self):
-        self.data['%s.etc-release' % self.name] = string.join(self.cmd_results[0]).strip()
+        self.data['etc-release.etc-release'] = string.join(self.cmd_results[0]).strip()
 
 
 class ScriptRhoCmd(RhoCmd):
     name = "script"
     cmd_strings = []
+    fields = {'script.output':'output of script',
+              'script.error':'error of script',
+              'script.command':'name of script'}
 
     def __init__(self, command):
         self.command = command
@@ -142,6 +157,7 @@ class GetFileRhoCmd(RhoCmd):
 # linux only...
 class CpuRhoCmd(RhoCmd):
     name = "cpu"
+    fields = {'cpu.count':'number of processors'}
     
     def __init__(self):
         self.cmd_strings = ["cat /proc/cpuinfo"] 
@@ -152,28 +168,32 @@ class CpuRhoCmd(RhoCmd):
         for line in self.cmd_results[0][0].splitlines():
             if line.find("processor") == 0:
                 cpu_count = cpu_count + 1
-        self.data["%s.count" % self.name] = cpu_count
+        self.data["cpu.count"] = cpu_count
 
 
 
 class EtcIssueRhoCmd(GetFileRhoCmd):
     name = "etc-issue"
     filename = "/etc/issue"
+    fields = {'etc-issue.etc-issue':'contents of /etc/issue'}
 
     def parse_data(self):
-        self.data["%s.etc-issue" % self.name] = string.strip(self.cmd_results[0][0])
+        self.data["etc-issue.etc-issue"] = string.strip(self.cmd_results[0][0])
     
 class InstnumRhoCmd(GetFileRhoCmd):
     name = "instnum"
     filename = "/etc/sysconfig/rhn/install-num"
+    fields = {'instnum.instnum':'installation number'}
 
     def parse_data(self):
-        self.data["%s.instnum" % self.name] =  string.strip(self.cmd_results[0][0])
+        self.data["instnum.instnum"] =  string.strip(self.cmd_results[0][0])
 
 class SystemIdRhoCmd(GetFileRhoCmd):
     name = "systemid"
     filename = "/etc/sysconfig/rhn/systemid"
-
+    #FIXME: there are more fields here, not sure it's worth including them as options
+    fields = {'systemid.system_id':'Red Hat Network system id',
+              'systemid.username':'Red Hat Network username',}
     def parse_data(self):
         # if file is empty, or we get errors, skip...
         if not self.cmd_results[0][0] or self.cmd_results[0][1]:

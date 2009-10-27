@@ -240,7 +240,6 @@ def paramikoConnect(ssh_job):
             try:
                 log.info("trying: %s" % debug_str)
 
-                print ssh_job.allow_agent
                 ssh.connect(ssh_job.ip, port=int(port), 
                             username=auth.username,
                             password=auth.password,
