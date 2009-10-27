@@ -15,16 +15,19 @@ import rho_cmds
 import rho_ips
 import ssh_jobs
 
+import gettext
+t = gettext.translation('rho', 'locale', fallback=True)
+_ = t.ugettext
 
 # report fields we can use. Add them here so we can show them
 # with --report-fields
 # FIXME: i18n?
-fields = {'ip':'ip address',
-          'port':'ssh port',
-          'auth.type':'type of ssh authentication used',
-          'auth.username':'username ssh',
-          'auth.name':'name of authentication class',
-          'error':'any errors that are found'}
+fields = {'ip':_('ip address'),
+          'port':_('ssh port'),
+          'auth.type':_('type of ssh authentication used'),
+          'auth.username':_('username ssh'),
+          'auth.name':_('name of authentication class'),
+          'error':_('any errors that are found')}
 
 class ScanReport():
 
