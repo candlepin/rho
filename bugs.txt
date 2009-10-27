@@ -97,6 +97,8 @@ Config Encryption Password:
 
 ------------------
 
+
+
 profile list, and profile show --name"" seem to list the same output.  We may
 want to just show profile names when "rho profile list" is called"
 [whayutin@thinkdoe rho]$ rho profile show --name whayutin.rdu.redhat.com
@@ -109,6 +111,9 @@ Config Encryption Password:
 {'auths': ['keys'], 'range': ['whayutin.rdu.redhat.com'], 'name':
 'whayutin.rdu.redhat.com', 'ports': [22]}
 [whayutin@thinkdoe rho]$ 
+
+
+
 Q -------------------------------------------------------
 Q
 Q add an auth that is only using an sshkey w/ a passphrase
@@ -118,12 +123,16 @@ Q
 Q Please change the txt for passwd prompt to say passphrase
 Q Q-------------------------------------------------------
 
+
+
 Q -------------------------
 Q clarify ssh error... getting similar error for ssh not running ,and bad
 Q passphrase
 Q Config Encryption Password:
 Q 10.11.228.65,,,,,,,,,,,,,,,,,no ssh
 Q --------------------------
+
+
 
 * if we try to specify an auth at scantime:
 
@@ -141,6 +150,8 @@ None
     self.report.add(queueObj)
   File "build/bdist.linux-i686/egg/rho/scanner.py", line 50, in add
     'auth.type': ssh_job.auth.type,
+
+
 
 --------------------------------------------------
 FIXED
@@ -163,7 +174,13 @@ paramikoConnect
     return ssh
 None
 10.11.228.65,,,,,,,,,,,,,,,,,no ssh
+
+
+
 -----------------------------------------------------
+
+
+
 Profile edit, lame bug
 If you make no edits to a profile, the command return should not say the
 profile was edited
@@ -172,7 +189,12 @@ profile was edited
 Config Encryption Password:
 Profile busted1 edited
 [whayutin@thinkdoe .ssh]$ 
+
+
+
 -----------------------------------------------------
+
+
 
  * if user adds malformed range, python trace occurs:
  [thesteve04@cinemashow rho]$ rho profile add --name=hax0r --auth=redhat
@@ -223,7 +245,13 @@ __init__
 __set__
     'format!' % value)
 netaddr.AddrFormatError: '24,10.16.76.0' is not a supported address format!
+
+
+
 ---------------------
+
+
+
 * trace periodically appears in long scans:
 
 Exception: Channel closed.
@@ -242,8 +270,11 @@ Exception: Channel closed.
 None
 (looks to be a parmiko bug... https://bugs.launchpad.net/paramiko/+bug/413850)
 
+
+
 ----------------------------------------
-rho profile clear on a profiles that dont exist..
-[whayutin@thinkdoe ~]$ rho profile clear --name=DOESNOTEXIST
-Profile DOESNOTEXIST removed
+FIXED
+Q rho profile clear on a profiles that dont exist..
+Q [whayutin@thinkdoe ~]$ rho profile clear --name=DOESNOTEXIST
+Q Profile DOESNOTEXIST removed
 ------------------------------
