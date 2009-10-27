@@ -113,8 +113,14 @@ class Config(object):
             c = self._auth_index[cname]
             self._auths.remove(c)
             del self._auth_index[cname]
+
+            for profile in self._profiles:
+                profile.remove_auth_name(cname)
+
         # TODO: need to raise error here, user shouldn't see nothing if
         # they botched their command to remove a auth
+        else:
+            raise NoSuchAuthError(cname)
 
     def get_auth(self, cname):
         if cname not in self._auth_index:
@@ -257,6 +263,14 @@ class Profile(object):
                 AUTHS_KEY: self.auth_names,
                 PORTS_KEY: self.ports
         }
+
+    def remove_auth_name(self, auth_name):
+        """
+        Remove the given auth name, if this profile is associated with it.
+        Otherwise do nothing.
+        """
+        if auth_name in self.auth_names:
+            self.auth_names.remove(auth_name)
 
 
 # Needs to follow the class definitions:

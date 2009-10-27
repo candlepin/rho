@@ -408,6 +408,13 @@ class ScanCommand(CliCommand):
             self.scanner.scan_profiles(["clioptions"])
             
         if len(self.options.profiles) > 0:
+
+            for profile in self.options.profiles:
+                if len(self.config.get_profile(profile).auth_names) == 0:
+                    print(_("ERROR: Profile %s has no auths to try.") %
+                            profile)
+                    sys.exit(1)
+
             # seems like a lot of code to cat two possibly None lists...
             missing = self.scanner.scan_profiles(self.options.profiles)
             if missing:
@@ -585,10 +592,10 @@ class AuthEditCommand(CliCommand):
                 metavar="USERNAME",
                 help=_("user name for authenticating against target machine - REQUIRED"))
         self.parser.add_option("--password", dest="password",
-                metavar="PASSWORD",
+                action="store_true",
                 help=_("password for authenticating against target machine"))
 
-        self.parser.set_defaults(password="")
+        self.parser.set_defaults(password=False)
 
     def _validate_options(self):
         CliCommand._validate_options(self)
@@ -608,7 +615,7 @@ class AuthEditCommand(CliCommand):
             a.username = self.options.username
 
         if self.options.password:
-            a.password = self.options.password
+            a.password = get_password(a.username, RHO_AUTH_PASSWORD)
 
         if self.options.filename:
             sshkey = _read_key_file(self.options.filename)
