@@ -391,6 +391,13 @@ class ScanCommand(CliCommand):
             self.scanner.scan_profiles(["clioptions"])
             
         if len(self.options.profiles) > 0:
+
+            for profile in self.options.profiles:
+                if len(self.config.get_profile(profile).auth_names) == 0:
+                    print(_("ERROR: Profile %s has no auths to try.") %
+                            profile)
+                    sys.exit(1)
+
             # seems like a lot of code to cat two possibly None lists...
             missing = self.scanner.scan_profiles(self.options.profiles)
             if missing:
