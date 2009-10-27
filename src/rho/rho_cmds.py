@@ -120,6 +120,7 @@ class EtcReleaseRhoCmd(RhoCmd):
         release_files = ["/etc/redhat-release", "/etc/release",
                          "/etc/debian_release", "/etc/Suse-release",
                          "/etc/mandriva-release", "/etc/enterprise-release",
+                         "/etc/sun-release", "/etc/slackware-release",
                          "/etc/ovs-release", "/etc/arch-release"]
         cmd_string = """for i in %s; do if [ -f "$i" ] ; then cat $i; fi ;  done""" % string.join(release_files, ' ')
         self.cmd_strings = [cmd_string]
