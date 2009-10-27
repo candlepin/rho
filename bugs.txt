@@ -134,22 +134,25 @@ Q --------------------------
 
 
 
-* if we try to specify an auth at scantime:
+Q * if we try to specify an auth at scantime:
 
-[thesteve04@cinemashow rho]$ rho scan notontarget --auth=dog8code
-Config Encryption Password:
-Exception: local variable 'ssh' referenced before assignment
+Fixed now, shouldn't be able to specify an auth and a profile at the same
+time, the profile already has auths associated with it.
 
-(<type 'exceptions.UnboundLocalError'>, UnboundLocalError("local variable 'ssh' referenced before assignment",), <traceback object at 0x96a139c>)
-  File "build/bdist.linux-i686/egg/rho/my_sshpt.py", line 276, in attemptConnection
-    ssh = paramikoConnect(ssh_job)
-  File "build/bdist.linux-i686/egg/rho/my_sshpt.py", line 258, in paramikoConnect
-    return ssh
-None
-  File "build/bdist.linux-i686/egg/rho/my_sshpt.py", line 64, in run
-    self.report.add(queueObj)
-  File "build/bdist.linux-i686/egg/rho/scanner.py", line 50, in add
-    'auth.type': ssh_job.auth.type,
+Q [thesteve04@cinemashow rho]$ rho scan notontarget --auth=dog8code
+Q Config Encryption Password:
+Q Exception: local variable 'ssh' referenced before assignment
+
+Q (<type 'exceptions.UnboundLocalError'>, UnboundLocalError("local variable 'ssh' referenced before assignment",), <traceback object at 0x96a139c>)
+Q   File "build/bdist.linux-i686/egg/rho/my_sshpt.py", line 276, in attemptConnection
+Q     ssh = paramikoConnect(ssh_job)
+Q   File "build/bdist.linux-i686/egg/rho/my_sshpt.py", line 258, in paramikoConnect
+Q     return ssh
+Q None
+Q   File "build/bdist.linux-i686/egg/rho/my_sshpt.py", line 64, in run
+Q     self.report.add(queueObj)
+Q   File "build/bdist.linux-i686/egg/rho/scanner.py", line 50, in add
+Q     'auth.type': ssh_job.auth.type,
 
 
 
@@ -189,6 +192,8 @@ profile was edited
 Config Encryption Password:
 Profile busted1 edited
 [whayutin@thinkdoe .ssh]$ 
+
+Not sure if this is worth fixing or not. - dgoodwin
 
 
 
