@@ -1,0 +1,524 @@
+.TH rho 1 "October 28, 2009" "version 0.1" "rho User Commands"
+.SH NAME
+rho \- Easily discover and manage systems on your network.
+
+.SH SYNOPSIS
+rho
+.I command subcommand [options]
+
+.SH DESCRIPTION
+rho is a network discovery tool to identify the number of systems running on a network, their operating system, hardware, and release numbers for almost any Linux or Unix flavor. Being able to identify the systems running on the network is a vital component to managing licenses and renewals. Ultimately, discovery is part of the larger sysadmin task of managing inventories.
+.PP
+rho uses two configuration entries to manage the discovery process.
+.I Profiles
+define the network or subnet that is being monitored.
+.I Credentials
+contains the usernames, passwords or, alternatively, the SSH keys of the user as which discovery runs. There can be multiple network profiles and authentication credentials, used in any combination.
+.PP
+rho is an
+.I agentless
+discovery tool, so there is no need to install anything on multiple systems. OS discovery for the entire network is centralized to a single machine.
+.PP
+This man page covers the commands, subcommands and options for rho with basic usage information. For more detailed information and examples, including best practices, see the rho README.
+
+.SH SEE ALSO
+See the RHQ user and developer documentation at http://jopr.org/confluence/display/RHQ/Home.
+
+.SH USAGE
+rho performs three major tasks:
+.PP
+1. Creating authentication profiles. This has the basic command:
+.PP
+.B rho auth add ...
+.PP
+2. Creating network profiles. This has the basic command:
+.PP
+.B rho profiles add --name X --range X --auth X
+.PP
+3. Running discovery, such as:
+.PP
+.B rho scan --profile X
+.PP
+The following sections cover these commands in more detail.
+.PP
+The primary purpose of rho is to scan a network. This can be done using simply 'rho scan' and passing all of the required network parameters and authentication credentials with every discovery pass. Using network and authentication profiles, however, simplifies discovery.
+.PP
+By default, the authentication credentials and profiles created using rho are stored in an encrypted file, $HOME/.rho.conf. The file is encrypted with AES-256 encryption and is decrypted when the 'rho' command is run, using a passphrase to access the file.
+
+
+.SS AUTHENTICATION
+The first part to configuring rho is setting up authentication credentials. rho uses SSH to connect to the servers on the network, and the credeetials is uses are configured in auth entries. Some kind of auth entry has to be passed when the scan is run, either by referencing the auth entry in a profile or by passing the credentials with the scan command.
+.PP
+There can be multiple auth credentials contained in a single profile.
+.PP
+.B
+Creating and Editing auth Entries
+.PP
+rho uses SSH credentials to access the servers to get their OS information during discovery. These credentials can be either a username-password or username-key pair. Each set of credentials is stored in a separate entry.
+.PP
+.B rho auth add --name
+.I name
+.B --username
+.I name
+.B [--file
+.I key_file
+.B ] [--password
+.I password
+.B ]
+.PP
+.TP
+--name name
+This required argument sets the name of the new authentication credentials entry. This should be descriptive, such as identifying the user or server it relates to. For example, "server1-rhouser".
+.PP
+.TP
+--username name
+This required argument contains the username of the SSH identity will use to bind to the server. This parameter prompts for the password for the user identity.
+.PP
+.TP
+--file key_file
+Optionally, this contains the path and file name of the file containing the SSH key issued for the --username identity.
+
+.PP
+The information given in an auth entry -- such as a password, SSH keys, or even the username -- may change. For example, network security may require passwords to be updated every few months. The auth entry can be edited to change the SSH credential information. The parameters for 'rho auth edit' are the same as those for 'rho auth add'.
+.PP
+.B rho auth edit --name
+.I name
+.B --username
+.I name
+.B [--file
+.I key_file
+.B ] [--password
+.I password
+.B ]
+
+.PP
+.B
+Listing and Showing auth Entries
+.PP
+The 'rho auth list' command returns the details for every auth entry configured for rho. This output includes the name, username, password, and auth type for each entry. Optionally, it can include the key fingerprint.
+.PP
+.B rho auth list [--showkeys]
+.PP
+.TP
+--showkeys
+This displays the key fingerprint of the SSH key given in the --file parameter when the authentication method was added. By default, key information is not returned with 'rho auth list'.
+
+.PP
+The 'rho auth show' command is the same as the 'rho auth list' command, except that it only returns details for a single specified auth entry.
+.PP
+.B rho auth show --name
+.I name
+.B [--showkeys]
+.PP
+.TP
+--name name
+This required argument gives the authentication credentials entry to display.
+.PP
+.TP
+--showkeys
+This displays the key fingerprint of the SSH key given in the --file parameter when the authentication method was added. By default, key information is not returned with 'rho auth show'.
+
+.PP
+.B
+Deleting auth Entries
+.PP
+It can be necessary to remove authentication credentials as the network infrastructure changes. This is done using the 'clear' subcommand.
+.PP
+.B IMPORTANT:
+Remove the auth setting from any profile which uses it
+.I before
+removing the auth entry. Otherwise, any attempt to use the profile attempts to use the non-existent auth entry, which causes the 'rho' command to fail.
+
+.PP
+.B rho auth clear --name
+.I name
+.B | --all
+.PP
+.TP
+--name name
+This argument gives the authentication credentials entry to delete.
+.PP
+.TP
+--all
+This deletes all stored authentication credentials.
+
+
+.SS PROFILES
+.I Profiles
+define a collection network information, including IP addresses, SSH ports, and SSH credentials. A discovery scan can reference a profile so that running the scan is automatic and repeatable, without having to re-enter network information every time.
+.PP
+.B
+Creating and Editing Profiles
+.PP
+A profile is essentially a concise collection of the information that rho needs to connect to a network or system. This means it contains 1) servers to connect to, 2) SSH ports to use, and 3) authentication credentials to use. Each of these parameters allowed multiple entries, so the same profile can access a patchwork of servers and subnets, as needed.
+.PP
+.B rho profile add --name
+.I name
+.B [--range
+.I ip_address
+.B ] [--ports
+.I ssh_ports
+.B ] [--auth
+.I auth_profile
+.B ]
+.PP
+.TP
+--name name
+This required argument sets the name of the new profile. This name is used to identify the profile in later operations. Use a descriptive name, such as "ColoSubnet".
+.PP
+.TP
+--range ip_address
+This sets the IP address, hostname, or IP address range to use when running discovery. There are several different formats that are allowed for the
+.I ip_address
+value.
+.IP
+1. A specific hostname or domain:
+.IP
+--range server.example.com
+.IP
+--range example.com
+.IP
+2. A specific IP address, in both standard and CIDR format:
+.IP
+--range 1.2.3.4
+.IP
+--range 1.2.3.4/24
+.IP
+3. Wildcards in IP addresses:
+.IP
+--range 1.2.3.*
+.IP
+4. An IP address range, in the form "IP - IP":
+.IP
+--range "1.2.3.4 - 1.2.3.255"
+.IP
+The --range setting also allows multiple entries, so non-contiguous ranges can be specified in the same profile. For example:
+.IP
+--range "1.2.3.4 - 1.2.3.100" --range "1.2.3.211" --range "server.example.com"
+.IP
+These all show up in the profile entry as:
+.IP
+'range': ['1.2.3.4 - 1.2.3.100', '1.2.3.211', 'server.example.com']
+.PP
+.TP
+--ports ssh_ports
+This gives a comma-separated list of allowed SSH ports to access on the hosts. For example:
+.IP
+--ports 22,300,500
+.IP
+The default port is 22. This parameter is optional.
+.PP
+.TP
+--auth auth_profile
+This contains the name of the authentication profile (created with 'rho auth add') to use to authentication to the servers being scanned. To add more than one auth profile to the network profile, run the --auth argument multiple times. For example:
+.IP
+--auth first_auth --auth second_auth
+.IP
+IMPORTANT: This auth profile must exist before attempting to add the authentication profile to the network profile.
+
+.PP
+The only required parameter when a profile is created is its name. Some parameters can be missing when it's first added and can be added later or they can be modified using the 'rho profile edit' command.
+.PP
+.B rho profile edit --name
+.I name
+.B [--range
+.I ip_address
+.B ] [--ports
+.I ssh_ports
+.B ] [--auth
+.I auth_profile
+.B ]
+.PP
+Although all three 'rho profile' parameters accept more than one setting, the 'rho profile edit' command is not additive. If a new argument is passed, it overwrites whatever was originally in the profile, it doesn't add a new attribute, even if the parameter is multi-valued. To add or keep multiple values with the edit command, list all parameters in the edit. For example, if a profile was created with an auth value of "server1creds" and the same profile will be used to scan with both server1creds and server2creds, edit as follows:
+.PP
+rho profile edit --name myprofile --auth server1creds --auth server2creds
+.PP
+You can use 'rho profile show --name myprofile' to make sure that the profile was properly edited.
+
+.PP
+.B
+Listing and Showing Profiles
+.PP
+The 'list' commands lists the details for all configured profiles. The output includes the IP ranges, auth credentials, and ports for the profile.
+.PP
+.B rho profile list
+.PP
+The 'rho profile show' command is the same as the 'rho profile list' command, except that it returns details for a single specific profile. This is a handy command to verify edits to a profile.
+.PP
+.B rho profile show --name
+.I profile
+
+.PP
+.B
+Deleting Profiles
+.PP
+Any or all profiles can be deleted using the 'clear' subcommand.
+.PP
+.B rho profile clear --name
+.I name
+.B | --all
+
+
+.SS SCANNING
+The 'scan' command is the one that actually runs discovery on the network. This command scans all of the servers within the range, and then prints the information to a CSV file.
+.PP
+There are two ways to run a scan. The simplest way is to specify the profile to use:
+.PP
+.B rho scan [--profile
+.I profile_name
+.B ] [--output
+.I file
+.B ] [--allow-agent true|false] [--cache
+.I file
+.B ] [--show-fields true|false] [--report-format
+.I options
+.B ]
+.PP
+.TP
+--profile profile_name
+Gives the name of the profile to use to run the scan.
+.PP
+.TP
+--output file
+Prints the output to a comma-separated values (CSV) file instead of stdout.
+.PP
+.TP
+--allow-agent true|false
+Tells 'rho' to use the keys stored in the local ssh-agent. By default, this is false, so that the credentials are used from the profile.
+.PP
+.TP
+--cache file
+Loads the output file of a previous scan. This loads the successful connection information (SSH port, auth username, and auth credentials) used to access each IP address in the range. This allows the scan to progress more quickly because it doesn't have to iterate through all of the auth credentials for the profile for each server. If credentials for the server aren't available or th previous credentials fail, then the scan falls back to the auth settings in the profile.
+.PP
+.TP
+--show-fields
+Prints the available values that can be returned in the scan output.
+.nf
+auth.name:name of authentication class
+auth.type:type of ssh authentication used
+auth.username:username ssh
+cpu.count:number of processors
+error:any errors that are found
+etc-issue.etc-issue:contents of /etc/issue
+etc-release.etc-release:contents of /etc/release (or equilivent)
+instnum.instnum:installation number
+ip:ip address
+port:ssh port
+redhat-release.name:name of package that provides 'redhat-release'
+redhat-release.release:release of package that provides 'redhat-release'
+redhat-release.version:version of package that provides 'redhat-release'
+systemid.system_id:Red Hat Network system id
+systemid.username:Red Hat Network username
+uname.all:uname -a (all)
+uname.hardware_platform:uname -i (hardware_platform)
+uname.hostname:uname -n (hostname)
+uname.kernel:uname -r (kernel)
+uname.os:uname -s (os)
+uname.processor:uname -p (processor)
+.fi
+.PP
+.TP
+--report-format options
+Sets the values to include in the CSV output, in order. The possible values are displayed with 'rho scan --show-fields'. Three fields are required, 'ip,port,authname'.
+
+.PP
+Alternatively, the scan can be run without using any profile and just passing all of the profile (or profile and auth) parameters with the scan command:
+.PP
+.B rho scan [--range
+.I ip_address
+.B ] [--ports
+.I ssh_ports
+.B ] [--username
+.I name
+.B ] [--auth
+.I auth_credentials
+.B ] [--output
+.I file
+.B ] [--allow-agent true|false] [--cache
+.I file
+.B ] [--show-fields true|false] [--report-format
+.I options
+.B ]
+
+
+.SS VIEWING AND LOADING CONFIGURATION
+The configuration for using 'rho' is stored in the .rho.conf file. This file is automatically created and AES-256 encrypted when the first auth entry or profile is created.
+.PP
+The .rho.conf file is basically a simple JSON file, so it is possible to create a .conf file and then load the configuration all at once, rather than using 'rho' to create the file. This file has to be a plaintext, raw JSON file; when it is loaded, 'rho' will properly read and encrypt it. This is done using the 'importconfig' command.
+.PP
+.B rho importconfig --from-file
+.I /path/to/file.conf
+.PP
+.TP
+--from-file /path/to/file
+Identifies the JSON configuration file to use. This argument is required.
+
+.PP
+The complete configuration of the .rho.conf file can be viewed using the 'rho dumpconfig' command. This displays both profiles and auths, printed to stdout.
+.PP
+.B rho dumpconfig
+
+
+.SS OPTIONS FOR ALL COMMANDS
+.PP
+A handful of options are allowed with every command for rho.
+.PP
+.B rho ... [--config
+.I file
+.B ] [--log
+.I file
+.B ] [--log-level debug|info|warning|error|critical] [--help]
+.PP
+.TP
+--config file
+By default, rho reads its configuration from $HOME/.rho.conf. rho.conf is an AES-256 encrypted JSON file created by the rho utility. This option points the tool to a different location. The file does not need to exist first; the rho tool automatically creates and encrypts the specified config file the first time it is referenced.
+.PP
+.TP
+--log file
+This writes the output from the command to a specific log file. Otherwise, the logging information is written to stout.
+.PP
+.TP
+--log-level level
+This sets the logging level for the command. This moves progressively from the logging only critical failures (critical) to logging everything about the command (debug). If this is not set, the default is critical.
+.PP
+.TP
+--help
+This prints the help for the rho command or subcommand.
+
+
+.SS ENVIRONMENT VARIABLES
+There is currently two environment variables that can be set when using rho to avoid password prompts.
+.PP
+.B
+IMPORTANT:
+Storing passwords in environment variables is especially dangerous. Be very cautious about using these environment variables in a production environment.
+.PP
+.TP
+.B RHO_PASSPHRASE
+The AES-256 encrypted $HOME/.rho.conf file must be accessed every time rho is run. This file stores all of the profile information. A passphrase must be entered to access this file; the phrase is set the first time the file is created. Normally, the command prompts for this passphrase and it must be entered manually. The RHO_PASSPHRASE environment variable sets the password.
+.PP
+.TP
+.B  RHO_AUTH_PASSWORD
+The SSH credentials prompt for the authentication password whenever the scan is run or the credentials are updated. This SSH password can be set using the RHO_AUTH_PASSWORD environment variable.
+
+
+.SH OUTPUT
+When the scan runs successfully, it outputs a CSV file that can be used to inventory the servers on the network. The output file has the following format:
+.nf
+ip,port,OS,kernel,processor,platform,release name,release version,release number,system ID,username,instnum,release,CPU count,etc-issue,auth type,auth username,auth name,error
+.fi
+.PP
+For example:
+.nf
+192.168.123.116,22,Linux,i686,i386,redhat-release,5Client,5.3.0.3,ID-1000015943,jsmith,da3122afdb7edd23,Red Hat Enterprise Linux Client release 5.3 (Tikanga),2,Red Hat Enterprise Linux Client release 5.3 (Tikanga),ssh,rho-user,server1auth,none
+.fi
+.PP
+ip
+.IP
+The IP address of the server machine picked up in the scan.
+.PP
+port
+.IP
+The SSH port number used to access the server.
+.PP
+kernel
+.IP
+The kernel for the server.
+.PP
+processor
+.IP
+The processor type for the server.
+.PP
+platform
+.IP
+The hardware platform for the server.
+.PP
+release name
+.IP
+The type of release. For Red Hat Linux, this is redhat-release. For up- and downstream releases, this could be centos-release or fedora-release. The formats for other Unix and Linux distributions depends on the distribution.
+.PP
+release version
+.IP
+The major version of the release.
+.PP
+release number
+.IP
+The release number for the operating system release.
+.PP
+system ID
+.IP
+The identifier for the server, as in /etc/sysconfig/rhn/systemid.
+.I For Red Hat releases only.
+.PP
+username
+.IP
+The username used by the server to bind to Red Hat Network for updates, as in /etc/sysconfig/rhn/systemid.
+.I For Red Hat releases only.
+.PP
+instnum
+.IP
+The instance number for the server for entitlement management, as in /etc/sysconfig/rhn/systemid.
+.I For Red Hat releases only.
+.PP
+release
+.IP
+The full release name, as in the /etc/*release file.
+.I Mainly for operating systems other than Red Hat Linux.
+.PP
+CPU count
+.IP
+The number of CPUs on the machine.
+.PP
+etc-issue
+.IP
+The release number of the operating system, as in the /etc/issue file.
+.I Mainly for operating systems other than Red Hat Linux.
+.PP
+auth type
+.IP
+The SSH authentication method used by rho. This can be ssh (simple password) or ssh_key.
+.PP
+auth username
+.IP
+The username used by rho to bind to the system.
+.PP
+auth name
+.IP
+The name of the auth profile used by rho for the scan.
+.PP
+error
+.IP
+Any errors returned by the SSH process.
+
+.SH EXAMPLES
+.PP
+.TP
+Adding new auth credentials
+rho auth add --name new-creds --username rho-user --file /etc/ssh/ssh_host_rsa_key
+.PP
+.TP
+Creating a new profile
+rho profile add --name new-profile
+.PP
+.TP
+Editing a profile
+rho profile edit --name new-profile --range "1.2.3.0 - 1.2.3.255" --auth new-creds --auth other-creds --ports 22,318,415
+.PP
+.TP
+Running a scan without a profile
+rho scan --range "1.2.3.0 - 1.2.3.255" --username rho-user --port 122 --output /home/jsmith/Desktop/output.csv
+.PP
+.TP
+Running a scan with a profile
+rho scan --profile new-profile --output /home/jsmith/Desktop/output.csv
+
+.SH SECURITY CONSIDERATIONS
+The credentials used to access servers are stored with the profile configuration in an AES-256 encrypted configuration file (rho.conf). A passphrase is used to access this file. The passphrase and decrypted file contents are in the system memory, and could theoretically be written to disk if they were to be swapped out.
+.PP
+While the password-related environment variables can be set to run 'rho' without prompts (such as scheduling a cron job), setting these variables is extremely risky. Be exceptionally cautious about using these variables.
+
+.SH AUTHORS
+The rho tool was originally written by Adrian Likins <alikins-at-redhat.com>, Devan Goodwin <dgoodwin-at-redhat.com>, and Jesus M. Rodriguez <jesusr-at-redhat.com> of Red Hat, Inc.
+
+.SH COPYRIGHT
+(c)2009 Red Hat, Inc. Licensed under the GNU Public License version 2.
