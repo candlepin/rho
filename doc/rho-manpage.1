@@ -43,11 +43,11 @@ The following sections cover these commands in more detail.
 .PP
 The primary purpose of rho is to scan a network. This can be done using simply 'rho scan' and passing all of the required network parameters and authentication credentials with every discovery pass. Using network and authentication profiles, however, simplifies discovery.
 .PP
-By default, the authentication credentials and profiles created using rho are stored in an encrypted file, $HOME/.rho.conf. The file is encrypted with AES-256 encryption and is decrypted when the 'rho' command is run, using a passphrase to access the file.
+By default, the authentication credentials and profiles created using rho are stored in an encrypted file, $HOME/.rho.conf. The file is encrypted with AES-128 encryption and is decrypted when the 'rho' command is run, using a passphrase to access the file.
 
 
 .SS AUTHENTICATION
-The first part to configuring rho is setting up authentication credentials. rho uses SSH to connect to the servers on the network, and the credeetials is uses are configured in auth entries. Some kind of auth entry has to be passed when the scan is run, either by referencing the auth entry in a profile or by passing the credentials with the scan command.
+The first part to configuring rho is setting up authentication credentials. rho uses SSH to connect to the servers on the network, and the credentials is uses are configured in auth entries. Some kind of auth entry has to be passed when the scan is run, either by referencing the auth entry in a profile or by passing the credentials with the scan command.
 .PP
 There can be multiple auth credentials contained in a single profile.
 .PP
@@ -68,7 +68,7 @@ rho uses SSH credentials to access the servers to get their OS information durin
 .PP
 .TP
 --name name
-This required argument sets the name of the new authentication credentials entry. This should be descriptive, such as identifying the user or server it relates to. For example, "server1-rhouser".
+This required argument sets the name of the new authentication credentials entry. This should be descriptive, such as identifying the user or server it relates to. For example, "server1-rhouser". It should never contain the actual password, as this name may be logged or printed during rho execution.
 .PP
 .TP
 --username name
@@ -145,7 +145,7 @@ This deletes all stored authentication credentials.
 
 .SS PROFILES
 .I Profiles
-define a collection network information, including IP addresses, SSH ports, and SSH credentials. A discovery scan can reference a profile so that running the scan is automatic and repeatable, without having to re-enter network information every time.
+define a collection of network information, including IP addresses, SSH ports, and SSH credentials. A discovery scan can reference a profile so that running the scan is automatic and repeatable, without having to re-enter network information every time.
 .PP
 .B
 Creating and Editing Profiles
@@ -172,11 +172,9 @@ This sets the IP address, hostname, or IP address range to use when running disc
 .I ip_address
 value.
 .IP
-1. A specific hostname or domain:
+1. A specific hostname:
 .IP
 --range server.example.com
-.IP
---range example.com
 .IP
 2. A specific IP address, in both standard and CIDR format:
 .IP
@@ -288,7 +286,7 @@ Tells 'rho' to use the keys stored in the local ssh-agent. By default, this is f
 .PP
 .TP
 --cache file
-Loads the output file of a previous scan. This loads the successful connection information (SSH port, auth username, and auth credentials) used to access each IP address in the range. This allows the scan to progress more quickly because it doesn't have to iterate through all of the auth credentials for the profile for each server. If credentials for the server aren't available or th previous credentials fail, then the scan falls back to the auth settings in the profile.
+Loads the output file of a previous scan. This loads the successful connection information (SSH port, auth username, and auth credentials) used to access each IP address in the range. This allows the scan to progress more quickly because it doesn't have to iterate through all of the auth credentials for the profile for each server. If credentials for the server aren't available or the previous credentials fail, then the scan falls back to the auth settings in the profile.
 .PP
 .TP
 --show-fields
@@ -395,7 +393,7 @@ Storing passwords in environment variables is especially dangerous. Be very caut
 .PP
 .TP
 .B RHO_PASSPHRASE
-The AES-256 encrypted $HOME/.rho.conf file must be accessed every time rho is run. This file stores all of the profile information. A passphrase must be entered to access this file; the phrase is set the first time the file is created. Normally, the command prompts for this passphrase and it must be entered manually. The RHO_PASSPHRASE environment variable sets the password.
+The AES-128 encrypted $HOME/.rho.conf file must be accessed every time rho is run. This file stores all of the profile information. A passphrase must be entered to access this file; the phrase is set the first time the file is created. Normally, the command prompts for this passphrase and it must be entered manually. The RHO_PASSPHRASE environment variable sets the password.
 .PP
 .TP
 .B  RHO_AUTH_PASSWORD
@@ -488,7 +486,7 @@ The name of the auth profile used by rho for the scan.
 .PP
 error
 .IP
-Any errors returned by the SSH process.
+Any errors returned by the SSH process. This is normally "login failed" or "unable to connect".
 
 .SH EXAMPLES
 .PP
@@ -513,7 +511,7 @@ Running a scan with a profile
 rho scan --profile new-profile --output /home/jsmith/Desktop/output.csv
 
 .SH SECURITY CONSIDERATIONS
-The credentials used to access servers are stored with the profile configuration in an AES-256 encrypted configuration file (rho.conf). A passphrase is used to access this file. The passphrase and decrypted file contents are in the system memory, and could theoretically be written to disk if they were to be swapped out.
+The credentials used to access servers are stored with the profile configuration in an AES-128 encrypted configuration file (rho.conf). A passphrase is used to access this file. The passphrase and decrypted file contents are in the system memory, and could theoretically be written to disk if they were to be swapped out.
 .PP
 While the password-related environment variables can be set to run 'rho' without prompts (such as scheduling a cron job), setting these variables is extremely risky. Be exceptionally cautious about using these variables.
 
