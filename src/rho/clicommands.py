@@ -731,10 +731,15 @@ class ProfileClearCommand(CliCommand):
 
     def _do_command(self):
         if self.options.name:
-            self.config.remove_profile(self.options.name)
-            c = config.ConfigBuilder().dump_config(self.config)
-            crypto.write_file(self.options.config, c, self.passphrase, self.salt)
-            print(_("Profile %s removed" % self.options.name))
+            if self.config.has_profile(self.options.name):
+                self.config.remove_profile(self.options.name)
+                c = config.ConfigBuilder().dump_config(self.config)
+                crypto.write_file(self.options.config, c, self.passphrase, 
+                        self.salt)
+                print(_("Profile %s removed" % self.options.name))
+            else:
+                print(_("ERROR: No such profile: %s") % self.options.name)
+                sys.exit(1)
         elif self.options.all:
             self.config.clear_profiles()
             c = config.ConfigBuilder().dump_config(self.config)

@@ -162,6 +162,9 @@ class Config(object):
         self._profiles = []
         self._profile_index = {}
 
+    def has_profile(self, pname):
+        return pname in self._profile_index
+
     def remove_profile(self, gname):
         if self._profile_index.has_key(gname):
             g = self._profile_index[gname]
