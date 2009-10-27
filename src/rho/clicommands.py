@@ -318,6 +318,9 @@ class ScanCommand(CliCommand):
         if self.options.username and hasAuths:
             self.parser.error(_("Cannot specify both --username and --auth"))
 
+        if hasProfiles and hasAuths:
+            self.parser.error(_("Cannot specify both auths and ranges."))
+
         if hasRanges and not (self.options.username or hasAuths):
             self.parser.error(_(
                 "--username or --auth required to scan a range."))
