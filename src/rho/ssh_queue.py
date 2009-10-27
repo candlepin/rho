@@ -33,25 +33,25 @@ import paramiko
 import config
 
 
-class GenericThread(threading.Thread):
-    """A baseline thread that includes the functions we want for all our threads so we don't have to duplicate code."""
+class BaseThread(threading.Thread):
+    """ Parent class for all threads. """
+
     def quit(self):
         self.quitting = True
 
-class OutputThread(GenericThread):
-    """This thread is here to prevent SSHThreads from simultaneously writing to the same file and mucking it all up.  Essentially, it allows sshpt to write results to an outfile as they come in instead of all at once when the program is finished.  This also prevents a 'kill -9' from destroying report resuls and also lets you do a 'tail -f <outfile>' to watch results in real-time.
-    
-        output_queue: Queue.Queue(): The queue to use for incoming messages.
-        verbose - Boolean: Whether or not we should output to stdout.
+
+class OutputThread(BaseThread):
+    """
+    Prevent SSHThreads from simultaneously writing to the same file, 
+    'kill -9' from destroying results, and allows you to do a tail -f on the
+    report file to watch results in real time.
     """
     def __init__(self, output_queue, verbose=True, report=None):
-        """Name ourselves and assign the variables we were instanciated with."""
         threading.Thread.__init__(self, name="OutputThread")
         self.output_queue = output_queue
         self.verbose = verbose
         self.quitting = False
         self.report = report
-
     
     def quit(self):
         self.quitting = True
@@ -79,22 +79,30 @@ class OutputThread(GenericThread):
             # somewhere in here, we return the data to...?
             self.output_queue.task_done()
 
-class SSHThread(GenericThread):
-    """Connects to a host and optionally runs commands or copies a file over SFTP.
-    Must be instanciated with:
-      id                    A thread ID
-      ssh_connect_queue     Queue.Queue() for receiving orders
-      output_queue          Queue.Queue() to output results
 
-    Here's the list of variables that are added to the output queue before it is put():
+class SSHThread(BaseThread):
+    """
+    Connect to a host and run commands.
+
+    Must be instanciated with:
+
+    Adds the following to the output queue before put():
         queueObj['host']
         queueObj['username']
         queueObj['password']
         queueObj['commands'] - List: Commands that were executed
         queueObj['connection_result'] - String: 'SUCCESS'/'FAILED'
-        queueObj['command_output'] - String: Textual output of commands after execution
+        queueObj['command_output'] - String: Textual output of commands 
+                                     after execution
     """
     def __init__ (self, id, ssh_connect_queue, output_queue):
+        """
+        Constructor
+
+            id                    A thread ID
+            ssh_connect_queue     Queue.Queue() for receiving orders
+            output_queue          Queue.Queue() to output results
+        """
         threading.Thread.__init__(self, name="SSHThread-%d" % (id,))
         self.ssh_connect_queue = ssh_connect_queue
         self.output_queue = output_queue
@@ -134,7 +142,7 @@ class SSHThread(GenericThread):
             self.quit()
 
 def startOutputThread(verbose, report):
-    """Starts up the OutputThread (which is used by SSHThreads to print/write out results)."""
+    """ Starts up the OutputThread. """
     output_queue = Queue.Queue()
     output_thread = OutputThread(output_queue, verbose,report)
     output_thread.setDaemon(True)
@@ -142,14 +150,18 @@ def startOutputThread(verbose, report):
     return output_queue
 
 def stopOutputThread():
-    """Shuts down the OutputThread"""
+    """ Shuts down the OutputThread. """
     for t in threading.enumerate():
         if t.getName().startswith('OutputThread'):
             t.quit()
     return True
 
 def startSSHQueue(output_queue, max_threads):
-    """Setup concurrent threads for testing SSH connectivity.  Must be passed a Queue (output_queue) for writing results."""
+    """
+    Setup concurrent threads for testing SSH connectivity.  
+    
+    Must be passed a Queue (output_queue) for writing results.
+    """
     ssh_connect_queue = Queue.Queue()
     for thread_num in range(max_threads):
         ssh_thread = SSHThread(thread_num, ssh_connect_queue, output_queue)
@@ -158,17 +170,16 @@ def startSSHQueue(output_queue, max_threads):
     return ssh_connect_queue
 
 def stopSSHQueue():
-    """Shut down the SSH Threads"""
+    """ Shut down the SSHThreads. """
     for t in threading.enumerate():
         if t.getName().startswith('SSHThread'):
             t.quit()
     return True
 
 def queueSSHConnection(ssh_connect_queue, cmd):
-    """Add files to the SSH Queue (ssh_connect_queue)"""
+    """ Add files to the SSH Queue. (ssh_connect_queue) """
     ssh_connect_queue.put(cmd)
     return True
-
 
 def get_pkey(auth):
 
