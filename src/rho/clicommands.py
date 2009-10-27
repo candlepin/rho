@@ -696,7 +696,7 @@ class ProfileEditCommand(CliCommand):
                 try:
                     self.config.get_auth(a)
                 except config.NoSuchAuthError, e:
-                    print(_("No auth '%s' found.") % auth)
+                    print _("ERROR: No such auth: %s") % e.authname
                     sys.exit(1)
 
         c = config.ConfigBuilder().dump_config(self.config)
@@ -791,7 +791,7 @@ class ProfileAddCommand(CliCommand):
                 try:
                     self.config.get_auth(a)
                 except config.NoSuchAuthError, e:
-                    print(_("No auth '%s' found.") % auth)
+                    print _("ERROR: No such auth: %s") % e.authname
                     sys.exit(1)
 
         g = config.Profile(name=self.options.name, ranges=self.options.ranges,
@@ -861,20 +861,16 @@ class AuthShowCommand(CliCommand):
         out = OutputPrinter(keys, dontpad=["key"])
 
         c = self.config.get_auth(self.options.name)
-        if c:
-            c1 = dict(**c.to_dict())
+        c1 = dict(**c.to_dict())
 
-            c1["password"] = "********"
+        c1["password"] = "********"
 
-            if c.type == "ssh_key" and not self.options.keys:
-                c1["key"] = "*******"
+        if c.type == "ssh_key" and not self.options.keys:
+            c1["key"] = "*******"
 
-            out.add_row(c1)
-            out.write()
-            print("")
-
-        else:
-            print(_("No auth '%s' found.") % self.options.name)
+        out.add_row(c1)
+        out.write()
+        print("")
 
 class AuthListCommand(CliCommand):
     def __init__(self):
