@@ -362,7 +362,7 @@ class ScanCommand(CliCommand):
                 # Looks like we couldn't login to this machine last time.
                 continue
 
-            cache[row['ip']] = {'port': row['port'], 'auth': row['auth.name']}
+            cache[row['ip']] = {'port': int(row['port']), 'auth': row['auth.name']}
             log.debug("Found cached results for: %s" % row['ip'])
 
         f.close()
