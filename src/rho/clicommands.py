@@ -571,10 +571,10 @@ class AuthEditCommand(CliCommand):
                 metavar="USERNAME",
                 help=_("user name for authenticating against target machine - REQUIRED"))
         self.parser.add_option("--password", dest="password",
-                metavar="PASSWORD",
+                action="store_true",
                 help=_("password for authenticating against target machine"))
 
-        self.parser.set_defaults(password="")
+        self.parser.set_defaults(password=False)
 
     def _validate_options(self):
         CliCommand._validate_options(self)
@@ -594,7 +594,7 @@ class AuthEditCommand(CliCommand):
             a.username = self.options.username
 
         if self.options.password:
-            a.password = self.options.password
+            a.password = get_password(a.username, RHO_AUTH_PASSWORD)
 
         if self.options.filename:
             sshkey = _read_key_file(self.options.filename)
