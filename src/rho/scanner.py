@@ -49,7 +49,6 @@ class ScanReport():
         # {'ip:ip', 'uanme.os':unameresults... etc}
 
     def add(self, ssh_job):
-        print "ssh_job.ip", ssh_job.ip
         data = {}
         for rho_cmd in ssh_job.rho_cmds:
             data.update(rho_cmd.data)
