@@ -162,7 +162,12 @@ class GetFileRhoCmd(RhoCmd):
 # linux only...
 class CpuRhoCmd(RhoCmd):
     name = "cpu"
-    fields = {'cpu.count':_('number of processors')}
+    fields = {'cpu.count':_('number of processors'),
+              'cpu.vendor_id':_("cpu vendor name"),
+              'cpu.bogomips':_("bogomips"),
+              'cpu.cpu_family':_("cpu family"),
+              'cpu.model_name':_("name of cpu model"),
+              'cpu.model_ver':_("cpu model version")}
     
     def __init__(self):
         self.cmd_strings = ["cat /proc/cpuinfo"] 
@@ -175,6 +180,44 @@ class CpuRhoCmd(RhoCmd):
                 cpu_count = cpu_count + 1
         self.data["cpu.count"] = cpu_count
 
+        cpu_dict = {}
+        for line in self.cmd_results[0][0].splitlines():
+            # first blank line should be end of first cpu
+            # for this case, we are only grabbing the fields from the first
+            # cpu and the total count. Should be close enough.
+            if line == "":
+                break
+            parts = line.split(':')
+             #should'nt be ':', but just in case, join all parts and strip
+            cpu_dict[parts[0].strip()] = ("".join(parts[1:])).strip()
+
+        # we don't need everything, just parse out the interesting bits
+
+        # FIXME: this only supports i386/x86_64. We could add support for more
+        # but it's a lot of ugly code (see read_cpuinfo() in smolt.py from smolt
+        # [I know it's ugly, I wrote it...]) That code also needs the value of uname()
+        # available to it, which we don't currently have a way of plumbing in. So
+        # x86* only for now... -akl
+        # empty bits to return if we are on say, ia64
+        self.data.update({'cpu.vendor_id':'',
+                          'cpu.model_name':'',
+                          'cpu.bogomips':'',
+                          'cpu.cpu_family':'',
+                          'cpu.model_ver':''})
+
+        try:
+            self.get_x86_cpu_info(cpu_dict)
+        except:
+            pass
+
+    def get_x86_cpu_info(self, cpu_dict):
+        self.data["cpu.vendor_id"] = cpu_dict.get("vendor_id")
+        # model name should help find kvm/qemu guests...
+        self.data["cpu.model_name"] = cpu_dict.get("model name")
+        # they would take my linux card away if I didn't include bogomips
+        self.data["cpu.bogomips"] = cpu_dict.get("bogomips")
+        self.data["cpu.cpu_family"] = cpu_dict.get("cpu family")
+        self.data["cpu.model_ver"] = cpu_dict.get("model")
 
 
 class EtcIssueRhoCmd(GetFileRhoCmd):

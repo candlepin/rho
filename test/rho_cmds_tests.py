@@ -21,8 +21,8 @@ class _TestRhoCmd(unittest.TestCase):
             output.append((out, err))
         return output
 
-    def test_run(self):
-        print self.out
+#    def test_run(self):
+#        print self.out
 
     def test_parse(self):
         self.rho_cmd.populate_data(self.out)
@@ -52,3 +52,17 @@ class TestScriptRhoCmd(_TestRhoCmd):
         self.out = self._run_cmds()
 
     
+class TestCpuCmd(_TestRhoCmd):
+    cmd_class = rho_cmds.CpuRhoCmd
+
+    def test_cpu_count(self):
+        self.rho_cmd.populate_data(self.out)
+        print "cpu.count: %(cpu.count)s" % self.rho_cmd.data
+
+    def test_cpu_bogomips(self):
+        self.rho_cmd.populate_data(self.out)
+        print "cpu.bogomips: %(cpu.bogomips)s" % self.rho_cmd.data
+
+    def test_cpu_vendor_id(self):
+        self.rho_cmd.populate_data(self.out)
+        print "cpu.vendor_id: %(cpu.vendor_id)s" % self.rho_cmd.data
