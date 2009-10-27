@@ -24,6 +24,7 @@ _ = t.ugettext
 from optparse import OptionParser
 from getpass import getpass
 import simplejson as json
+import paramiko
 
 from rho.log import log, setup_logging
 
@@ -44,6 +45,36 @@ def _read_key_file(filename):
     sshkey = keyfile.read()
     keyfile.close()
     return sshkey
+
+# figure out if a key is encrypted
+# basically, just try to read the key sans password
+# and see if it works... Pass in a passphrase to
+# see if it is the correct passphrase
+def ssh_key_passphrase_is_good(filename, password=None):
+    keyfile = open(os.path.expanduser(
+             os.path.expandvars(filename)), "r")
+    good_key = True
+    try:
+        get_key_from_file(filename,password=password)
+    except paramiko.PasswordRequiredException:
+        good_key = False
+    except paramiko.SSHException:
+        good_key = False
+    return good_key
+
+def get_key_from_file(filename, password=None):
+    pkey = None
+    keyfile = open(os.path.expanduser(
+             os.path.expandvars(filename)), "r")
+    if keyfile.readline().find("-----BEGIN DSA PRIVATE KEY-----") > -1:
+        keyfile.seek(0)
+        pkey = paramiko.DSSKey.from_private_key_file(filename, password=password)
+    keyfile.seek(0)
+    if keyfile.readline().find("-----BEGIN RSA PRIVATE KEY-----") > -1:
+        keyfile.seek(0)
+        pkey = paramiko.RSAKey.from_private_key_file(filename, password=password)
+    return pkey
+
 
 def get_passphrase(for_key):
     passphrase = ""
@@ -574,6 +605,7 @@ class ProfileListCommand(CliCommand):
         out.write()
         print("")
 
+
 class AuthEditCommand(CliCommand):
     def __init__(self):
         usage = _("usage: %prog auth edit [options]")
@@ -617,6 +649,7 @@ class AuthEditCommand(CliCommand):
             a.password = get_password(a.username, RHO_AUTH_PASSWORD)
 
         if self.options.filename:
+
             sshkey = _read_key_file(self.options.filename)
 
             if a.type == config.SSH_TYPE:
@@ -909,6 +942,8 @@ class AuthListCommand(CliCommand):
         out.write()
         print("")
 
+
+
 class AuthAddCommand(CliCommand):
     def __init__(self):
         usage = _("usage: %prog auth add [options]")
@@ -941,19 +976,30 @@ class AuthAddCommand(CliCommand):
         self.config.add_auth(cred)
         c = config.ConfigBuilder().dump_config(self.config)
         crypto.write_file(self.options.config, c, self.passphrase, self.salt)
-        
+
+    def _validate_key_and_passphrase(self, keyfile):
+        self.auth_passphrase = ""
+        # if key works sans a password, we dont need one
+        if not ssh_key_passphrase_is_good(self.options.filename):
+            self.auth_passphrase = get_passphrase(self.options.filename)
+            # validate the passphrase for the key is correct
+            if not ssh_key_passphrase_is_good(self.options.filename, self.auth_passphrase):
+                print _("Wrong passphrase for %s" % self.options.filename)
+                sys.exit(1)
+
+
+
     def _do_command(self):
 
         if self.options.filename:
-            auth_passphrase = get_passphrase(self.options.filename)
-
             # using sshkey
+            self._validate_key_and_passphrase(self.options.filename)
             sshkey = _read_key_file(self.options.filename)
 
             cred = config.SshKeyAuth({"name": self.options.name,
                 "key": sshkey,
                 "username": self.options.username,
-                "password": auth_passphrase,
+                "password": self.auth_passphrase,
                 "type": "ssh_key"})
 
             self._save_cred(cred)
