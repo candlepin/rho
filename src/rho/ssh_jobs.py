@@ -19,6 +19,7 @@ from rho.log import log
 import os
 import posix
 import Queue
+import socket
 import string
 import StringIO
 import subprocess
@@ -143,7 +144,7 @@ class SshThread(threading.Thread):
         self.quitting = True
 
     def connect(self, ssh_job):
-        # do the actually paramiko ssh connection
+        # do the actual paramiko ssh connection
         self.ssh = None
            # Copy the list of ports, we'll modify it as we go:
         ports_to_try = list(ssh_job.ports)
