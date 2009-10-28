@@ -28,20 +28,6 @@ import threading
 import time
 import traceback
 
-class Auth():
-    def __init__(self, name=None, type=None, username=None, password=None):
-        self.name = name
-        self.type = type
-        self.username = username
-        self.password = password
-
-class SshAuth(Auth):
-    def __init__(self, name=None, type=None, username=None, password=None):
-        self.name = name
-        self.type = "ssh"
-        self.username = username
-        self.password = password
-
 
 # probably should be in a different module, but nothing else
 # to go with it
@@ -125,7 +111,6 @@ class OutputThread(threading.Thread):
                 self.report.add(ssh_job)
             except Exception, e:
                 log.error("Exception: %s" % e)
-                log.error(sys.exc_type())
                 log.error(traceback.print_tb(sys.exc_info()[2]))
                 self.quit()
 
@@ -259,7 +244,7 @@ class SshThread(threading.Thread):
 
         except Exception, e:
             log.error("Exception on %s: %s" % (ssh_job.ip, e))
-            log.error(sys.exc_type())
+ #           log.error(sys.exc_type())
             log.error(sys.exc_info())
             log.error(traceback.print_tb(sys.exc_info()[2]))
             ssh_job.connection_result = False
@@ -277,7 +262,7 @@ class SshThread(threading.Thread):
 
         except Exception, e:
             log.error("Exception: %s" % e)
-            log.error(sys.exc_type())
+#            log.error(sys.exc_type())
             log.error(traceback.print_tb(sys.exc_info()[2]))
             
             
