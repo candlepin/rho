@@ -19,6 +19,7 @@ from rho.log import log
 import os
 import posix
 import Queue
+import socket
 import string
 import StringIO
 import subprocess
