@@ -52,6 +52,7 @@ class ScanReport():
         data = {}
         for rho_cmd in ssh_job.rho_cmds:
             data.update(rho_cmd.data)
+
         if ssh_job.error:
             self.ips[ssh_job.ip] = {'ip': ssh_job.ip,
                                     'port':ssh_job.port,
@@ -145,9 +146,6 @@ class Scanner():
             for range_str in profile.ranges:
                 ipr = rho_ips.RhoIpRange(range_str)
                 ips.extend(ipr.list_ips())
-
-            # TODO: remove
-            self._find_auths(profile.auth_names)
 
             for ip in ips:
 
