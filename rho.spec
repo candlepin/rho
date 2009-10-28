@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: rho
-Version: 0.0.5
+Version: 0.0.6
 Release:        1%{?dist}
 Summary: An SSH system profiler
 
@@ -57,6 +57,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Oct 28 2009 Devan Goodwin <dgoodwin@redhat.com> 0.0.6-1
+- Fix "rho scan nosuchprofile". (dgoodwin@redhat.com)
+- Update README. (dlackey@redhat.com)
+
 * Tue Oct 27 2009 Devan Goodwin <dgoodwin@redhat.com> 0.0.5-1
 - Too many features/bugfixes to list. Approaching first release.
 * Wed Oct 21 2009 Devan Goodwin <dgoodwin@redhat.com> 0.0.2-1

@@ -117,7 +117,7 @@ be installed on:
 
  * The user account that rho uses to SSH into the machine must have adequate 
    permissions to run commands and read certain files. For example, it *cannot* 
-   be a /bin/login or /bin/false shell.
+   be a /sbin/nologin or /bin/false shell.
 
  * The user account rho uses for a machine should have a sh like shell
 
@@ -172,7 +172,29 @@ auth and profile both have three subcommands:
  * clear to remove any or all entries
 
 The complete list of options for each command and subcommand are listed in the 
-rho manpage. The common options are listed with the examples.
+rho manpage with other usage examples. The common options are listed with the 
+examples in this README.
+
+
+PASSWORDS
+Every time the rho tool is run, the command prompts for the config file password. 
+(The configuration file is encrypted and required a password to access it.) The 
+first time rho is run, the prompt sets the password as it created the file. Every 
+time after, it uses the password to decrypt the file.
+
+     [me@example rho]$ bin/rho auth list
+     Config Encryption Password:
+
+When running a scan, the tool prompts for the config encryption password and 
+for the SSH password, if required.
+
+Although there is a significant security risk, it is possible to set environment 
+variables for both of these passwords:
+
+ * RHO_PASSPHRASE for the rho configuration file password
+
+ * RHO_AUTH_PASSWORD for the SSH password
+
 
 AUTH ENTRIES
 The first step to configuring rho is adding auth credentials to use to connect 
@@ -181,6 +203,7 @@ over SSH. Each authentication identity requires its own auth entry.
     rho auth add --name server1creds --username rho-user --file 
     /etc/ssh/ssh_host_rsa_key 
 
+
 PROFILES
 Then, create the profile to use for the scan. This should include a list of IP 
 addresses or ranges, the auth identity to use, and the SSH ports to try.
@@ -188,10 +211,16 @@ addresses or ranges, the auth identity to use, and the SSH ports to try.
     rho profile edit --name profile1 --range "1.2.3.0 - 1.2.3.255" --auth 
     server1creds --auth server2creds --ports 22,318,415 
 
-SCANNING
-The simplest way to run a scan is to specify a profile and output file:
 
-    rho scan --profile new-profile --output /home/jsmith/Desktop/output.csv 
+SCANNING
+The only argument required for a scan is a profile to use. In the that case, 
+the output is printed to stdout. 
+
+    rho scan --profile myprofile
+
+There is another option to use to specify an output file (which is in CSV format):
+
+    rho scan --profile myprofile --output /home/jsmith/Desktop/output.csv 
 
 It's also possible to run a scan without a profile, by passing the required 
 information with the scan command.
@@ -210,6 +239,7 @@ the profile.
 
      rho scan --cache /home/me/cache.csv --profile profile1 --output 
      /home/me/newoutput.csv
+
 
 OUTPUT
 The important part about a scan is, obviously, the results report. By default, 
@@ -280,7 +310,7 @@ If you want to schedule a rho scan, then the best practice is:
  1. Write a small script like this:
 
 #!/bin/sh
-RHO_PASSWORD=mysupersecretpassword /usr/bin/rho scan --profile=mynetworkprofile1
+RHO_PASSWORD=password /usr/bin/rho scan --profile=myprofile
 
  2. Protect that script with the most secure Unix permissions that will work, 
     like 700 (for a single user).
