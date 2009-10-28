@@ -268,3 +268,8 @@ Q rho profile clear on a profiles that dont exist..
 Q [whayutin@thinkdoe ~]$ rho profile clear --name=DOESNOTEXIST
 Q Profile DOESNOTEXIST removed
 ------------------------------
+
+* --range checks validity of ip's in range, which can fail if given a hostname
+* that doesnt resolve (--range doesntexist.example.com, for example)
+
+* "rho scan nonexistent" causes a traceback
