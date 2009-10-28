@@ -460,6 +460,9 @@ class ScanCommand(CliCommand):
         if len(self.options.profiles) > 0:
 
             for profile in self.options.profiles:
+                if not self.config.has_profile(profile):
+                    print(_("ERROR: No such profile: %s") % profile)
+                    sys.exit(1)
                 if len(self.config.get_profile(profile).auth_names) == 0:
                     print(_("ERROR: Profile %s has no auths to try.") %
                             profile)
