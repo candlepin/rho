@@ -44,7 +44,7 @@ class TestRhoIps(unittest.TestCase):
         self._check_ipr("10.0.0.1", ["10.0.0.1"])
 
     def testLocalhost(self):
-        self._check_ipr("localhost", ["127.0.0.1"])
+        self._check_ipr("localhost", ["localhost"])
 
     def testCommaSeperatedIps(self):
         self._check_ipr("10.0.0.1,10.0.0.2", ["10.0.0.1", "10.0.0.2"])
@@ -60,7 +60,7 @@ class TestRhoIps(unittest.TestCase):
     def testCommaSeperatedTrueCIDR(self):
         self._check_ipr("10.0.0.0/31, 10.0.1.0/31", 
                         ["10.0.0.0", "10.0.0.1", "10.0.1.0", "10.0.1.1"])
-        
+         
 #    def testHostname(self):
 #        # any suggests for a hostname whose ip won't change?
 #        self._check_ipr("bugzilla.redhat.com", ["209.132.176.231"])
@@ -90,7 +90,7 @@ class TestRhoIps(unittest.TestCase):
     def testCider(self):
         self._check_ipr("10.0.0.1/31", ["10.0.0.0", "10.0.0.1"])
 
-        
+
     def testIpRangeLarge(self):
         expected = []
         for i in range(0,4):

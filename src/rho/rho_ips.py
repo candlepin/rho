@@ -43,17 +43,6 @@ class RhoIpRange(object):
             is_ip = False
         return is_ip
 
-    # make sure we end up with an ip
-    def _find_ip(self, iprange):
-        if ip_regex.search(iprange):
-            return iprange
-
-        # try to resolve if it looks like a hostname
-        # FIXME: thisis blocky and generally icky and failureprone -akl
-        ip = socket.gethostbyname(iprange)
-
-        return ip
-
     def _comma_split(self, iprange):
         ranges = iprange.split(',')
         ranges = map(string.strip, ranges)
@@ -68,8 +57,8 @@ class RhoIpRange(object):
 
             #FIXME: all of this error handling is crappy -akl
             try:
-                self.start_ip = self._find_ip(parts[0])
-                self.end_ip = self._find_ip(parts[1])
+                self.start_ip = parts[0]
+                self.end_ip = parts[1]
             except:
                 #FIXME: catchall excepts are bad
                 print _("unable to find ip for %s") % parts
@@ -99,14 +88,14 @@ class RhoIpRange(object):
 
         if ip_regex.search(range_str) and self._is_ip(range_str):
             # must be a single ip
-            self.start_ip = self._find_ip(range_str)
+            self.start_ip = range_str
             ips = [netaddr.IP(self.start_ip)]
             return ips
         
         # doesn't look like anything else, try treating it as a hostname
         try:
-            self.start_ip = self._find_ip(range_str)
-            ips = [netaddr.IP(self.start_ip)]
+            self.start_ip = range_str
+            ips = [self.start_ip]
             return ips
         except:
             return None
