@@ -144,7 +144,6 @@ class SshThread(threading.Thread):
 
     def connect(self, ssh_job):
         # do the actually paramiko ssh connection
-        self.ssh = None
            # Copy the list of ports, we'll modify it as we go:
         ports_to_try = list(ssh_job.ports)
 
@@ -178,7 +177,7 @@ class SshThread(threading.Thread):
                 except paramiko.SSHException, e:
                     # paramiko throws an SSHException for pretty much everything... ;-<
                     log.error("ssh key error for %s: %s" % (debug_str, str(e)))
-                    ssh = str(e)
+                    ssh_job.error = str(e)
                     continue
 
                 self.ssh = paramiko.SSHClient()
@@ -211,14 +210,13 @@ class SshThread(threading.Thread):
                     err = _("login failed")
                     log.error(err)
                     ssh_job.error = err
-                    self.ssh = str(e)
                     found_port = port
                     continue
 
                 # No route to host:
                 except socket.error, e:
                     log.warn("No route to host, skipping port: %s" % debug_str)
-                    self.ssh = str(e)
+                    ssh_job.error = str(e)
                     break
 
                 # TODO: Hitting a live port that isn't ssh will result in
@@ -228,7 +226,7 @@ class SshThread(threading.Thread):
                 except Exception, detail:
                     log.warn("Connection error: %s - %s" % (debug_str,
                         str(detail)))
-                    self.ssh = str(detail)
+                    ssh_job.error = str(detail)
                     continue
 
 
@@ -249,7 +247,10 @@ class SshThread(threading.Thread):
             self.connect(ssh_job)
             if not self.ssh:
                 return
-            
+
+            # there was a connection/auth failure
+            if ssh_job.error:
+                return
             self.run_cmds(ssh_job)
             self.ssh.close()
 
