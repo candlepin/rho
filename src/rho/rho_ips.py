@@ -44,13 +44,15 @@ class RhoIpRange(object):
         return is_ip
 
     def _comma_split(self, iprange):
+
         ranges = iprange.split(',')
+        # cull any empty strings from leading/trailing/dupe commas
+        ranges = [x for x in ranges if x != '']
         ranges = map(string.strip, ranges)
         return ranges
 
     def parse_iprange(self, range_str):
         ips = []
-        # FIXME: NOTE: all of this stuff is pretty much untested ;-> -akl
         if range_str.find(' - ') > -1:
             #looks like a range
             parts = range_str.split(' - ')
