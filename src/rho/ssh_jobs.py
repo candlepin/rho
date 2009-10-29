@@ -11,7 +11,6 @@
 
 import paramiko
 
-import ssh_queue
 import scanner
 import config
 from rho.log import log
