@@ -7,8 +7,8 @@ Summary: An SSH system profiler
 
 Group: Applications/Internet
 License: GPLv2
-URL: http://alikins.fedorapeople.org/files/rho/rho-%{version}-%{release}.tar.gz
-Source0: rho-%{version}.tar.gz
+URL: http://github.com/jmrodri/rho
+Source0: http://alikins.fedorapeople.org/files/rho/rho-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildArch: noarch
