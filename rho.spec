@@ -7,7 +7,7 @@ Summary: An SSH system profiler
 
 Group: Applications/Internet
 License: GPLv2
-URL: http://github.com/jmrodri/rho
+URL: http://alikins.fedorapeople.org/files/rho/rho-%{version}-%{release}.tar.gz
 Source0: rho-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -36,9 +36,7 @@ retrieving information about them.
 rm -rf $RPM_BUILD_ROOT
 %{__python} setup.py install -O1 --skip-build --root $RPM_BUILD_ROOT
 cd doc/
-gzip rho.1
-mkdir -p $RPM_BUILD_ROOT%{_mandir}/man1/
-mv rho.1.gz $RPM_BUILD_ROOT%{_mandir}/man1/
+install -D -p -m 644 gzip.1 $RPM_BUILD_ROOT%{_mandir}/man1/rho.1
 rm -f $RPM_BUILD_ROOT%{python_sitelib}/*egg-info/requires.txt
 
 
@@ -57,6 +55,11 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Oct 29 2009 Adrian Likins <alikins@redhat.com> 0.0.7-1
+- add SourceURL
+- remove ssh_queue.py
+- fix man page install
+
 * Wed Oct 28 2009 Devan Goodwin <dgoodwin@redhat.com> 0.0.6-1
 - Fix "rho scan nosuchprofile". (dgoodwin@redhat.com)
 - Update README. (dlackey@redhat.com)
