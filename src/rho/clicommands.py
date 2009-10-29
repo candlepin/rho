@@ -580,7 +580,7 @@ class ProfileShowCommand(CliCommand):
         CliCommand.__init__(self, "profile show", usage, shortdesc, desc)
 
         self.parser.add_option("--name", dest="name", metavar="NAME",
-                help=_("auth credential name - REQUIRED"))
+                help=_("profile name - REQUIRED"))
 
     def _validate_options(self):
         CliCommand._validate_options(self)
