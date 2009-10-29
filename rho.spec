@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: rho
-Version: 0.0.8
+Version: 0.0.9
 Release:        1%{?dist}
 Summary: An SSH system profiler
 
@@ -55,7 +55,7 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Thu Oct 29 2009 Adrian Likins <alikins@redhat.com> 0.0.8-1
+* Thu Oct 29 2009 Adrian Likins <alikins@redhat.com> 0.0.9-1
 - add SourceURL
 - remove ssh_queue.py
 - fix man page install
