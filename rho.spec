@@ -36,7 +36,7 @@ retrieving information about them.
 rm -rf $RPM_BUILD_ROOT
 %{__python} setup.py install -O1 --skip-build --root $RPM_BUILD_ROOT
 cd doc/
-install -D -p -m 644 gzip.1 $RPM_BUILD_ROOT%{_mandir}/man1/rho.1
+install -D -p -m 644 rho.1 $RPM_BUILD_ROOT%{_mandir}/man1/rho.1
 rm -f $RPM_BUILD_ROOT%{python_sitelib}/*egg-info/requires.txt
 
 
