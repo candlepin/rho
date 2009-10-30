@@ -40,7 +40,7 @@ class ScanReport():
                   "redhat-release.version", "redhat-release.release",
                   "systemid.system_id", "systemid.username", "instnum.instnum", 
                   "etc-release.etc-release", "cpu.count", 
-                  "cpu.vendor_id", "cpu.model_name",
+                  "cpu.vendor_id", "cpu.model_name", "dmi.bios-vendor",
                   #"etc-issue.etc-issue",
                   "auth.type", "auth.username", "auth.name", "error"]
     def __init__(self):
@@ -107,7 +107,8 @@ class Scanner():
                                         rho_cmds.SystemIdRhoCmd,
                                         rho_cmds.CpuRhoCmd,
                                         rho_cmds.EtcReleaseRhoCmd,
-                                        rho_cmds.EtcIssueRhoCmd]
+                                        rho_cmds.EtcIssueRhoCmd,
+                                        rho_cmds.DmiRhoCmd]
         self.ssh_jobs = ssh_jobs.SshJobs()
         self.output = []
 

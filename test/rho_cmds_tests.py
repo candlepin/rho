@@ -66,3 +66,10 @@ class TestCpuCmd(_TestRhoCmd):
     def test_cpu_vendor_id(self):
         self.rho_cmd.populate_data(self.out)
         print "cpu.vendor_id: %(cpu.vendor_id)s" % self.rho_cmd.data
+
+class TestDmiRhoCmd(_TestRhoCmd):
+    cmd_class = rho_cmds.DmiRhoCmd
+
+    def test_dmi_decode(self):
+        self.rho_cmd.populate_data(self.out)
+        print self.rho_cmd.data

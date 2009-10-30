@@ -258,6 +258,30 @@ class SystemIdRhoCmd(GetFileRhoCmd):
         for key in systemid:
             self.data["%s.%s" % (self.name, key)] = systemid[key]
         
+class DmiRhoCmd(RhoCmd):
+    name = "dmi"
+    fields = {'dmi.bios-vendor':_('BIOS vendor info from DMI'),
+              'dmi.bios-version':_('BIOS version info from DMI'),
+              'dmi.system-manufacturer':_('System manufacture from DMI'), 
+              'dmi.processor-family':_('Processor family from DMI')}
+
+    def __init__(self):
+        self.cmd_strings = ["dmidecode -s bios-vendor",
+                            "dmidecode -s bios-version",
+                            "dmidecode -s system-manufacturer",
+                            "dmidecode -s processor-family"]
+        RhoCmd.__init__(self)
+
+    def parse_data(self):
+        if self.cmd_results[0][0] and not self.cmd_results[0][1]: 
+            self.data['dmi.bios-vendor'] = string.strip(self.cmd_results[0][0])
+        if self.cmd_results[1][0] and not self.cmd_results[1][1]:
+            self.data['dmi.bios-version'] = string.strip(self.cmd_results[1][0])
+        if self.cmd_results[2][0] and not self.cmd_results[2][1]:
+            self.data['dmi.system-manufacturer'] = string.strip(self.cmd_results[2][0])
+        if self.cmd_results[3][0] and not self.cmd_results[3][1]:
+            self.data['dmi.processor-family'] = string.strip(self.cmd_results[3][0])
+
 
 # the list of commands to run on each host
 class RhoCmdList():
