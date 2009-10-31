@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: rho
-Version: 0.0.10
+Version: 0.0.11
 Release:        1%{?dist}
 Summary: An SSH system profiler
 
@@ -54,6 +54,12 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Sat Oct 31 2009 Devan Goodwin <dgoodwin@rm-rf.ca> 0.0.11-1
+- Support Netaddr > 0.7 (jbowes@repl.ca)
+- add a DmiRhoCmd. Grab some basic DMI info. (alikins@redhat.com)
+- fix wrong help in "rho profile show" (profile, not auth)
+  (alikins@redhat.com)
+
 * Thu Oct 29 2009 Adrian Likins <alikins@redhat.com> 0.0.10-1
 - add SourceURL
 - remove ssh_queue.py
