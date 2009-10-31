@@ -18,8 +18,57 @@ import netaddr
 ip_regex = re.compile(r'\d+\.\d+\.\d+\.\d+')
 
 
+class _OldNetAddr(object):
+
+    @staticmethod
+    def get_address(ip):
+        return [netaddr.IP(ip)]
+
+    @staticmethod
+    def get_range(start_ip, end_ip):
+        return list(netaddr.IPRange(start_ip, end_ip))
+
+    @staticmethod
+    def get_network(range_str):
+        cidr = netaddr.IP(range_str)
+        return list(cidr.iprange())
+
+    @staticmethod
+    def get_glob(range_str):
+        wildcard = netaddr.Wildcard(range_str)
+        return list(wildcard)
+
+
+class _NewNetAddr(object):
+
+    @staticmethod
+    def get_address(ip):
+        return [netaddr.IPAddress(ip)]
+
+    @staticmethod
+    def get_range(start_ip, end_ip):
+        range = netaddr.IPRange(start_ip, end_ip)
+        return list(range)
+
+    @staticmethod
+    def get_network(range_str):
+        network = netaddr.IPNetwork(range_str)
+        return [x for x in network]
+
+    @staticmethod
+    def get_glob(range_str):
+        wildcard = netaddr.IPGlob(range_str)
+        return list(wildcard)
+
+
 class RhoIpRange(object):
     def __init__(self, ipranges):
+        if getattr(netaddr, "IP", None) != None:
+            # 'old' netaddr
+            self.netaddr = _OldNetAddr
+        else:
+            # version 0.7 or higher
+            self.netaddr = _NewNetAddr
 
         # Iterator that returns netaddr.IP objects:
         self.ips = []
@@ -33,7 +82,7 @@ class RhoIpRange(object):
                 return None
             self.ips.extend(ret)
         # list of netaddr.IP() objects
-            
+
     # FIXME: only works on ipv4 -akl
     def _is_ip(self, ip):
         is_ip = True
@@ -68,8 +117,7 @@ class RhoIpRange(object):
                 self.end_ip = None
 
             if self.start_ip and self.end_ip:
-                ipr = netaddr.IPRange(self.start_ip, self.end_ip)
-                ips = list(ipr)
+                ips = self.netaddr.get_range(self.start_ip, self.end_ip)
             return ips
         
         # FIXME: not sure what to do about cases like 
@@ -79,20 +127,15 @@ class RhoIpRange(object):
             # looks like a cidr
             # the netaddr.CIDR object is picky about being 
             # "true" CIDR which isn't really something we need to care about
-            cidr = netaddr.IP(range_str)
-            ips = list(cidr.iprange())
-            return ips
+            return self.netaddr.get_network(range_str)
 
         if range_str.find('*') > -1:
-            wildcard = netaddr.Wildcard(range_str)
-            ips = list(wildcard)
-            return ips
+            return self.netaddr.get_glob(range_str)
 
         if ip_regex.search(range_str) and self._is_ip(range_str):
             # must be a single ip
             self.start_ip = range_str
-            ips = [netaddr.IP(self.start_ip)]
-            return ips
+            return self.netaddr.get_address(self.start_ip)
         
         # doesn't look like anything else, try treating it as a hostname
         try:
