@@ -15,8 +15,7 @@ BuildArch: noarch
 BuildRequires: python-devel
 BuildRequires: python-setuptools
 Requires: python-paramiko
-# Refactors in 0.7 break backward compat:
-Requires: python-netaddr < 0.7
+Requires: python-netaddr 
 Requires: python-simplejson
 Requires: python-crypto
 
