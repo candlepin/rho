@@ -262,9 +262,8 @@ class SshThread(threading.Thread):
             
         
 class SshJobs():
-    def __init__(self, ssh_job_src=[]):
+    def __init__(self):
         # cmdSrc is some sort of list/iterator thing
-        self.ssh_jobs = ssh_job_src
 
         self.verbose = True
         self.output = scanner.ScanReport()
