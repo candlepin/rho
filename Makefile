@@ -54,6 +54,12 @@ install: build
 tests:
 	-nosetests -d -v -a '!slow' 
 
+coverage:
+	# figleaf needs full paths...
+	# needs figleaf installed, see http://darcs.idyll.org/~t/projects/figleaf/doc/
+	-figleaf -i /usr/bin/nosetests -d -v -a '!slow'
+	-figleaf2html -d test/coverage .figleaf
+
 sdist: messages
 	$(PYTHON) setup.py sdist
 
