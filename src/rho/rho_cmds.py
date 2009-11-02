@@ -146,9 +146,10 @@ class ScriptRhoCmd(RhoCmd):
         self.data['%s.error' % self.name] = self.cmd_results[0][1]
         self.data['%s.command' % self.name] = self.command
 
-class GetFileRhoCmd(RhoCmd):
+class _GetFileRhoCmd(RhoCmd):
     name = "file"
     cmd_strings = []
+    filename = None
     
     def __init__(self):
         self.cmd_string_template = "if [ -f %s ] ; then cat %s ; fi"
@@ -219,7 +220,7 @@ class CpuRhoCmd(RhoCmd):
         self.data["cpu.model_ver"] = cpu_dict.get("model")
 
 
-class EtcIssueRhoCmd(GetFileRhoCmd):
+class EtcIssueRhoCmd(_GetFileRhoCmd):
     name = "etc-issue"
     filename = "/etc/issue"
     fields = {'etc-issue.etc-issue':_('contents of /etc/issue')}
@@ -227,7 +228,7 @@ class EtcIssueRhoCmd(GetFileRhoCmd):
     def parse_data(self):
         self.data["etc-issue.etc-issue"] = string.strip(self.cmd_results[0][0])
     
-class InstnumRhoCmd(GetFileRhoCmd):
+class InstnumRhoCmd(_GetFileRhoCmd):
     name = "instnum"
     filename = "/etc/sysconfig/rhn/install-num"
     fields = {'instnum.instnum':_('installation number')}
@@ -235,7 +236,7 @@ class InstnumRhoCmd(GetFileRhoCmd):
     def parse_data(self):
         self.data["instnum.instnum"] =  string.strip(self.cmd_results[0][0])
 
-class SystemIdRhoCmd(GetFileRhoCmd):
+class SystemIdRhoCmd(_GetFileRhoCmd):
     name = "systemid"
     filename = "/etc/sysconfig/rhn/systemid"
     #FIXME: there are more fields here, not sure it's worth including them as options
