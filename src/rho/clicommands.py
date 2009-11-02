@@ -53,7 +53,7 @@ def ssh_key_passphrase_is_good(filename, password=None):
     good_key = True
     try:
         get_key_from_file(filename, password=password)
-    except paramiko.PasswordRequiredException:
+    Except paramiko.PasswordRequiredException:
         good_key = False
     except paramiko.SSHException:
         good_key = False
@@ -98,7 +98,7 @@ class OutputPrinter(object):
         for k in keys:
             sepline.append("-" * (len(k) + pad))
 
-        self.rows = [keys,sepline]
+        self.rows = [keys, sepline]
         self.pad = pad
         self.dontpad = dontpad
 
@@ -162,8 +162,8 @@ class ProfilePrinter(object):
                 print("        %s" % port)
 
             print("    ranges:")
-            for range in p.ranges:
-                print("        %s" % range)
+            for ip_range in p.ranges:
+                print("        %s" % ip_range)
 
 class CliCommand(object):
     """ Base class for all sub-commands. """
