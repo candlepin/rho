@@ -431,10 +431,10 @@ class ScanCommand(CliCommand):
                     auths.append(a)
         else:
             # FIXME: need a more abstract credentials class -akl
-            auth=config.SshAuth({'name':"clioptions",
-                                        'username': self.options.username,
-                                        'password': user_password,
-                                        'type': 'ssh'})
+            auth = config.SshAuth({'name':"clioptions",
+                                   'username': self.options.username,
+                                   'password': user_password,
+                                   'type': 'ssh'})
             self.config.add_auth(auth)
             # if we are specifing auth stuff not in the config, add it to
             # the config class as "clioptions" and set the auth name to
