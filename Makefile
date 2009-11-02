@@ -5,7 +5,8 @@ MESSAGESPOT=po/rho.pot
 
 TOPDIR = $(shell pwd)
 DIRS	= test bin locale src
-PYDIRS	= src/rho bin 
+PYDIRS	= src/rho
+BINDIR  = bin
 
 #MANPAGES = funcd func func-inventory func-transmit func-build-map func-create-module
 
@@ -57,9 +58,14 @@ sdist: messages
 	$(PYTHON) setup.py sdist
 
 pychecker:
-	-for d in $(PYDIRS); do ($(MAKE) -C $$d pychecker ); done   
+	-for d in $(PYDIRS); do PYTHONPATH=$(TOPDIR)/src pychecker $$d/*.py;  done
+	-PYTHONPATH=$(TOPDIR)/src pychecker bin/rho
 pyflakes:
-	-for d in $(PYDIRS); do ($(MAKE) -C $$d pyflakes ); done	
+	-for d in $(PYDIRS); do PYTHONPATH=$(TOPDIR)/src pyflakes $$d/*.py; done
+	-PYTHONPATH=$(TOPDIR)/src pyflakes bin/rho
+pylint:
+	-for d in $(PYDIRS); do PYTHONPATH=$(TOPDIR)/src pylint $$d/*.py; done
+	-PYTHONPATH=$(TOPDIR)/src pylint bin/rho
 money: clean
 	-sloccount --addlang "makefile" $(TOPDIR) $(PYDIRS) 
 
