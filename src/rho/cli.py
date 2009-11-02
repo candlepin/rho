@@ -74,7 +74,7 @@ class CLI:
         while cmd == None:
             key = " ".join(possiblecmd[:i])
             if key is None or key == "":
-                break;
+                break
 
             if self.cli_commands.has_key(key):
                 cmd = self.cli_commands[key]
