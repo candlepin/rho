@@ -58,7 +58,7 @@ sdist: messages
 	$(PYTHON) setup.py sdist
 
 pychecker:
-	-for d in $(PYDIRS); do PYTHONPATH=$(TOPDIR)/src pychecker $$d/*.py;  done
+	-for d in $(PYDIRS); do PYTHONPATH=$(TOPDIR)/src pychecker --limit 100 --only $$d/*.py;  done
 	-PYTHONPATH=$(TOPDIR)/src pychecker bin/rho
 pyflakes:
 	-for d in $(PYDIRS); do PYTHONPATH=$(TOPDIR)/src pyflakes $$d/*.py; done
