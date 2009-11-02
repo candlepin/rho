@@ -29,12 +29,11 @@ build: clean versionfile
 	$(PYTHON) setup.py build -f
 
 clean:
-	-rm -f  MANIFEST
-	-rm -rf dist/ build/
+	-rm -f  MANIFEST etc/version .figleaf_interesting
+	-rm -rf dist/ build/ test/coverage rpm-build/
 	-rm -rf *~
-	-rm -rf rpm-build/
+	-rm -rf .figleaf
 	-rm -rf docs/*.gz
-	-rm -f etc/version
 #	-for d in $(DIRS); do ($(MAKE) -C $$d clean ); done
 
 confclean:
