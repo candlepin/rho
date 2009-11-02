@@ -17,7 +17,6 @@ import os.path
 from rho.log import log
 
 # From the python-crypto package
-from Crypto.Cipher import Blowfish
 from Crypto.Cipher import  AES
 
 from rho.PBKDF2 import PBKDF2
