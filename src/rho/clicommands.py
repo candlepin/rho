@@ -416,7 +416,7 @@ class ScanCommand(CliCommand):
         # hmm, some possible report values don't come from cmds...
         if self.options.showfields:
             fields = self.scanner.get_cmd_fields()
-            fields.update(scanner.fields)
+            fields.update(scanner.report_fields)
             field_keys = fields.keys()
             field_keys.sort()
             for field_key in field_keys:

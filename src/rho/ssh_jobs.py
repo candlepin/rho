@@ -11,9 +11,9 @@
 
 import paramiko
 
-import scanner
-import config
+from rho import config
 from rho.log import log
+from rho import scan_report
 
 import Queue
 import socket
@@ -45,8 +45,6 @@ def get_pkey(auth):
     print _("The private key file for %s is not a recognized ssh key type" % auth.name)
     return None
 
-#FIXME: SshJob needs to have a RhoJobsList, where each RhoJob item actually has
-# a list of cli commands to run
 class SshJob():
     def __init__(self, ip=None, ports=[22], rho_cmds=None, auths=None,
             timeout=30, cache={}, allow_agent=False):
@@ -86,9 +84,9 @@ class SshJob():
         pass
 
 class OutputThread(threading.Thread):
-    def __init__(self, output_queue, report=None):
-        self.out_queue = output_queue
-        self.report = report
+    def __init__(self, report=None):
+        self.out_queue = Queue.Queue()
+        self.report = scan_report.ScanReport()
         self.quitting = False
         threading.Thread.__init__(self, name="rho_output_thread")
        
@@ -112,19 +110,19 @@ class OutputThread(threading.Thread):
 
 
 class SshThread(threading.Thread):
-    def __init__(self, id, ssh_queue, output_queue):
+    def __init__(self, thread_id, ssh_queue, output_queue):
         self.ssh_queue = ssh_queue
         self.out_queue = output_queue
-        self.id = id
+        self.id = thread_id
         self.quitting = False
-        threading.Thread.__init__(self, name="rho_ssh_thread-%s" % id)
+        threading.Thread.__init__(self, name="rho_ssh_thread-%s" % thread_id)
+        self.ssh = None
 
     def quit(self):
         self.quitting = True
 
     def connect(self, ssh_job):
         # do the actual paramiko ssh connection
-        self.ssh = None
            # Copy the list of ports, we'll modify it as we go:
         ports_to_try = list(ssh_job.ports)
 
@@ -212,7 +210,7 @@ class SshThread(threading.Thread):
 
 
 
-    def run_cmds(self,ssh_job):
+    def run_cmds(self, ssh_job, callback=None):
         for rho_cmd in ssh_job.rho_cmds:
             output = []
             for cmd_string in rho_cmd.cmd_strings:
@@ -266,29 +264,27 @@ class SshJobs():
         # cmdSrc is some sort of list/iterator thing
 
         self.verbose = True
-        self.output = scanner.ScanReport()
         self.max_threads = 10  
 
-        self.report = scanner.ScanReport()
+        self.ssh_queue = Queue.Queue()
+#        self.output_queue = Queue.Queue()
 
     def queue_jobs(self, ssh_job):
         self.ssh_queue.put(ssh_job, block=True)
 
     def start_ssh_queue(self):
-        self.ssh_queue = Queue.Queue()
         for thread_num in range(self.max_threads):
             ssh_thread = SshThread(thread_num, 
                                    self.ssh_queue,
-                                   self.output_queue)
+                                   self.output_thread.out_queue)
             ssh_thread.setDaemon(True)
             ssh_thread.start()
         
 
     def start_output_queue(self):
-        self.output_queue = Queue.Queue()
-        output_thread = OutputThread(self.output_queue, self.report)
-        output_thread.setDaemon(True)
-        output_thread.start()
+        self.output_thread = OutputThread()
+        self.output_thread.setDaemon(True)
+        self.output_thread.start()
         
 
     def run_jobs(self, ssh_jobs=None, callback=None):
@@ -309,6 +305,6 @@ class SshJobs():
                     self.queue_jobs(ssh_job)
                     self.ssh_jobs.remove(ssh_job)
         self.ssh_queue.join()
-        return self.output_queue
+        self.output_thread.out_queue.join()
 
 
