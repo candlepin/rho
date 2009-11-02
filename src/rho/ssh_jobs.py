@@ -267,7 +267,7 @@ class SshJobs():
         self.max_threads = 10  
 
         self.ssh_queue = Queue.Queue()
-#        self.output_queue = Queue.Queue()
+        self.ssh_jobs = []
 
     def queue_jobs(self, ssh_job):
         self.ssh_queue.put(ssh_job, block=True)
