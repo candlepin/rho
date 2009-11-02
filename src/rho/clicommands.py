@@ -50,11 +50,9 @@ def _read_key_file(filename):
 # and see if it works... Pass in a passphrase to
 # see if it is the correct passphrase
 def ssh_key_passphrase_is_good(filename, password=None):
-    keyfile = open(os.path.expanduser(
-             os.path.expandvars(filename)), "r")
     good_key = True
     try:
-        get_key_from_file(filename,password=password)
+        get_key_from_file(filename, password=password)
     except paramiko.PasswordRequiredException:
         good_key = False
     except paramiko.SSHException:
