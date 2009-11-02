@@ -998,7 +998,7 @@ class AuthAddCommand(CliCommand):
         c = config.ConfigBuilder().dump_config(self.config)
         crypto.write_file(self.options.config, c, self.passphrase, self.salt)
 
-    def _validate_key_and_passphrase(self, keyfile):
+    def _validate_key_and_passphrase(self):
         self.auth_passphrase = ""
         # if key works sans a password, we dont need one
         if not ssh_key_passphrase_is_good(self.options.filename):
@@ -1013,7 +1013,7 @@ class AuthAddCommand(CliCommand):
     def _do_command(self):
         if self.options.filename:
             # using sshkey
-            self._validate_key_and_passphrase(self.options.filename)
+            self._validate_key_and_passphrase()
             sshkey = _read_key_file(self.options.filename)
 
             cred = config.SshKeyAuth({"name": self.options.name,
