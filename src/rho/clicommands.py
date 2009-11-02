@@ -563,8 +563,8 @@ class ImportConfigCommand(CliCommand):
         Executes the command.
         """
         f = open(self.options.sourcefile, 'r')
-        json = f.read()
-        imported_config = config.ConfigBuilder().build_config(json)
+        json_buf = f.read()
+        imported_config = config.ConfigBuilder().build_config(json_buf)
         c = config.ConfigBuilder().dump_config(imported_config)
 
         crypto.write_file(self.options.config, c, self.passphrase, self.salt)
