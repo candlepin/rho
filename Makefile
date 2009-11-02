@@ -6,6 +6,8 @@ MESSAGESPOT=po/rho.pot
 TOPDIR = $(shell pwd)
 DIRS	= test bin locale src
 PYDIRS	= src/rho
+PYFILES = $(wildcard src/rho/*.py)
+
 BINDIR  = bin
 
 #MANPAGES = funcd func func-inventory func-transmit func-build-map func-create-module
@@ -57,8 +59,10 @@ tests:
 coverage:
 	# figleaf needs full paths...
 	# needs figleaf installed, see http://darcs.idyll.org/~t/projects/figleaf/doc/
+	-rm -f .figleaf_interesting
+	-for file in $(PYFILES); do echo $(TOPDIR)/$$file >> .figleaf_interesting; done
 	-figleaf -i /usr/bin/nosetests -d -v -a '!slow'
-	-figleaf2html -d test/coverage .figleaf
+	-figleaf2html -d test/coverage -f .figleaf_interesting .figleaf
 
 sdist: messages
 	$(PYTHON) setup.py sdist
