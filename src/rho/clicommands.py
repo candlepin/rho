@@ -32,6 +32,7 @@ from rho import config
 from rho import crypto
 from rho import rho_ips
 from rho import scanner
+from rho import scan_report
 
 
 RHO_PASSWORD = "RHO_PASSWORD"
@@ -53,7 +54,7 @@ def ssh_key_passphrase_is_good(filename, password=None):
     good_key = True
     try:
         get_key_from_file(filename, password=password)
-    Except paramiko.PasswordRequiredException:
+    except paramiko.PasswordRequiredException:
         good_key = False
     except paramiko.SSHException:
         good_key = False
@@ -199,7 +200,7 @@ class CliCommand(object):
         try:
             port_int = int(port)
         except ValueError:
-            # aka, we get a string here...
+            # aka, we get a string here... 
             return False
         if int(port) < 1 or int(port) >65535:
             return False
@@ -323,7 +324,7 @@ class ScanCommand(CliCommand):
         self.parser.add_option("--allow-agent", dest="allowagent", action="store_true", 
                metavar="ALLOWAGENT", default=False,
                help=_("Use keys from local ssh-agent"))
-        self.parser.add_option("--show-fields", dest="showfields",action="store_true", 
+        self.parser.add_option("--show-fields", dest="showfields", action="store_true", 
               metavar="SHOWFIELDS", 
               help=_("show fields available for reports"))
         self.parser.add_option("--report-format", dest="reportformat",
@@ -414,11 +415,12 @@ class ScanCommand(CliCommand):
         # hmm, some possible report values don't come from cmds...
         if self.options.showfields:
             fields = self.scanner.get_cmd_fields()
-            fields.update(scanner.report_fields)
+            fields.update(scan_report.report_fields)
             field_keys = fields.keys()
             field_keys.sort()
             for field_key in field_keys:
                 print "%s:%s" % (field_key, fields[field_key]) 
+            sys.exit(0)
             
 
         if len(self.options.auth) > 0:
