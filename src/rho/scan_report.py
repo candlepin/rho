@@ -15,7 +15,6 @@ _ = t.ugettext
 
 # report fields we can use. Add them here so we can show them
 # with --report-fields
-# FIXME: i18n?
 report_fields = {'ip':_('ip address'),
           'port':_('ssh port'),
           'auth.type':_('type of ssh authentication used'),

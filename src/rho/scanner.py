@@ -42,13 +42,11 @@ class Scanner():
         fields = {}
         for cmd in self.default_rho_cmd_classes:
             if cmd.fields:
-                    fields.update(cmd.fields)
+                fields.update(cmd.fields)
         return fields
 
     def _find_auths(self, authnames):
         """ Return a list of Auth objects for the with the given names. """
-        # FIXME: this seems like a reasonable place to plug in a "default" auth
-        # if we like, maybe?  -akl
         auth_objs = []
         for authname in authnames:
             auth = self.config.get_auth(authname)
@@ -110,11 +108,11 @@ class Scanner():
 
     def get_rho_cmds(self, rho_cmd_classes=None):
         if not rho_cmd_classes:
-            self.rho_cmd_classes = self.default_rho_cmd_classes
-        rho_cmds  = []
-        for rho_cmd_class in self.rho_cmd_classes:
-            rho_cmds.append(rho_cmd_class())
-        return rho_cmds
+            rho_cmd_classes = self.default_rho_cmd_classes
+        rho_cmds_list  = []
+        for rho_cmd_class in rho_cmd_classes:
+            rho_cmds_list.append(rho_cmd_class())
+        return rho_cmds_list
 
     def _run_scan(self):
         self.ssh_jobs.run_jobs(callback=self._callback)
