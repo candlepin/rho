@@ -183,8 +183,6 @@ class CliCommand(object):
 
     def _add_common_options(self):
         """ Add options that apply to all sub-commands. """
-        self.parser.add_option("--debug", dest="debug",
-                help=_("enable debug output"))
 
         # Default is expanded later:
         self.parser.add_option("--config", dest="config",
