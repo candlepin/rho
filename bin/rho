@@ -11,8 +11,6 @@
 #
 
 import gettext
-import os.path
-import sys
 
 from rho.cli import CLI
 

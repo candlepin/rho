@@ -20,7 +20,6 @@ import gettext
 t = gettext.translation('rho', 'locale', fallback=True)
 _ = t.ugettext
 
-from rho.log import log
 
 # basic idea, wrapper classes around the cli cmds we run on the machines
 # to be inventories. the rho_cmd class will have a string for the 
@@ -259,6 +258,8 @@ class SystemIdRhoCmd(GetFileRhoCmd):
             self.data["%s.%s" % (self.name, key)] = systemid[key]
         
 class DmiRhoCmd(RhoCmd):
+    # note this test doesn't work well, or at all, for non root
+    # users by default. 
     name = "dmi"
     fields = {'dmi.bios-vendor':_('BIOS vendor info from DMI'),
               'dmi.bios-version':_('BIOS version info from DMI'),

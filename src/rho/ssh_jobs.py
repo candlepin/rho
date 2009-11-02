@@ -15,16 +15,11 @@ import scanner
 import config
 from rho.log import log
 
-import os
-import posix
 import Queue
 import socket
-import string
 import StringIO
-import subprocess
 import sys
 import threading
-import time
 import traceback
 
 

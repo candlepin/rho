@@ -10,7 +10,6 @@ import csv
 
 from rho.log import log
 
-import config
 import rho_cmds
 import rho_ips
 import ssh_jobs

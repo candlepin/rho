@@ -32,7 +32,6 @@ from rho import config
 from rho import crypto
 from rho import rho_ips
 from rho import scanner
-from rho import ssh_jobs
 
 
 RHO_PASSWORD = "RHO_PASSWORD"
