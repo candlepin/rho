@@ -47,8 +47,8 @@ class _NewNetAddr(object):
 
     @staticmethod
     def get_range(start_ip, end_ip):
-        range = netaddr.IPRange(start_ip, end_ip)
-        return list(range)
+        ip_range = netaddr.IPRange(start_ip, end_ip)
+        return list(ip_range)
 
     @staticmethod
     def get_network(range_str):
