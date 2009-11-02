@@ -30,7 +30,7 @@ build: clean versionfile
 
 clean:
 	-rm -f  MANIFEST etc/version .figleaf_interesting
-	-rm -rf dist/ build/ test/coverage rpm-build/
+	-rm -rf dist/ build/ test/coverage rpm-build/ rho.egg-info/
 	-rm -rf *~
 	-rm -rf .figleaf
 	-rm -rf docs/*.gz
