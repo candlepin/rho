@@ -66,6 +66,16 @@ class TestRhoIps(unittest.TestCase):
 
     def testIPTooLong(self):
         self._check_ipr("10.0.2.3.4.5.3.4", [])
+
+    def testIPCIDRBadIp(self):
+        self._check_ipr("10.0.0.300/24", [])
+
+    def testIPWildcardBadIp(self):
+        self._check_ipr("10.0.300.*", [])
+
+    def testIPRangeBadIp(self):
+        self._check_ipr("10.0.0.300 - 10.0.0.301", [])
+
 #    def testHostname(self):
 #        # any suggests for a hostname whose ip won't change?
 #        self._check_ipr("bugzilla.redhat.com", ["209.132.176.231"])

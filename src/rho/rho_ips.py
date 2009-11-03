@@ -117,7 +117,10 @@ class RhoIpRange(object):
                 self.end_ip = None
 
             if self.start_ip and self.end_ip:
-                ips = self.netaddr.get_range(self.start_ip, self.end_ip)
+                try:
+                    ips = self.netaddr.get_range(self.start_ip, self.end_ip)
+                except netaddr.AddrFormatError:
+                    return None
             return ips
         
         # FIXME: not sure what to do about cases like 
@@ -127,16 +130,24 @@ class RhoIpRange(object):
             # looks like a cidr
             # the netaddr.CIDR object is picky about being 
             # "true" CIDR which isn't really something we need to care about
-            return self.netaddr.get_network(range_str)
+            try:
+                return self.netaddr.get_network(range_str)
+            except netaddr.AddrFormatError:
+                return None
 
         if range_str.find('*') > -1:
-            return self.netaddr.get_glob(range_str)
+            try:
+                return self.netaddr.get_glob(range_str)
+            except netaddr.AddrFormatError:
+                return None
 
-        if ip_regex_foo.search(range_str) and self._is_ip(range_str):
+        if ip_regex.search(range_str) and self._is_ip(range_str):
             # must be a single ip
             self.start_ip = range_str
-            return self.netaddr.get_address(self.start_ip)
-
+            try:
+                return self.netaddr.get_address(self.start_ip)
+            except netaddr.AddrFormatError:
+                return None
         # looks like a hostname, but starts with a digit, must be
         # a broken ip address. hostnames can't start with a digit
         if range_str[0] in string.digits:
