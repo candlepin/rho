@@ -45,8 +45,36 @@ n  rho scan: you can scan using a profile and at the same time specify a
 n  dumpconfig contains a stanza called "groups". For consistency reasons we
 n  think it should be called "profiles". 
 
-n [test@whayutin ~]$ rho --name=wes1 --auth=foobar --range=10.10.10.300, this should throw an error. instead it lists the command help
-
+nnnnnnnnnnn
+10.10.10.300 should throw a number format error.. as numbers can not be > 255
+[test@whayutin ~]$ rho profile add --name=range --auth=auto --range=10.10.10.300
+[test@whayutin ~]$ rho profile add --name=range --auth=auto1 --range=10.10.10.300/24
+Traceback (most recent call last):
+  File "/home/test/rho/bin/rho", line 20, in <module>
+    CLI().main()
+  File "/home/test/rho/src/rho/cli.py", line 95, in main
+    cmd.main()
+  File "/home/test/rho/src/rho/clicommands.py", line 267, in main
+    self._validate_options()
+  File "/home/test/rho/src/rho/clicommands.py", line 760, in _validate_options
+    self._validate_ranges(self.options.ranges)
+  File "/home/test/rho/src/rho/clicommands.py", line 217, in _validate_ranges
+    ipr =  rho_ips.RhoIpRange(iprange)
+  File "/home/test/rho/src/rho/rho_ips.py", line 79, in __init__
+    ret = self.parse_iprange(sub_iprange)
+  File "/home/test/rho/src/rho/rho_ips.py", line 130, in parse_iprange
+    return self.netaddr.get_network(range_str)
+  File "/home/test/rho/src/rho/rho_ips.py", line 33, in get_network
+    cidr = netaddr.IP(range_str)
+  File "/usr/lib/python2.6/site-packages/netaddr/address.py", line 725, in __init__
+    super(IP, self).__init__(addr, addr_type)
+  File "/usr/lib/python2.6/site-packages/netaddr/address.py", line 237, in __init__
+    self.value = addr
+  File "/usr/lib/python2.6/site-packages/netaddr/address.py", line 92, in __set__
+    'format!' % value)
+netaddr.AddrFormatError: '10.10.10.300' is not a supported address format!
+[test@whayutin ~]$ 
+nnnnnnnnnnnnnnnn
 
 
 
