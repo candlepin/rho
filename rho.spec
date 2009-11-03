@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: rho
-Version: 0.0.11
+Version: 0.0.12
 Release:        1%{?dist}
 Summary: An SSH system profiler
 
@@ -54,6 +54,11 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Nov 03 2009 Adrian Likins <alikins@redhat.com> 0.0.12-1
+- Fix a bug where we weren't actually consuming the Queue if there weren't as
+  many or more threads than hosts. (alikins@redhat.com)
+- remove --debug option, it doesn't do anything (alikins@redhat.com)
+
 * Sat Oct 31 2009 Devan Goodwin <dgoodwin@rm-rf.ca> 0.0.11-1
 - Support Netaddr > 0.7 (jbowes@repl.ca)
 - add a DmiRhoCmd. Grab some basic DMI info. (alikins@redhat.com)
