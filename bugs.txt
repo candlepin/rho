@@ -35,30 +35,37 @@ Config Encryption Password:
 [whayutin@thinkdoe rho]$ 
 
 
-Profile edit, lame bug
-If you make no edits to a profile, the command return should not say the
-profile was edited
-
-[whayutin@thinkdoe .ssh]$ rho profile edit --name=busted1 
-Config Encryption Password:
-Profile busted1 edited
-[whayutin@thinkdoe .ssh]$ 
-
-Not sure if this is worth fixing or not. - dgoodwin
 
 * --range checks validity of ip's in range, which can fail if given a hostname
 * that doesnt resolve (--range doesntexist.example.com, for example)
 
 * "rho scan nonexistent" causes a traceback
 
+* rho auth edit, can not change from ssh_key to just ssh
+Q edit field in given auth -- so this partially failes (weshay)
+
+------------------------
+*[test@whayutin .ssh]$ rho profile show --name mymachine
+
+name: mymachine
+    auths:
+        foobar
+    ports:
+        23
+    ranges:
+        auto-jon23.usersys.redhat.com
+[test@whayutin .ssh]$ rho scan mymachine --ports=22
+auto-jon23.usersys.redhat.com,,,,,,,,,,,,,,,,,,,,unable to connect
+[test@whayutin .ssh]$ 
+-----------------------------
+
 
 =========================BUGS THAT NEED QA==================================================
 
-Q prompt for ssh passphrase
-Q edit field in given auth
-Q ports not validated for valid values i.e. -1 or 333333 is accepted.
-Q add ssh port that worked to output report
-Q --profile is missing from rho scan
+
+
+
+
 Q profile add with --auth=[nonexistent auth] gives traceback, should just print 'auth doesn't exist' - same with nonexistent ssh keyfile, etc
 Q rho scan --help should say "profile" on the usage line. 
 Q rho scan: you can scan using a profile and at the same time specify a
@@ -210,5 +217,16 @@ Q Profile DOESNOTEXIST removed
 ===============================================================================================
 =========================BUGS VERIFIED BY QA===================================================
 X Can not add a private RSA key to authentication
+X prompt for ssh passphrase
+
+x ports not validated for valid values i.e. -1 or 333333 is accepted.  (AUTOMATED, weshay)
+[test@whayutin .ssh]$ rho profile edit --name=mymachine --ports=-1
+-1 includes an invalid port number. Ports should be between 1 and 65535
+
+X  add ssh port that worked to output report
+X --profile is missing from rho scan
+
+
+
 
 =======================END==BUGS VERIFIED BY QA==END================================================
