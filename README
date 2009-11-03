@@ -244,7 +244,7 @@ the profile.
 OUTPUT
 The important part about a scan is, obviously, the results report. By default, 
 this contains a large amount of information about the operating system, 
-hardware, and platform. The --show-fields lists all of the available report 
+hardware, and platform. The 'rho scan --show-fields' command lists all of the available report 
 fields (which may change with every version).
 
      auth.name:name of authentication class
