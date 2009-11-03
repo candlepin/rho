@@ -121,9 +121,15 @@ class SshThread(threading.Thread):
     def quit(self):
         self.quitting = True
 
+    def callback(self, *args):
+        log.info(args)
+#        print args
+
+
     def connect(self, ssh_job):
         # do the actual paramiko ssh connection
-           # Copy the list of ports, we'll modify it as we go:
+
+        # Copy the list of ports, we'll modify it as we go:
         ports_to_try = list(ssh_job.ports)
 
         found_port = None # we'll set this once we identify a port that works
@@ -179,6 +185,7 @@ class SshThread(threading.Thread):
                     found_port = port
                     found_auth = True
                     log.info("success: %s" % debug_str)
+                    self.callback("connected to: %s:%s with auth: %s" % (ssh_job.ip, ssh_job.port, ssh_job.auth.name))
                     break
 
                 # Implies we've found an SSH server listening:
@@ -209,13 +216,13 @@ class SshThread(threading.Thread):
                     continue
 
 
-
     def run_cmds(self, ssh_job, callback=None):
         for rho_cmd in ssh_job.rho_cmds:
             output = []
             for cmd_string in rho_cmd.cmd_strings:
                 stdin, stdout, stderr = self.ssh.exec_command(cmd_string)
                 output.append((stdout.read(), stderr.read()))
+                self.callback("command: %s on %s" % (rho_cmd.name, ssh_job.ip))
             rho_cmd.populate_data(output)
 
     def get_transport(self, ssh_job):
@@ -236,7 +243,6 @@ class SshThread(threading.Thread):
 
         except Exception, e:
             log.error("Exception on %s: %s" % (ssh_job.ip, e))
- #           log.error(sys.exc_type())
             log.error(sys.exc_info())
             log.error(traceback.print_tb(sys.exc_info()[2]))
             ssh_job.connection_result = False
@@ -244,19 +250,18 @@ class SshThread(threading.Thread):
 
 
     def run(self):
-        try:
-            # grab a "ssh_job" off the q
-            ssh_job = self.ssh_queue.get()
-            self.get_transport(ssh_job)
-            
-            self.out_queue.put(ssh_job)
-            self.ssh_queue.task_done()
+        while not self.quitting:
+            try:
+                # grab a "ssh_job" off the q
+                ssh_job = self.ssh_queue.get()
+                self.get_transport(ssh_job)
+                self.out_queue.put(ssh_job)
+                self.ssh_queue.task_done()
 
-        except Exception, e:
-            log.error("Exception: %s" % e)
-#            log.error(sys.exc_type())
-            log.error(traceback.print_tb(sys.exc_info()[2]))
-            
+            except Exception, e:
+                log.error("Exception: %s" % e)
+                log.error(traceback.print_tb(sys.exc_info()[2]))
+                self.ssh_queue.task_done()
             
         
 class SshJobs():
@@ -264,7 +269,7 @@ class SshJobs():
         # cmdSrc is some sort of list/iterator thing
 
         self.verbose = True
-        self.max_threads = 10  
+        self.max_threads = 10
 
         self.ssh_queue = Queue.Queue()
         self.ssh_jobs = []
@@ -304,6 +309,7 @@ class SshJobs():
                 if not self.ssh_queue.full():
                     self.queue_jobs(ssh_job)
                     self.ssh_jobs.remove(ssh_job)
+
         self.ssh_queue.join()
         self.output_thread.out_queue.join()
 
