@@ -60,7 +60,12 @@ class TestRhoIps(unittest.TestCase):
     def testCommaSeperatedTrueCIDR(self):
         self._check_ipr("10.0.0.0/31, 10.0.1.0/31", 
                         ["10.0.0.0", "10.0.0.1", "10.0.1.0", "10.0.1.1"])
-         
+
+    def testIPOver(self):
+        self._check_ipr("10.0.0.300", [])
+
+    def testIPTooLong(self):
+        self._check_ipr("10.0.2.3.4.5.3.4", [])
 #    def testHostname(self):
 #        # any suggests for a hostname whose ip won't change?
 #        self._check_ipr("bugzilla.redhat.com", ["209.132.176.231"])

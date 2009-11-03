@@ -132,11 +132,16 @@ class RhoIpRange(object):
         if range_str.find('*') > -1:
             return self.netaddr.get_glob(range_str)
 
-        if ip_regex.search(range_str) and self._is_ip(range_str):
+        if ip_regex_foo.search(range_str) and self._is_ip(range_str):
             # must be a single ip
             self.start_ip = range_str
             return self.netaddr.get_address(self.start_ip)
-        
+
+        # looks like a hostname, but starts with a digit, must be
+        # a broken ip address. hostnames can't start with a digit
+        if range_str[0] in string.digits:
+            return None
+
         # doesn't look like anything else, try treating it as a hostname
         try:
             self.start_ip = range_str
