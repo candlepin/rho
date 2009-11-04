@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: rho
-Version: 0.0.13
+Version: 0.0.14
 Release:        1%{?dist}
 Summary: An SSH system profiler
 
@@ -54,6 +54,19 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Nov 04 2009 Adrian Likins <alikins@redhat.com> 0.0.14-1
+- add bits generated to .gitignore (shut up git) (alikins@redhat.com)
+- Don't use weird style of classes on 2.4, use Class(object)
+  (alikins@redhat.com)
+- A few more tweaks to make Queue24 work the same way as the Queue.Queue in
+  2.6. (alikins@redhat.com)
+- On python2.4 (aka, rhel5) Queue.Queue doesn't have the .join or .task_done
+  methods, which we use and like. So check for them and if they aren't there,
+  use our own implementation (pretty much c&p from the 2.6 version of
+  Queue.Queue). A little ugly, but alas. (alikins@redhat.com)
+- use new style classes, python2.4 doesn't like class FOO()
+  (alikins@redhat.com)
+
 * Tue Nov 03 2009 Adrian Likins <alikins@redhat.com> 0.0.13-1
 - Fix a bug where we weren't actually consuming the Queue if there weren't as
   many or more threads than hosts. (alikins@redhat.com)
