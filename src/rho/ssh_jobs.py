@@ -75,7 +75,8 @@ class Queue24(Queue.Queue):
             if unfinished <= 0:
                 if unfinished < 0:
                     raise ValueError('task_done() called too many times')
-                self.all_tasks_done.notify_all()
+                # notifyAll became notify_all in 2.6
+                self.all_tasks_done.notifyAll()
             self.unfinished_tasks = unfinished
         finally:
             self.all_tasks_done.release()
@@ -96,13 +97,21 @@ class Queue24(Queue.Queue):
         finally:
             self.all_tasks_done.release()
 
+    # not exactly the way the 2.6+ Queue class does it, but it's
+    # easier and a lot less code this way. 
+    def _put(self, item):
+	self.queue.append(item)
+	self.unfinished_tasks +=1
+
+
+
 # if I were fancy, this might be a factory
 # Check to see if our queue has "join", aka, if we
 # are on python2.6 or newer
-def get_queue():
+def OurQueue(*args, **kwargs):
     if getattr(Queue.Queue, 'join', None):
-        return Queue.Queue()
-    return Queue24()
+        return Queue.Queue(*args, **kwargs)
+    return Queue24(*args, **kwargs)
 
 
 class SshJob(object):
@@ -145,7 +154,7 @@ class SshJob(object):
 
 class OutputThread(threading.Thread):
     def __init__(self, report=None):
-        self.out_queue = get_queue()
+        self.out_queue = OurQueue()
         self.report = scan_report.ScanReport()
         self.quitting = False
         threading.Thread.__init__(self, name="rho_output_thread")
@@ -317,7 +326,6 @@ class SshThread(threading.Thread):
                 self.get_transport(ssh_job)
                 self.out_queue.put(ssh_job)
                 self.ssh_queue.task_done()
-
             except Exception, e:
                 log.error("Exception: %s" % e)
                 log.error(traceback.print_tb(sys.exc_info()[2]))
@@ -331,7 +339,7 @@ class SshJobs(object):
         self.verbose = True
         self.max_threads = 10
 
-        self.ssh_queue = get_queue()
+        self.ssh_queue = OurQueue()
         self.ssh_jobs = []
 
     def queue_jobs(self, ssh_job):
@@ -372,5 +380,4 @@ class SshJobs(object):
 
         self.ssh_queue.join()
         self.output_thread.out_queue.join()
-
 
