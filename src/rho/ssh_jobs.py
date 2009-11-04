@@ -45,6 +45,66 @@ def get_pkey(auth):
     print _("The private key file for %s is not a recognized ssh key type" % auth.name)
     return None
 
+# on python 2.4, the Queue class doesnt .join and .task_done,which we use and
+# are nice. So we add them to Queue24 if we need to
+class Queue24(Queue.Queue):
+    def __init__(self, maxsize=0):
+        # Notify all_tasks_done whenever the number of unfinished tasks
+        # drops to zero; thread waiting to join() is notified to resume
+        Queue.Queue.__init__(self, maxsize=maxsize)
+        self.all_tasks_done = threading.Condition(self.mutex)
+        self.unfinished_tasks = 0
+
+    def task_done(self):
+        """Indicate that a formerly enqueued task is complete.
+
+        Used by Queue consumer threads.  For each get() used to fetch a task,
+        a subsequent call to task_done() tells the queue that the processing
+        on the task is complete.
+
+        If a join() is currently blocking, it will resume when all items
+        have been processed (meaning that a task_done() call was received
+        for every item that had been put() into the queue).
+
+        Raises a ValueError if called more times than there were items
+        placed in the queue.
+        """
+        self.all_tasks_done.acquire()
+        try:
+            unfinished = self.unfinished_tasks - 1
+            if unfinished <= 0:
+                if unfinished < 0:
+                    raise ValueError('task_done() called too many times')
+                self.all_tasks_done.notify_all()
+            self.unfinished_tasks = unfinished
+        finally:
+            self.all_tasks_done.release()
+
+    def join(self):
+        """Blocks until all items in the Queue have been gotten and processed.
+
+        The count of unfinished tasks goes up whenever an item is added to the
+        queue. The count goes down whenever a consumer thread calls task_done()
+        to indicate the item was retrieved and all work on it is complete.
+
+        When the count of unfinished tasks drops to zero, join() unblocks.
+        """
+        self.all_tasks_done.acquire()
+        try:
+            while self.unfinished_tasks:
+                self.all_tasks_done.wait()
+        finally:
+            self.all_tasks_done.release()
+
+# if I were fancy, this might be a factory
+# Check to see if our queue has "join", aka, if we
+# are on python2.6 or newer
+def get_queue():
+    if getattr(Queue.Queue, 'join', None):
+        return Queue.Queue()
+    return Queue24()
+
+
 class SshJob(object):
     def __init__(self, ip=None, ports=[22], rho_cmds=None, auths=None,
             timeout=30, cache={}, allow_agent=False):
@@ -85,7 +145,7 @@ class SshJob(object):
 
 class OutputThread(threading.Thread):
     def __init__(self, report=None):
-        self.out_queue = Queue.Queue()
+        self.out_queue = get_queue()
         self.report = scan_report.ScanReport()
         self.quitting = False
         threading.Thread.__init__(self, name="rho_output_thread")
@@ -271,7 +331,7 @@ class SshJobs(object):
         self.verbose = True
         self.max_threads = 10
 
-        self.ssh_queue = Queue.Queue()
+        self.ssh_queue = get_queue()
         self.ssh_jobs = []
 
     def queue_jobs(self, ssh_job):
