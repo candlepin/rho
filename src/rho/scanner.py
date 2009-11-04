@@ -101,8 +101,8 @@ class Scanner(object):
                                        allow_agent=self.allow_agent)
                 ssh_job_list.append(sshj)
 
-            self.ssh_jobs.ssh_jobs = ssh_job_list
-            self._run_scan()
+        self.ssh_jobs.ssh_jobs = ssh_job_list
+        self._run_scan()
 
         return missing_profiles
 
