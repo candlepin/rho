@@ -18,7 +18,7 @@ t = gettext.translation('rho', 'locale', fallback=True)
 _ = t.ugettext
 
 
-class Scanner():
+class Scanner(object):
     def __init__(self, config=None, cache={}, allow_agent=False):
         self.config = config
         self.profiles = []
