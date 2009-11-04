@@ -25,7 +25,7 @@ report_fields = {'ip':_('ip address'),
 
 
 
-class ScanReport():
+class ScanReport(object):
 
     # rho_cmds and the list of rho_cmd_classes in scanner.Scanner to get
     # an idea what fields are available for reports

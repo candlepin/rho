@@ -37,7 +37,7 @@ _ = t.ugettext
 # output. 
 
 
-class RhoCmd():
+class RhoCmd(object):
     name = "base"
     fields = {}
     def __init__(self):
@@ -286,7 +286,7 @@ class DmiRhoCmd(RhoCmd):
 
 
 # the list of commands to run on each host
-class RhoCmdList():
+class RhoCmdList(object):
     def __init__(self):
         self.cmds = {}
         self.cmds['uname'] = UnameRhoCmd()

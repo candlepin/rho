@@ -45,7 +45,7 @@ def get_pkey(auth):
     print _("The private key file for %s is not a recognized ssh key type" % auth.name)
     return None
 
-class SshJob():
+class SshJob(object):
     def __init__(self, ip=None, ports=[22], rho_cmds=None, auths=None,
             timeout=30, cache={}, allow_agent=False):
         # rho_cmds really needs to be list like, easy mistake to make...
@@ -264,7 +264,7 @@ class SshThread(threading.Thread):
                 self.ssh_queue.task_done()
             
         
-class SshJobs():
+class SshJobs(object):
     def __init__(self):
         # cmdSrc is some sort of list/iterator thing
 
