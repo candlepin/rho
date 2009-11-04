@@ -8,7 +8,10 @@
 *~
 *.egg
 *.egg-info
+.figleaf_interesting
+.figleaf
 MANIFEST
 dist
 build
 .build
+test/coverage
