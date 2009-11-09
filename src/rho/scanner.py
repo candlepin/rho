@@ -34,7 +34,8 @@ class Scanner(object):
                                         rho_cmds.CpuRhoCmd,
                                         rho_cmds.EtcReleaseRhoCmd,
                                         rho_cmds.EtcIssueRhoCmd,
-                                        rho_cmds.DmiRhoCmd]
+                                        rho_cmds.DmiRhoCmd,
+                                        rho_cmds.VirtRhoCmd]
         self.ssh_jobs = ssh_jobs.SshJobs()
         self.output = []
 

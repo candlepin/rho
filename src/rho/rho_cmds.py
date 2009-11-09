@@ -146,18 +146,6 @@ class ScriptRhoCmd(RhoCmd):
         self.data['%s.error' % self.name] = self.cmd_results[0][1]
         self.data['%s.command' % self.name] = self.command
 
-class _GetFileRhoCmd(RhoCmd):
-    name = "file"
-    cmd_strings = []
-    filename = None
-    
-    def __init__(self):
-        self.cmd_string_template = "if [ -f %s ] ; then cat %s ; fi"
-        self.cmd_strings = [self.cmd_string_template % (self.filename, self.filename)]
-        RhoCmd.__init__(self)
-
-    def parse_data(self):
-        self.data["%s.contents" % self.name] = "".join(self.cmd_results[0])
 
 # linux only...
 class CpuRhoCmd(RhoCmd):
@@ -174,14 +162,18 @@ class CpuRhoCmd(RhoCmd):
         RhoCmd.__init__(self)
 
     def parse_data(self):
+        self.data = self.parse_data_cpu(self.cmd_results)
+
+    def parse_data_cpu(self, results):
+        data = {}
         cpu_count = 0
-        for line in self.cmd_results[0][0].splitlines():
+        for line in results[0][0].splitlines():
             if line.find("processor") == 0:
                 cpu_count = cpu_count + 1
-        self.data["cpu.count"] = cpu_count
+        data["cpu.count"] = cpu_count
 
         cpu_dict = {}
-        for line in self.cmd_results[0][0].splitlines():
+        for line in results[0][0].splitlines():
             # first blank line should be end of first cpu
             # for this case, we are only grabbing the fields from the first
             # cpu and the total count. Should be close enough.
@@ -199,25 +191,40 @@ class CpuRhoCmd(RhoCmd):
         # available to it, which we don't currently have a way of plumbing in. So
         # x86* only for now... -akl
         # empty bits to return if we are on say, ia64
-        self.data.update({'cpu.vendor_id':'',
-                          'cpu.model_name':'',
-                          'cpu.bogomips':'',
-                          'cpu.cpu_family':'',
-                          'cpu.model_ver':''})
+        data.update({'cpu.vendor_id':'',
+                     'cpu.model_name':'',
+                     'cpu.bogomips':'',
+                     'cpu.cpu_family':'',
+                     'cpu.model_ver':''})
 
         try:
-            self.get_x86_cpu_info(cpu_dict)
+            self.get_x86_cpu_info(data, cpu_dict)
         except:
             pass
 
-    def get_x86_cpu_info(self, cpu_dict):
-        self.data["cpu.vendor_id"] = cpu_dict.get("vendor_id")
+        return data
+
+    def get_x86_cpu_info(self, data, cpu_dict):
+        data["cpu.vendor_id"] = cpu_dict.get("vendor_id")
         # model name should help find kvm/qemu guests...
-        self.data["cpu.model_name"] = cpu_dict.get("model name")
+        data["cpu.model_name"] = cpu_dict.get("model name")
         # they would take my linux card away if I didn't include bogomips
-        self.data["cpu.bogomips"] = cpu_dict.get("bogomips")
-        self.data["cpu.cpu_family"] = cpu_dict.get("cpu family")
-        self.data["cpu.model_ver"] = cpu_dict.get("model")
+        data["cpu.bogomips"] = cpu_dict.get("bogomips")
+        data["cpu.cpu_family"] = cpu_dict.get("cpu family")
+        data["cpu.model_ver"] = cpu_dict.get("model")
+
+class _GetFileRhoCmd(RhoCmd):
+    name = "file"
+    cmd_strings = []
+    filename = None
+
+    def __init__(self):
+        self.cmd_string_template = "if [ -f %s ] ; then cat %s ; fi"
+        self.cmd_strings = [self.cmd_string_template % (self.filename, self.filename)]
+        RhoCmd.__init__(self)
+
+    def parse_data(self):
+        self.data["%s.contents" % self.name] = "".join(self.cmd_results[0])
 
 
 class EtcIssueRhoCmd(_GetFileRhoCmd):
@@ -227,7 +234,7 @@ class EtcIssueRhoCmd(_GetFileRhoCmd):
 
     def parse_data(self):
         self.data["etc-issue.etc-issue"] = string.strip(self.cmd_results[0][0])
-    
+
 class InstnumRhoCmd(_GetFileRhoCmd):
     name = "instnum"
     filename = "/etc/sysconfig/rhn/install-num"
@@ -257,14 +264,14 @@ class SystemIdRhoCmd(_GetFileRhoCmd):
             return
         for key in systemid:
             self.data["%s.%s" % (self.name, key)] = systemid[key]
-        
+
 class DmiRhoCmd(RhoCmd):
     # note this test doesn't work well, or at all, for non root
     # users by default. 
     name = "dmi"
     fields = {'dmi.bios-vendor':_('BIOS vendor info from DMI'),
               'dmi.bios-version':_('BIOS version info from DMI'),
-              'dmi.system-manufacturer':_('System manufacture from DMI'), 
+              'dmi.system-manufacturer':_('System manufacturer from DMI'), 
               'dmi.processor-family':_('Processor family from DMI')}
 
     def __init__(self):
@@ -283,6 +290,102 @@ class DmiRhoCmd(RhoCmd):
             self.data['dmi.system-manufacturer'] = string.strip(self.cmd_results[2][0])
         if self.cmd_results[3][0] and not self.cmd_results[3][1]:
             self.data['dmi.processor-family'] = string.strip(self.cmd_results[3][0])
+
+
+class VirtRhoCmd(CpuRhoCmd):
+    # try to determine if we are a virt guest, a host, or bare metal
+    name = "virt"
+    fields = {'virt.virt':_("If a host is a virt guest, host, or bare metal"),
+              'virt.type':_("What type of virtualization a system is running")}
+
+    def __init__(self):
+        CpuRhoCmd.__init__(self)
+        cmd_template = "if [ -e %s ] ; then echo \"true\"; else echo \"false\"; fi"
+        self.cmd_strings.extend(["dmidecode -s system-manufacturer",
+                                 cmd_template % "/proc/xen/privcmd", 
+                                 cmd_template % "/proc/xen/capabilities",
+                                 cmd_template % "/dev/kvm"])
+
+    def parse_data(self):
+        self.data["virt.virt"] = "baremetal"
+        self.data["virt.type"] = "baremetal"
+
+        # check /proc/cpuinfo to see if we are Qemu/kvm
+        self._check_cpuinfo_for_qemu()
+
+        self._check_for_dev_kvm()
+        # run dmidecode again, see what system-manufacturer is and
+        # and if know it (also, check to see if dmidecode fails, like it
+        # will for non root)
+        self._check_dmidecode()
+        # look for xen files (proc/xen/privcmd, /proc/xen/capabilities)
+        #
+        self._check_for_xen()
+
+    # We are going to try a variety of hacks and kluges to see if we are virt,
+    # and if so, what kind. Mainly looking for xen/kvm here, but if anything else
+    # is easy to detect, try that too.
+
+    # based heavily on "virt-what" and facters virt detections
+    # can't use virt-what since it's not on most systems
+    # it's also relys on root access...
+
+    def _check_cpuinfo_for_qemu(self):
+        # look at model name of /proc/cpuinfo 
+        data = self.parse_data_cpu(self.cmd_results)
+        # model_name can be an empty string...
+        if data["cpu.model_name"] and data["cpu.model_name"][:4] == "QEMU":
+            self.data["virt.virt"] = "guest"
+            #hmm, it could be regular old qemu here, but
+            # this is probably close enough for reporting
+            self.data["virt.type"] = "kvm"
+            return True
+        return False
+
+
+    def _check_for_dev_kvm(self):
+        dev_kvm = None
+        if self.cmd_results[4][0] and not self.cmd_results[4][1]:
+            dev_kvm = string.strip(self.cmd_results[4][0])
+        if dev_kvm == "true":
+            self.data["virt.virt"] = "host"
+            self.data["virt.type"] = "kvm"
+
+    # look at the results of dmidecode for hints about what type of
+    # virt we have. could probably also track vmware esx version with
+    # bios version
+    def _check_dmidecode(self):
+        manuf = None
+        if self.cmd_results[1][0] and not self.cmd_results[1][1]:
+            manuf = string.strip(self.cmd_results[1][0])
+        if manuf:
+            if manuf.find("VMware") > -1:
+                self.data["virt.type"] = "vmware"
+                self.data["virt.virt"] = "guest"
+
+            if manuf.find("innotek GmbH") > -1:
+                self.data["virt.type"] = "virtualbox"
+                self.data["virt.virt"] = "guest"
+
+            if manuf.find("Microsoft") > -1:
+                self.data["virt.type"] = "virtualpc"
+                self.data["virt.virt"] = "guest"
+
+
+    def _check_for_xen(self):
+        # look for /proc/xen/privcmd
+        # Note: xen show "qemu" as cputype as well, so we do this
+        # after looking at cpuinfo
+
+        if self.cmd_results[2][0] and not self.cmd_results[2][1]:
+            if string.strip(self.cmd_results[2][0]) == "true":
+                self.data["virt.virt"] = "host"
+                self.data["virt.type"] = "xen"
+        if self.cmd_results[3][0] and not self.cmd_results[3][1]:
+            if string.strip(self.cmd_results[3][0]) == "true":
+                self.data["virt.virt"] = "guest"
+                self.data["virt.type"] = "xen"
+
 
 
 # the list of commands to run on each host
