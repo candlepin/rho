@@ -1,0 +1,48 @@
+
+
+* Telling if a guest is virt:
+
+/proc/cpuinfo shows cpu type for qeum/kvm quests
+dmidecode -s bios-vendor (etc) shows type for kvm/virtualbox
+facter has some virt detect stuff (not great though)
+
+/proc/cpuinfo has "hypervisor" flag set in cpu flags
+(http://projects.reductivelabs.com/issues/2067)
+
+lspci  (virtbox and kvm show up specific virt hardware devices)
+
+http://article.gmane.org/gmane.comp.emulators.kvm.devel/20539
+
+lscpu? doesn't seem to be in rhel/fedora
+
+http://dag.wieers.com/blog/detecting-vmware-esx-version-from-the-guest-os
+
+http://virtwo.blogspot.com/2008/10/identifying-esx-version-in-vm-peeking.html
+
+http://www.dmo.ca/blog/detecting-virtualization-on-linux/
+	- /proc/scsi/*
+	- /proc/ide/*   (look for QEMU disk types)
+
+
+from rhn-client-tools:
+          # check to see if this a PV Guest
+            if os.access("/dev/xvc0", os.R_OK):
+                is_pv_guest = 1
+http://rwmj.wordpress.com/2009/10/23/tip-get-windows-version-service-pack-number/
+
+
+
+* Host detecting guests/domains
+	virsh list
+	virt-uname (etc)
+	guestfish
+
+	virt-cat domain /etc/sysconfig/network
+	            (etc)
+
+	/sbin/ip on host
+		(look for bridges and virt bridges, and vnets)
+		(look in `ip neigh` for arp stuff?)
+		(can we find ip's of bridge/natted hosts?)
+
+
