@@ -302,8 +302,8 @@ class VirtRhoCmd(CpuRhoCmd):
         CpuRhoCmd.__init__(self)
         cmd_template = "if [ -e %s ] ; then echo \"true\"; else echo \"false\"; fi"
         self.cmd_strings.extend(["dmidecode -s system-manufacturer",
-                                 cmd_template % "/proc/xen/privcmd", 
-                                 cmd_template % "/proc/xen/capabilities",
+                                 "ps aux | grep xend | grep -v grep", 
+                                 cmd_template % "/proc/xen/privcmd",
                                  cmd_template % "/dev/kvm"])
 
     def parse_data(self):
@@ -321,6 +321,8 @@ class VirtRhoCmd(CpuRhoCmd):
         # look for xen files (proc/xen/privcmd, /proc/xen/capabilities)
         #
         self._check_for_xen()
+        # see if we are running xend...
+        self._check_for_xend()
 
     # We are going to try a variety of hacks and kluges to see if we are virt,
     # and if so, what kind. Mainly looking for xen/kvm here, but if anything else
@@ -353,7 +355,8 @@ class VirtRhoCmd(CpuRhoCmd):
 
     # look at the results of dmidecode for hints about what type of
     # virt we have. could probably also track vmware esx version with
-    # bios version
+    # bios version. None of this works as non root, so it's going to
+    # fail most of the time. 
     def _check_dmidecode(self):
         manuf = None
         if self.cmd_results[1][0] and not self.cmd_results[1][1]:
@@ -372,15 +375,21 @@ class VirtRhoCmd(CpuRhoCmd):
                 self.data["virt.virt"] = "guest"
 
 
+    def _check_for_xend(self):
+        # It would be way cooler if we could poke the cpuid and see if
+        # is a xen guest, but that requires a util to do it, and root
+        # access. 
+        if self.cmd_results[2][0] and not self.cmd_results[2][1]:
+            # is xend running? must be a xen host
+            # ugly...
+            self.data["virt.virt"] = "host"
+            self.data["virt.type"] = "xen"
+
     def _check_for_xen(self):
         # look for /proc/xen/privcmd
         # Note: xen show "qemu" as cputype as well, so we do this
         # after looking at cpuinfo
 
-        if self.cmd_results[2][0] and not self.cmd_results[2][1]:
-            if string.strip(self.cmd_results[2][0]) == "true":
-                self.data["virt.virt"] = "host"
-                self.data["virt.type"] = "xen"
         if self.cmd_results[3][0] and not self.cmd_results[3][1]:
             if string.strip(self.cmd_results[3][0]) == "true":
                 self.data["virt.virt"] = "guest"
