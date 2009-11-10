@@ -307,8 +307,8 @@ class VirtRhoCmd(CpuRhoCmd):
                                  cmd_template % "/dev/kvm"])
 
     def parse_data(self):
-        self.data["virt.virt"] = "baremetal"
-        self.data["virt.type"] = "baremetal"
+        self.data["virt.virt"] = ""
+        self.data["virt.type"] = ""
 
         # check /proc/cpuinfo to see if we are Qemu/kvm
         self._check_cpuinfo_for_qemu()
