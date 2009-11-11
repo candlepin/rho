@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: rho
-Version: 0.0.15
+Version: 0.0.16
 Release:        1%{?dist}
 Summary: An SSH system profiler
 
@@ -54,6 +54,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Nov 11 2009 Adrian Likins <alikins@redhat.com> 0.0.16-1
+- Add a RhoCmd class for detecting if we are a virt guest or host
+  (alikins@redhat.com)
+
 * Wed Nov 04 2009 Adrian Likins <alikins@redhat.com> 0.0.15-1
 - add bits generated to .gitignore (shut up git) (alikins@redhat.com)
 - Don't use weird style of classes on 2.4, use Class(object)
