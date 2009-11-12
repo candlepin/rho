@@ -22,6 +22,8 @@ from Crypto.Cipher import  AES
 
 from rho.PBKDF2 import PBKDF2
 
+from config import CONFIG_VERSION
+
 class BadKeyException(Exception):
     pass
 
@@ -68,9 +70,7 @@ class AESEncrypter(object):
         :Parameters:
            - `data`: pad and data to encrypt.
         """
-        multiply_by = abs((len(data) % AES.block_size) - AES.block_size)
-        if multiply_by != 16:
-            data += self.__pad_char * multiply_by
+        data = self.pad(data, self.__cipher_obj.block_size)
         return self.__cipher_obj.encrypt(data)
 
     def decrypt(self, ciphertext):
@@ -81,8 +81,28 @@ class AESEncrypter(object):
            - `data`: the data to decrypt and removing padding on.
         """
         data = self.__cipher_obj.decrypt(ciphertext)
-        data = string.rstrip(data, self.__pad_char)
+        if len(data):
+            data = self.unpad(data, self.__cipher_obj.block_size)
         return data
+
+    # see http://tools.ietf.org/html/rfc3852#section-6.3
+    def pad(self, data, length):
+        assert length < 256
+        assert length > 0
+        padlen = length - len(data) % length
+        assert padlen <= length
+        assert padlen > 0
+        return data + padlen * chr(padlen)
+
+    def unpad(self, data, length):
+        assert length < 256
+        assert length > 0
+        padlen = ord(data[-1])
+        assert padlen <= length
+        assert padlen > 0
+        assert data[-padlen:] == padlen * chr(padlen)
+        return data[:-padlen]
+
 
     # read-only properties
     pad_char = property(lambda self: self.__pad_char)
@@ -122,9 +142,11 @@ def write_file(filename, plaintext, key):
     f = open(filename, 'w')
     salt = os.urandom(8)
     iv = os.urandom(16)
+    # a hex version string
+    f.write("%2X" % CONFIG_VERSION)
     f.write(salt)
     f.write(iv)
-    log.debug("salt: %s iv: %s" % (salt, iv))
+    log.debug("version: %s salt: %s iv: %s" % (CONFIG_VERSION, salt, iv))
     f.write(encrypt(plaintext, key, salt, iv))
     f.close()
 
@@ -146,12 +168,16 @@ def read_file(filename, password):
         raise NoSuchFileException()
 
     f = open(filename, 'r')
-    contents = f.read()
-    salt = contents[0:8]
-    iv = contents[8:24]
-    log.debug("Read salt: %s  iv: %s" % (salt, iv))
+    # 2 byte version in hex
+    ver = f.read(2)
+    # 8 byte salt
+    salt = f.read(8)
+    # 16 byte initialization vector
+    iv = f.read(16)
+    log.debug("Read version: %s salt: %s  iv: %s" % (ver, salt, iv))
 
-    return_me = decrypt(contents[24:], password, salt, iv)
+    cont = f.read()
+    return_me = decrypt(cont, password, salt, iv)
     f.close()
     return return_me
 

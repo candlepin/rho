@@ -29,7 +29,7 @@ SSH_TYPE = "ssh"
 SSH_KEY_TYPE = "ssh_key"
 
 # Current config version, bump this if we ever change the format:
-CONFIG_VERSION = 1
+CONFIG_VERSION = 2
 
 
 class BadJsonException(Exception):

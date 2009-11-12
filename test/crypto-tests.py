@@ -37,6 +37,30 @@ class CryptoTests(unittest.TestCase):
         decrypted = rho.crypto.decrypt(ciphertext, key, self.salt, self.iv)
         self.assertEquals(plaintext, decrypted)
 
+    def test_encryption_no_data(self):
+        plaintext = ""
+        key = "math is hard"
+        ciphertext = rho.crypto.encrypt(plaintext, key, self.salt, self.iv)
+        decrypted = rho.crypto.decrypt(ciphertext, key, self.salt, self.iv)
+        self.assertEquals(plaintext, decrypted)
+        
+    # just trying to hit what might be corner cases for crypto bits with
+    # padding/unpadding, etc
+    def test_encryption_16_bytes(self):
+        plaintext = "a" * 16
+        key = "math is hard"
+        ciphertext = rho.crypto.encrypt(plaintext, key, self.salt, self.iv)
+        decrypted = rho.crypto.decrypt(ciphertext, key, self.salt, self.iv)
+        self.assertEquals(plaintext, decrypted)
+
+    def test_encryption_8_bytes(self):
+        plaintext = "a" * 8
+        key = "math is hard"
+        ciphertext = rho.crypto.encrypt(plaintext, key, self.salt, self.iv)
+        decrypted = rho.crypto.decrypt(ciphertext, key, self.salt, self.iv)
+        self.assertEquals(plaintext, decrypted)
+
+
     def test_encryption_big_key(self):
         plaintext = "hey look at my text $"
         key = """asldhaslkjdhaslkdhliufdygd87gy35kjhnflksjdhfsodjkfhlskhf
@@ -52,7 +76,13 @@ class CryptoTests(unittest.TestCase):
         plaintext = "hey look at my text $"
         key = "sekurity is alsome"
         ciphertext = rho.crypto.encrypt(plaintext, key, self.salt, self.iv)
-        result = rho.crypto.decrypt(ciphertext, 'badkey', self.salt, self.iv)
+        result = None
+        try:
+            result = rho.crypto.decrypt(ciphertext, 'badkey', self.salt, self.iv)
+        except:
+            # now the unpadding method throws a assertion if the ciphertext doesn't
+            # decrypt correctly
+            pass
         # TODO: Guess we can't really verify if decryption failed:
         #self.assertRaises(rho.crypto.BadKeyException,
         #        rho.crypto.decrypt, ciphertext, 'badkey')
