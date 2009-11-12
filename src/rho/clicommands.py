@@ -179,7 +179,7 @@ class CliCommand(object):
         self._add_common_options()
         self.name = name
         self.passphrase = None
-        self.salt = None
+
 
     def _add_common_options(self):
         """ Add options that apply to all sub-commands. """
@@ -237,7 +237,7 @@ class CliCommand(object):
         actual salted AES key.
         """
         if os.path.exists(filename):
-            (self.salt, confstr) = crypto.read_file(filename, password)
+            confstr = crypto.read_file(filename, password)
             try:
                 return config.ConfigBuilder().build_config(confstr)
             except config.BadJsonException:
@@ -245,8 +245,6 @@ class CliCommand(object):
 
         else:
             print _("Creating new config file: %s" % filename)
-            # Need to generate a new salt as well:
-            self.salt = os.urandom(8)
             return config.Config()
 
     def main(self):
@@ -512,7 +510,7 @@ class DumpConfigCommand(CliCommand):
         """
         Executes the command.
         """
-        (salt, content) = crypto.read_file(self.options.config, self.passphrase)
+        content = crypto.read_file(self.options.config, self.passphrase)
         print(json.dumps(json.loads(content), sort_keys = True, indent = 4))
 
         
@@ -532,8 +530,6 @@ class ImportConfigCommand(CliCommand):
                 metavar="FROMFILE",
                 help=_("import configuration from raw json file"))
 
-        # Generate a new salt as we're writing a new file here:
-        self.salt = os.urandom(8)
 
     def _validate_options(self):
         CliCommand._validate_options(self)
@@ -565,7 +561,7 @@ class ImportConfigCommand(CliCommand):
         imported_config = config.ConfigBuilder().build_config(json_buf)
         c = config.ConfigBuilder().dump_config(imported_config)
 
-        crypto.write_file(self.options.config, c, self.passphrase, self.salt)
+        crypto.write_file(self.options.config, c, self.passphrase)
         
 
 class ProfileShowCommand(CliCommand):
@@ -685,7 +681,7 @@ class ProfileEditCommand(CliCommand):
                     sys.exit(1)
 
         c = config.ConfigBuilder().dump_config(self.config)
-        crypto.write_file(self.options.config, c, self.passphrase, self.salt)
+        crypto.write_file(self.options.config, c, self.passphrase)
         print(_("Profile %s edited" % self.options.name))
 
 class ProfileClearCommand(CliCommand):
@@ -719,8 +715,7 @@ class ProfileClearCommand(CliCommand):
             if self.config.has_profile(self.options.name):
                 self.config.remove_profile(self.options.name)
                 c = config.ConfigBuilder().dump_config(self.config)
-                crypto.write_file(self.options.config, c, self.passphrase, 
-                        self.salt)
+                crypto.write_file(self.options.config, c, self.passphrase)
                 print(_("Profile %s removed" % self.options.name))
             else:
                 print(_("ERROR: No such profile: %s") % self.options.name)
@@ -728,7 +723,7 @@ class ProfileClearCommand(CliCommand):
         elif self.options.all:
             self.config.clear_profiles()
             c = config.ConfigBuilder().dump_config(self.config)
-            crypto.write_file(self.options.config, c, self.passphrase, self.salt)
+            crypto.write_file(self.options.config, c, self.passphrase)
             print(_("All network profiles removed"))
 
 class ProfileAddCommand(CliCommand):
@@ -788,7 +783,7 @@ class ProfileAddCommand(CliCommand):
                          auth_names=auth_names, ports=ports)
         self.config.add_profile(g)
         c = config.ConfigBuilder().dump_config(self.config)
-        crypto.write_file(self.options.config, c, self.passphrase, self.salt)
+        crypto.write_file(self.options.config, c, self.passphrase)
 
 
 class AuthEditCommand(CliCommand):
@@ -851,7 +846,7 @@ class AuthEditCommand(CliCommand):
                 a.key = sshkey
 
         c = config.ConfigBuilder().dump_config(self.config)
-        crypto.write_file(self.options.config, c, self.passphrase, self.salt)
+        crypto.write_file(self.options.config, c, self.passphrase)
         print(_("Auth %s updated" % self.options.name))
 
 
@@ -887,7 +882,7 @@ class AuthClearCommand(CliCommand):
             self.config.clear_auths()
 
         c = config.ConfigBuilder().dump_config(self.config)
-        crypto.write_file(self.options.config, c, self.passphrase, self.salt)
+        crypto.write_file(self.options.config, c, self.passphrase)
 
 class AuthShowCommand(CliCommand):
     def __init__(self):
@@ -994,7 +989,7 @@ class AuthAddCommand(CliCommand):
     def _save_cred(self, cred):
         self.config.add_auth(cred)
         c = config.ConfigBuilder().dump_config(self.config)
-        crypto.write_file(self.options.config, c, self.passphrase, self.salt)
+        crypto.write_file(self.options.config, c, self.passphrase)
 
     def _validate_key_and_passphrase(self):
         self.auth_passphrase = ""

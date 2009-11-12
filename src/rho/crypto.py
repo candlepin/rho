@@ -11,8 +11,9 @@
 
 """ Configuration Encryption Module """
 
-import string
+import os
 import os.path
+import string
 
 from rho.log import log
 
@@ -112,13 +113,14 @@ def decrypt(ciphertext, key, salt):
     #    raise BadKeyException
 
 
-def write_file(filename, plaintext, key, salt):
+def write_file(filename, plaintext, key):
     """ 
     Encrypt plaintext with the given key and write to file. 
     
     Existing file will be overwritten so be careful. 
     """
     f = open(filename, 'w')
+    salt = os.urandom(8)
     f.write(salt)
     f.write(encrypt(plaintext, key, salt))
     f.close()
@@ -147,5 +149,5 @@ def read_file(filename, password):
 
     return_me = decrypt(contents[8:], password, salt)
     f.close()
-    return (salt, return_me)
+    return return_me
 

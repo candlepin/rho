@@ -60,9 +60,6 @@ class CryptoTests(unittest.TestCase):
 
 class FileCryptoTests(unittest.TestCase):
 
-    def setUp(self):
-        self.salt = os.urandom(8)
-
     # NOTE: Not a true unit test, does write a temp file, comment out?
     def test_encrypt_file(self):
         """ Test file encryption/decryption. """
@@ -70,9 +67,8 @@ class FileCryptoTests(unittest.TestCase):
         key = "sekurity!"
         temp_file = '/tmp/rho-crypto-test.txt'
         try:
-            rho.crypto.write_file(temp_file, plaintext, key, self.salt)
-            (salt, result) = rho.crypto.read_file(temp_file, key)
-            self.assertEquals(self.salt, salt)
+            rho.crypto.write_file(temp_file, plaintext, key)
+            result = rho.crypto.read_file(temp_file, key)
             self.assertEquals(plaintext, result)
         finally:
             try:
@@ -88,9 +84,8 @@ class FileCryptoTests(unittest.TestCase):
         key = "sekurity!"
         temp_file = '/tmp/rho-crypto-test.txt'
         try:
-            rho.crypto.write_file(temp_file, text, key, self.salt)
-            (salt_result, result) = rho.crypto.read_file(temp_file, key)
-            self.assertEquals(self.salt, salt_result)
+            rho.crypto.write_file(temp_file, text, key)
+            result = rho.crypto.read_file(temp_file, key)
             self.assertEquals(text, result)
         finally:
             try:
@@ -100,7 +95,7 @@ class FileCryptoTests(unittest.TestCase):
 
     def test_bad_file_location(self):
         self.assertRaises(IOError, rho.crypto.write_file,
-                "/nosuchdir/nosuchfile.txt", 'blah', 'blah', self.salt)
+                "/nosuchdir/nosuchfile.txt", 'blah', 'blah')
         self.assertRaises(rho.crypto.NoSuchFileException, 
                 rho.crypto.read_file,
                 "/nosuchfile.txt", 'blah')
