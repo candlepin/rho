@@ -21,19 +21,20 @@ class CryptoTests(unittest.TestCase):
 
     def setUp(self):
         self.salt = os.urandom(8)
+        self.iv = os.urandom(16)
 
     def test_encryption1(self):
         plaintext = "hey look at my text $"
         key = "sekurity is alsome"
-        ciphertext = rho.crypto.encrypt(plaintext, key, self.salt)
-        decrypted = rho.crypto.decrypt(ciphertext, key, self.salt)
+        ciphertext = rho.crypto.encrypt(plaintext, key, self.salt, self.iv)
+        decrypted = rho.crypto.decrypt(ciphertext, key, self.salt, self.iv)
         self.assertEquals(plaintext, decrypted)
 
     def test_encryption2(self):
         plaintext = "hey look at my text $"
         key = "sekurity is alsome"
-        ciphertext = rho.crypto.encrypt(plaintext, key, self.salt)
-        decrypted = rho.crypto.decrypt(ciphertext, key, self.salt)
+        ciphertext = rho.crypto.encrypt(plaintext, key, self.salt, self.iv)
+        decrypted = rho.crypto.decrypt(ciphertext, key, self.salt, self.iv)
         self.assertEquals(plaintext, decrypted)
 
     def test_encryption_big_key(self):
@@ -43,15 +44,15 @@ class CryptoTests(unittest.TestCase):
                 klajsdhakjsdhlakjsdhalksjdhalkjsdhlkasjhdlkajshdlkajsdhla
                 alskdhalksjdlakdhlakjsdhlakjsdhlkajshdlkjasdhlkjafhiouryg
                 """
-        ciphertext = rho.crypto.encrypt(plaintext, key, self.salt)
-        decrypted = rho.crypto.decrypt(ciphertext, key, self.salt)
+        ciphertext = rho.crypto.encrypt(plaintext, key, self.salt, self.iv)
+        decrypted = rho.crypto.decrypt(ciphertext, key, self.salt, self.iv)
         self.assertEquals(plaintext, decrypted)
 
     def test_decryption_bad_key(self):
         plaintext = "hey look at my text $"
         key = "sekurity is alsome"
-        ciphertext = rho.crypto.encrypt(plaintext, key, self.salt)
-        result = rho.crypto.decrypt(ciphertext, 'badkey', self.salt)
+        ciphertext = rho.crypto.encrypt(plaintext, key, self.salt, self.iv)
+        result = rho.crypto.decrypt(ciphertext, 'badkey', self.salt, self.iv)
         # TODO: Guess we can't really verify if decryption failed:
         #self.assertRaises(rho.crypto.BadKeyException,
         #        rho.crypto.decrypt, ciphertext, 'badkey')

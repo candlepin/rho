@@ -37,7 +37,7 @@ class AESEncrypter(object):
     Based on contribution from Steve Milner.
     """
 
-    def __init__(self, password, salt, key_length=16):
+    def __init__(self, password, salt, iv, key_length=16 ):
         """
         Creates a new instance of AESEncrypter.
 
@@ -53,7 +53,7 @@ class AESEncrypter(object):
                     self.__key_length)
 
         self.__pad_char = " "
-        self.__cipher_obj = AES.new(self.__key)
+        self.__cipher_obj = AES.new(self.__key,AES.MODE_CFB, iv)
 
     def __create_key(self, salt, password):
         """
@@ -90,20 +90,20 @@ class AESEncrypter(object):
     key_length = property(lambda self: self.__key_length)
 
 
-def encrypt(plaintext, key, salt):
+def encrypt(plaintext, key, salt, iv):
     """
     Encrypt the plaintext using the given key. 
     """
-    encrypter = AESEncrypter(key, salt)
+    encrypter = AESEncrypter(key, salt, iv)
 
     return encrypter.encrypt(plaintext)
 
 
-def decrypt(ciphertext, key, salt):
+def decrypt(ciphertext, key, salt, iv):
     """
     Decrypt the ciphertext with the given key. 
     """
-    encrypter = AESEncrypter(key, salt)
+    encrypter = AESEncrypter(key, salt, iv)
     decrypted_plaintext = encrypter.decrypt(ciphertext)
     return decrypted_plaintext
 
@@ -121,8 +121,11 @@ def write_file(filename, plaintext, key):
     """
     f = open(filename, 'w')
     salt = os.urandom(8)
+    iv = os.urandom(16)
     f.write(salt)
-    f.write(encrypt(plaintext, key, salt))
+    f.write(iv)
+    log.debug("salt: %s iv: %s" % (salt, iv))
+    f.write(encrypt(plaintext, key, salt, iv))
     f.close()
 
 
@@ -145,9 +148,10 @@ def read_file(filename, password):
     f = open(filename, 'r')
     contents = f.read()
     salt = contents[0:8]
-    log.debug("Read salt: %s" % salt)
+    iv = contents[8:24]
+    log.debug("Read salt: %s  iv: %s" % (salt, iv))
 
-    return_me = decrypt(contents[8:], password, salt)
+    return_me = decrypt(contents[24:], password, salt, iv)
     f.close()
     return return_me
 
