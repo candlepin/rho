@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: rho
-Version: 0.0.18
+Version: 0.0.19
 Release: 1%{?dist}
 Summary: An SSH system profiler
 
@@ -45,7 +45,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/rho.1.gz
 
 %changelog
-* Fri Nov 13 2009 Adrian Likins <alikins@redhat.com> 0.0.18-1
+* Fri Nov 13 2009 Adrian Likins <alikins@redhat.com> 0.0.19-1
 - Merge Fedora Package review spec changes from Mark McLoughlin
   <markmc@redhat.com> (markmc@redhat.com)
 - Add the config file version to the begining of the encrypted config file as
