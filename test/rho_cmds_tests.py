@@ -16,7 +16,7 @@ class _TestRhoCmd(unittest.TestCase):
     def _run_cmds(self):
         output = []
         for cmd in self.rho_cmd.cmd_strings:
-            p = subprocess.Popen(cmd.split(' '), stderr=subprocess.PIPE, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+            p = subprocess.Popen((cmd), shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
             out, err = p.communicate()
             output.append((out, err))
         return output
@@ -51,7 +51,13 @@ class TestScriptRhoCmd(_TestRhoCmd):
         self.rho_cmd = self.cmd_class(command="ls -rho /tmp")
         self.out = self._run_cmds()
 
-    
+class TestVirtRhoCmd(_TestRhoCmd):
+    # this is all dependent on system level stuff, so hard to 
+    # test output, but this at least smoke tests it
+    cmd_class = rho_cmds.VirtRhoCmd
+    def test_virt_smoke(self):
+        self.rho_cmd.populate_data(self.out)
+
 class TestCpuCmd(_TestRhoCmd):
     cmd_class = rho_cmds.CpuRhoCmd
 
