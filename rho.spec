@@ -2,20 +2,20 @@
 
 Name: rho
 Version: 0.0.16
-Release:        1%{?dist}
+Release: 2%{?dist}
 Summary: An SSH system profiler
 
 Group: Applications/Internet
 License: GPLv2
 URL: http://github.com/jmrodri/rho
 Source0: http://alikins.fedorapeople.org/files/rho/rho-%{version}.tar.gz
-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildArch: noarch
 BuildRequires: python-devel
 BuildRequires: python-setuptools
 Requires: python-paramiko
-Requires: python-netaddr 
+Requires: python-netaddr
 Requires: python-simplejson
 Requires: python-crypto
 
@@ -24,36 +24,33 @@ Rho is a tool for scanning your network, logging into systems via SSH, and
 retrieving information about them.
 
 %prep
-%setup -q 
-
+%setup -q
 
 %build
 %{__python} setup.py build
 
-
 %install
 rm -rf $RPM_BUILD_ROOT
-%{__python} setup.py install -O1 --skip-build --root $RPM_BUILD_ROOT
-cd doc/
-install -D -p -m 644 rho.1 $RPM_BUILD_ROOT%{_mandir}/man1/rho.1
-rm -f $RPM_BUILD_ROOT%{python_sitelib}/*egg-info/requires.txt
-
+%{__python} setup.py install --skip-build --root $RPM_BUILD_ROOT
+install -D -p -m 644 doc/rho.1 $RPM_BUILD_ROOT%{_mandir}/man1/rho.1
 
 %clean
 rm -rf $RPM_BUILD_ROOT
-
 
 %files
 %defattr(-,root,root,-)
 %doc README AUTHORS COPYING
 %{_bindir}/rho
-%dir %{python_sitelib}/rho
-%{python_sitelib}/rho/*
-%{python_sitelib}/rho-*.egg-info
+%{python_sitelib}/*
 %{_mandir}/man1/rho.1.gz
 
-
 %changelog
+* Fri Nov 13 2009 Mark McLoughlin <markmc@redhat.com> - 0.0.16-2
+- Include egg info
+- Drop the -O1 arg from 'setup.py install'
+- Don't chdir for manpage install
+- Kill some whitespace
+
 * Wed Nov 11 2009 Adrian Likins <alikins@redhat.com> 0.0.16-1
 - Add a RhoCmd class for detecting if we are a virt guest or host
   (alikins@redhat.com)
