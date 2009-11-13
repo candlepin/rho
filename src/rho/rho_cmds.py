@@ -337,10 +337,10 @@ class VirtRhoCmd(CpuRhoCmd):
         data = self.parse_data_cpu(self.cmd_results)
         # model_name can be an empty string...
         if data["cpu.model_name"] and data["cpu.model_name"][:4] == "QEMU":
-            self.data["virt.virt"] = "guest"
             #hmm, it could be regular old qemu here, but
             # this is probably close enough for reporting
             self.data["virt.type"] = "kvm"
+            self.data["virt.virt"] = "virt-guest"
             return True
         return False
 
@@ -350,9 +350,8 @@ class VirtRhoCmd(CpuRhoCmd):
         if self.cmd_results[4][0] and not self.cmd_results[4][1]:
             dev_kvm = string.strip(self.cmd_results[4][0])
         if dev_kvm == "true":
-            self.data["virt.virt"] = "host"
             self.data["virt.type"] = "kvm"
-
+            self.data["virt.virt"] = "virt-host"
     # look at the results of dmidecode for hints about what type of
     # virt we have. could probably also track vmware esx version with
     # bios version. None of this works as non root, so it's going to
@@ -364,15 +363,15 @@ class VirtRhoCmd(CpuRhoCmd):
         if manuf:
             if manuf.find("VMware") > -1:
                 self.data["virt.type"] = "vmware"
-                self.data["virt.virt"] = "guest"
+                self.data["virt.virt"] = "virt-guest"
 
             if manuf.find("innotek GmbH") > -1:
                 self.data["virt.type"] = "virtualbox"
-                self.data["virt.virt"] = "guest"
+                self.data["virt.virt"] = "virt-guest"
 
             if manuf.find("Microsoft") > -1:
                 self.data["virt.type"] = "virtualpc"
-                self.data["virt.virt"] = "guest"
+                self.data["virt.virt"] = "virt-guest"
 
 
     def _check_for_xend(self):
@@ -382,8 +381,8 @@ class VirtRhoCmd(CpuRhoCmd):
         if self.cmd_results[2][0] and not self.cmd_results[2][1]:
             # is xend running? must be a xen host
             # ugly...
-            self.data["virt.virt"] = "host"
             self.data["virt.type"] = "xen"
+            self.data["virt.virt"] = "virt-host"
 
     def _check_for_xen(self):
         # look for /proc/xen/privcmd
@@ -392,9 +391,8 @@ class VirtRhoCmd(CpuRhoCmd):
 
         if self.cmd_results[3][0] and not self.cmd_results[3][1]:
             if string.strip(self.cmd_results[3][0]) == "true":
-                self.data["virt.virt"] = "guest"
                 self.data["virt.type"] = "xen"
-
+                self.data["virt.virt"] = "virt-guest"
 
 
 # the list of commands to run on each host
