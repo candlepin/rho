@@ -2,12 +2,12 @@
    rho - FLOSS tool for discovering RHEL, Linux, and Unix Servers  
 ~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~
 
-This is README is for rho version 0.1, released October 28, 2009. rho is a tool 
+This is README is for rho version 0.2, released November 20, 2009. rho is a tool 
 for scanning a network, logging into systems using SSH, and retrieving 
 information about available Unix and Linux servers. 
 
 This README contains information about installing rho, basic usage, known 
-issues and best practices. For more details information about the available 
+issues, and best practices. For more details information about the available 
 command and command options with rho, see the manpage.
 
 
@@ -30,7 +30,7 @@ The rho tool itself is set up through two configuration items:
  * auth entries, which contain the username and password or SSH key to access 
    each server
 
- * Profiles, which contain IP address ranges, auth credentials to use, and the 
+ * profile entries, which contain IP address ranges, auth credentials to use, and the 
    SSH ports to try
 
 There can be multiple auth entries in each profile, and multiple profiles 
@@ -88,18 +88,25 @@ The output is simple CSV format. The exact data can be configured as part of
 the scan, but by default, it contains the following information in the output:
  
      ip,port,OS,kernel,processor,platform,release name,release version,release 
-     number,system ID,username,instnum,release,CPU count,etc-issue,auth type,auth 
-     username,auth name,error
+     number,system ID,username,instnum,release,CPU count,CPU vendor,CPU model,
+     BIOS vendor,virtual guest/host,virtual type,auth type,auth username,auth 
+     name,error
 
 For example:
 
      192.168.123.116,22,Linux,i686,i386,redhat-release,5Client,5.3.0.3,ID-1000015943,
      jsmith,da3122afdb7edd23,Red Hat Enterprise Linux Client release 5.3 
-     (Tikanga),2,Red Hat Enterprise Linux Client release 5.3 
-     (Tikanga),ssh,rho-user,server1auth,none
+     (Tikanga),2,GenuineIntel,Intel(R) Core(TM)2 Duo CPU,Award Software, Inc.,host,
+     xen,ssh,rho-user,server1auth,none
 
 The available output fields can be listed using 'rho scan --show-fields' and 
 can be set using 'rho scan --report-format <fields>'.
+
+As implied by the report output, rho differentiates between baremetal machines, 
+virtual hosts, and virtual guests, and identifies several major virtual types 
+(Xen, Qemu, KVM, and VMWare). It can be very important for inventorying machines 
+and maintaining software licenses to separate virtual hosts from guests; rho 
+returns that information with every scan, by default.
 
 
 *~*~*~*~*~*~*~*~*~*~*~*~*~
@@ -213,7 +220,7 @@ addresses or ranges, the auth identity to use, and the SSH ports to try.
 
 
 SCANNING
-The only argument required for a scan is a profile to use. In the that case, 
+The only argument required for a scan is a profile to use. In that case, 
 the output is printed to stdout. 
 
     rho scan --profile myprofile
@@ -244,20 +251,18 @@ the profile.
 OUTPUT
 The important part about a scan is, obviously, the results report. By default, 
 this contains a large amount of information about the operating system, 
-hardware, and platform. The 'rho scan --show-fields' command lists all of the available report 
-fields (which may change with every version).
+hardware, and platform. The 'rho scan --show-fields' command lists all of the 
+available report fields (which may change with every version).
 
      auth.name:name of authentication class
      auth.type:type of ssh authentication used
      auth.username:username ssh
-     cpu.bogomips:bogomips
      cpu.count:number of processors
      cpu.cpu_family:cpu family
-     cpu.model_name:name of cpu model
-     cpu.model_ver:cpu model version
+     cpu.model_name:cpu model name
      cpu.vendor_id:cpu vendor name
+     dmi.bios-vendor:bios vendor name
      error:any errors that are found
-     etc-issue.etc-issue:contents of /etc/issue
      etc-release.etc-release:contents of /etc/release (or equivalent)
      instnum.instnum:installation number
      ip:ip address
@@ -267,6 +272,8 @@ fields (which may change with every version).
      redhat-release.version:version of package that provides 'redhat-release'
      systemid.system_id:Red Hat Network system id
      systemid.username:Red Hat Network username
+     virt.virt:host, guest, or baremetal
+     virt.type:type of virtual system
      uname.all:uname -a (all)
      uname.hardware_platform:uname -i (hardware_platform)
      uname.hostname:uname -n (hostname)
@@ -349,6 +356,9 @@ necessary
 *~*~*~*~*~*~*~*
 VERSION HISTORY
 ~*~*~*~*~*~*~*~
+version 0.2
+ * Added ability to detect and correctly categorize virtual hosts and guests.
+
 version 0.1 (Initial release)
  * Runs scans for RHEL systems, upstream (Fedora) systems, downstream (CentOS) 
 systems, and other flavors of Linux and Unix.
@@ -371,4 +381,4 @@ Copyright 2009, Red Hat, Inc.
 
 rho is released under the GNU Public License version 2.
 
-(README v1.0, last updated October 28, 2009.)
+(README v1.0, last updated November 13, 2009.)

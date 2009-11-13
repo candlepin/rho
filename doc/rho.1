@@ -293,9 +293,12 @@ auth.name:name of authentication class
 auth.type:type of ssh authentication used
 auth.username:username ssh
 cpu.count:number of processors
+cpu.cpu_family:cpu family
+cpu.model_name:cpu model name
+cpu.vendor_id:cpu vendor name
+dmi.bios-vendor:bios vendor name
 error:any errors that are found
-etc-issue.etc-issue:contents of /etc/issue
-etc-release.etc-release:contents of /etc/release (or equilivent)
+etc-release.etc-release:contents of /etc/release (or equivalent)
 instnum.instnum:installation number
 ip:ip address
 port:ssh port
@@ -304,6 +307,8 @@ redhat-release.release:release of package that provides 'redhat-release'
 redhat-release.version:version of package that provides 'redhat-release'
 systemid.system_id:Red Hat Network system id
 systemid.username:Red Hat Network username
+virt.virt:host, guest, or baremetal
+virt.type:type of virtual system
 uname.all:uname -a (all)
 uname.hardware_platform:uname -i (hardware_platform)
 uname.hostname:uname -n (hostname)
@@ -400,12 +405,12 @@ The SSH credentials prompt for the authentication password whenever the scan is 
 .SH OUTPUT
 When the scan runs successfully, it outputs a CSV file that can be used to inventory the servers on the network. The output file has the following format:
 .nf
-ip,port,OS,kernel,processor,platform,release name,release version,release number,system ID,username,instnum,release,CPU count,etc-issue,auth type,auth username,auth name,error
+ip,port,OS,kernel,processor,platform,release name,release version,release number,system ID,username,instnum,release,CPU count,CPU vendor,CPU model,BIOS vendor,virtual guest/host,virtual type,auth type,auth username,auth name,error
 .fi
 .PP
 For example:
 .nf
-192.168.123.116,22,Linux,i686,i386,redhat-release,5Client,5.3.0.3,ID-1000015943,jsmith,da3122afdb7edd23,Red Hat Enterprise Linux Client release 5.3 (Tikanga),2,Red Hat Enterprise Linux Client release 5.3 (Tikanga),ssh,rho-user,server1auth,none
+192.168.123.116,22,Linux,i686,i386,redhat-release,5Client,5.3.0.3,ID-1000015943,jsmith,da3122afdb7edd23,Red Hat Enterprise Linux Client release 5.3 (Tikanga),2,GenuineIntel,Intel(R) Core(TM)2 Duo CPU,Award Software,host,xen,ssh,rho-user,server1auth,none
 .fi
 .PP
 ip
@@ -464,10 +469,21 @@ CPU count
 .IP
 The number of CPUs on the machine.
 .PP
-etc-issue
+CPU vendor
 .IP
-The release number of the operating system, as in the /etc/issue file.
-.I Mainly for operating systems other than Red Hat Linux.
+The name of the CPU manufacturer, from the /proc/cpuinfo file.
+.PP
+BIOS vendor
+.IP
+The name of the BIOS vendor, from running dmidecode -s bios-vendor.
+.PP
+virtual guest/host
+.IP
+The type of virtual machine. This can be baremetal (no virtual machines), host, or guest.
+.PP
+virtual type
+.IP
+The type of virtual service. This can be xen, qemu, kvm, or vmware.
 .PP
 auth type
 .IP
