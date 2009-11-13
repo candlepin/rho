@@ -1,8 +1,8 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: rho
-Version: 0.0.16
-Release: 2%{?dist}
+Version: 0.0.17
+Release: 1%{?dist}
 Summary: An SSH system profiler
 
 Group: Applications/Internet
@@ -45,6 +45,15 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/rho.1.gz
 
 %changelog
+* Fri Nov 13 2009 Adrian Likins <alikins@redhat.com> 0.0.17-1
+- Merge Fedora Package review spec changes from Mark McLoughlin
+  <markmc@redhat.com> (markmc@redhat.com)
+- Add the config file version to the begining of the encrypted config file as
+  well (alikins@redhat.com)
+- Change the AES ciper mode of CFB and store/retrive a 16bit initialization
+  vector for use with CFB. (alikins@redhat.com)
+- Use a different salt each time we say the file. (alikins@redhat.com)
+
 * Fri Nov 13 2009 Mark McLoughlin <markmc@redhat.com> - 0.0.16-2
 - Include egg info
 - Drop the -O1 arg from 'setup.py install'
