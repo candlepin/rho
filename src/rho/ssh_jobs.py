@@ -104,7 +104,6 @@ class Queue24(Queue.Queue):
 	self.unfinished_tasks +=1
 
 
-
 # if I were fancy, this might be a factory
 # Check to see if our queue has "join", aka, if we
 # are on python2.6 or newer
@@ -112,6 +111,8 @@ def OurQueue(*args, **kwargs):
     if getattr(Queue.Queue, 'join', None):
         return Queue.Queue(*args, **kwargs)
     return Queue24(*args, **kwargs)
+
+
 
 
 class SshJob(object):
@@ -177,11 +178,29 @@ class OutputThread(threading.Thread):
 
             self.out_queue.task_done()
 
+# thread/queue for progress stuff so it stays synced and in order...
+class ProgressThread(threading.Thread):
+    def __init__(self):
+        self.prog_queue = OurQueue()
+        self.quitting = False
+        threading.Thread.__init__(self, name="rho_output_thread")
+       
+    def quit(self):
+        self.quitting = True
+
+    def run(self):
+        print _("Scanning...")
+        while not self.quitting:
+            prog_buf = self.prog_queue.get()
+            print prog_buf
+
+            self.prog_queue.task_done()
 
 class SshThread(threading.Thread):
-    def __init__(self, thread_id, ssh_queue, output_queue):
+    def __init__(self, thread_id, ssh_queue, output_queue, prog_queue):
         self.ssh_queue = ssh_queue
         self.out_queue = output_queue
+        self.prog_queue = prog_queue
         self.id = thread_id
         self.quitting = False
         threading.Thread.__init__(self, name="rho_ssh_thread-%s" % thread_id)
@@ -190,9 +209,10 @@ class SshThread(threading.Thread):
     def quit(self):
         self.quitting = True
 
-    def callback(self, *args):
-        log.info(args)
-#        print args
+    def show_connect(self, ssh_job, port, auth):
+        buf = _("%s:%s with auth %s") % (ssh_job.ip, port, auth.name)
+        log.info(buf)
+        self.prog_queue.put(buf)
 
 
     def connect(self, ssh_job):
@@ -240,12 +260,11 @@ class SshThread(threading.Thread):
                 try:
                     log.info("trying: %s" % debug_str)
 
+                    self.show_connect(ssh_job, port, auth)
                     self.ssh.connect(ssh_job.ip, port=int(port), 
                                      username=auth.username,
                                      password=auth.password,
                                      pkey=pkey,
-                                     # FIXME: 
-                                     # we should probably set this somewhere
                                      allow_agent=ssh_job.allow_agent,
                                      look_for_keys=ssh_job.look_for_keys,
                                      timeout=ssh_job.timeout)
@@ -254,7 +273,6 @@ class SshThread(threading.Thread):
                     found_port = port
                     found_auth = True
                     log.info("success: %s" % debug_str)
-                    self.callback("connected to: %s:%s with auth: %s" % (ssh_job.ip, ssh_job.port, ssh_job.auth.name))
                     break
 
                 # Implies we've found an SSH server listening:
@@ -285,13 +303,12 @@ class SshThread(threading.Thread):
                     continue
 
 
-    def run_cmds(self, ssh_job, callback=None):
+    def run_cmds(self, ssh_job,):
         for rho_cmd in ssh_job.rho_cmds:
             output = []
             for cmd_string in rho_cmd.cmd_strings:
                 stdin, stdout, stderr = self.ssh.exec_command(cmd_string)
                 output.append((stdout.read(), stderr.read()))
-                self.callback("command: %s on %s" % (rho_cmd.name, ssh_job.ip))
             rho_cmd.populate_data(output)
 
     def get_transport(self, ssh_job):
@@ -349,16 +366,21 @@ class SshJobs(object):
         for thread_num in range(self.max_threads):
             ssh_thread = SshThread(thread_num, 
                                    self.ssh_queue,
-                                   self.output_thread.out_queue)
+                                   self.output_thread.out_queue,
+                                   self.prog_thread.prog_queue)
             ssh_thread.setDaemon(True)
             ssh_thread.start()
-        
 
     def start_output_queue(self):
         self.output_thread = OutputThread()
         self.output_thread.setDaemon(True)
         self.output_thread.start()
-        
+
+    def start_prog_queue(self):
+        self.prog_thread = ProgressThread()
+        self.prog_thread.setDaemon(True)
+        self.prog_thread.start()
+
 
     def run_jobs(self, ssh_jobs=None, callback=None):
         if ssh_jobs:
@@ -368,6 +390,7 @@ class SshJobs(object):
         if len(self.ssh_jobs) < self.max_threads:
             self.max_threads = len(self.ssh_jobs)
         
+        self.start_prog_queue()
         self.start_output_queue()
         self.start_ssh_queue()
 
@@ -379,5 +402,6 @@ class SshJobs(object):
                     self.ssh_jobs.remove(ssh_job)
 
         self.ssh_queue.join()
+        self.prog_thread.prog_queue.join()
         self.output_thread.out_queue.join()
 
