@@ -27,10 +27,11 @@ from config import CONFIG_VERSION
 class BadKeyException(Exception):
     pass
 
-
 class NoSuchFileException(Exception):
     pass
 
+class DecryptionException(Exception):
+    pass
 
 class AESEncrypter(object):
     """
@@ -177,7 +178,13 @@ def read_file(filename, password):
     log.debug("Read version: %s salt: %s  iv: %s" % (ver, salt, iv))
 
     cont = f.read()
-    return_me = decrypt(cont, password, salt, iv)
+    try:
+        return_me = decrypt(cont, password, salt, iv)
+    except Exception, e:
+        log.warn("Exception while decrypting the configuration file: %s" % e)
+#        raise
+        raise DecryptionException
+
     f.close()
     return return_me
 

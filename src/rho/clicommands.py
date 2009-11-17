@@ -237,7 +237,11 @@ class CliCommand(object):
         actual salted AES key.
         """
         if os.path.exists(filename):
-            confstr = crypto.read_file(filename, password)
+            try:
+                confstr = crypto.read_file(filename, password)
+            except crypto.DecryptionException:
+                print self.parser.error(_("Error decrypting configuration file"))
+
             try:
                 return config.ConfigBuilder().build_config(confstr)
             except config.BadJsonException:
@@ -510,7 +514,10 @@ class DumpConfigCommand(CliCommand):
         """
         Executes the command.
         """
-        content = crypto.read_file(self.options.config, self.passphrase)
+        try:
+            content = crypto.read_file(self.options.config, self.passphrase)
+        except crypto.DecryptionException:
+            print self.parser.error(_("Error decrypting configuration file"))
         print(json.dumps(json.loads(content), sort_keys = True, indent = 4))
 
         

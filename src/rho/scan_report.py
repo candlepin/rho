@@ -35,7 +35,7 @@ class ScanReport(object):
                   "systemid.system_id", "systemid.username", "instnum.instnum", 
                   "etc-release.etc-release", "cpu.count", 
                   "cpu.vendor_id", "cpu.model_name", "dmi.bios-vendor",
-                  #"etc-issue.etc-issue",
+#                  "etc-issue.etc-issue",
                   "virt.virt", "virt.type",
                   "auth.type", "auth.username", "auth.name", "error"]
     def __init__(self):
