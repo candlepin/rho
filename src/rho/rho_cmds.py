@@ -116,8 +116,8 @@ class EtcReleaseRhoCmd(RhoCmd):
     name = "etc-release"
     fields = {'etc-release.etc-release':_('contents of /etc/release (or equilivent)')}
     def __init__(self):
-        release_files = ["/etc/redhat-release", "/etc/release",
-                         "/etc/debian_release", "/etc/Suse-release",
+        release_files = ["/etc/redhat-release", "/etc/release", "/etc/lsb-release",
+                         "/etc/debian_release", "/etc/SuSE-release",
                          "/etc/mandriva-release", "/etc/enterprise-release",
                          "/etc/sun-release", "/etc/slackware-release",
                          "/etc/ovs-release", "/etc/arch-release"]
