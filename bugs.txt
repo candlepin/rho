@@ -281,3 +281,23 @@ etc-issue.etc-issue
 cpu.bogomips
 uname.hostname
 n shell-init error upon 'rho profile list': http://wwwapps.rdu.redhat.com/w3xpastebin/pastebin.php?show=15280
+n graceful error message upon .rho.conf decryption error
+[thesteve04@cinemashow rho]$ rho scan --profile=rhel
+Config Encryption Password:
+Traceback (most recent call last):
+  File "/usr/bin/rho", line 5, in <module>
+    pkg_resources.run_script('rho==0.1', 'rho')
+  File "/usr/lib/python2.6/site-packages/pkg_resources.py", line 448, in run_script
+    self.require(requires)[0].run_script(script_name, ns)
+  File "/usr/lib/python2.6/site-packages/pkg_resources.py", line 1173, in run_script
+    exec script_code in namespace, namespace
+  File "/usr/lib/python2.6/site-packages/rho-0.1-py2.6.egg/EGG-INFO/scripts/rho", line 20, in <module>
+    
+  File "build/bdist.linux-i686/egg/rho/cli.py", line 95, in main
+  File "build/bdist.linux-i686/egg/rho/clicommands.py", line 277, in main
+  File "build/bdist.linux-i686/egg/rho/clicommands.py", line 240, in _read_config
+  File "build/bdist.linux-i686/egg/rho/crypto.py", line 180, in read_file
+  File "build/bdist.linux-i686/egg/rho/crypto.py", line 127, in decrypt
+  File "build/bdist.linux-i686/egg/rho/crypto.py", line 85, in decrypt
+  File "build/bdist.linux-i686/egg/rho/crypto.py", line 101, in unpad
+AssertionError
