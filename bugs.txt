@@ -301,13 +301,13 @@ Traceback (most recent call last):
   File "build/bdist.linux-i686/egg/rho/crypto.py", line 85, in decrypt
   File "build/bdist.linux-i686/egg/rho/crypto.py", line 101, in unpad
 AssertionError
-n Rho does not detect Ubuntu-based linux:
+v Rho does not detect Ubuntu-based linux:
 [root@sat-blade-8 rho]# rho scan --profile=ubuntu
 Config Encryption Password:
 Scanning...
 192.168.122.57:22 with auth dog8
 192.168.122.57,22,Linux,2.6.31-14-generic,unknown,unknown,,,,,,,,1,GenuineIntel,QEMU Virtual CPU version 0.9.1,QEMU,virt-guest,kvm,ssh,root,dog8,
-n Rho does not detect SuSE-based linux:
+v Rho does not detect SuSE-based linux:
 [thesteve04@cinemashow rho]$ rho scan --profile=suse
 Config Encryption Password:
 Scanning...
