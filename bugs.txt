@@ -268,5 +268,5 @@ X * "connection failed using auth class: mypw Authentication failed." or "timed 
 
 NEW BUGS, NOV 17 TESTDAY:
 n Traceback when using two auths from 'rho scan': http://wwwapps.rdu.redhat.com/w3xpastebin/pastebin.php?show=15270
-n Scanning a range from 'rho scan' non-functional:
-http://wwwapps.rdu.redhat.com/w3xpastebin/pastebin.php?show=15271
+n Scanning a range from 'rho scan' non-functional: http://wwwapps.rdu.redhat.com/w3xpastebin/pastebin.php?show=15271
+n Deterministic paramiko tracebacks: http://wwwapps.rdu.redhat.com/w3xpastebin/pastebin.php?show=15272
