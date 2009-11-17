@@ -450,8 +450,9 @@ class ScanCommand(CliCommand):
             g = config.Profile(name="clioptions", ranges=self.options.ranges,
                          auth_names=self.options.auth, ports=ports)
 
+            self.config.add_profile(g)
             self.scanner.scan_profiles(["clioptions"])
-            
+
         if len(self.options.profiles) > 0:
 
             for profile in self.options.profiles:
@@ -463,7 +464,6 @@ class ScanCommand(CliCommand):
                             profile)
                     sys.exit(1)
 
-            # seems like a lot of code to cat two possibly None lists...
             missing = self.scanner.scan_profiles(self.options.profiles)
             if missing:
                 print _("The following profile names were not found:")
