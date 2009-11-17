@@ -281,7 +281,7 @@ etc-issue.etc-issue
 cpu.bogomips
 uname.hostname
 n shell-init error upon 'rho profile list': http://wwwapps.rdu.redhat.com/w3xpastebin/pastebin.php?show=15280
-n graceful error message upon .rho.conf decryption error
+v graceful error message upon .rho.conf decryption error
 [thesteve04@cinemashow rho]$ rho scan --profile=rhel
 Config Encryption Password:
 Traceback (most recent call last):
