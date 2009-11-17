@@ -270,3 +270,14 @@ NEW BUGS, NOV 17 TESTDAY:
 n Traceback when using two auths from 'rho scan': http://wwwapps.rdu.redhat.com/w3xpastebin/pastebin.php?show=15270
 n Scanning a range from 'rho scan' non-functional: http://wwwapps.rdu.redhat.com/w3xpastebin/pastebin.php?show=15271
 n Deterministic paramiko tracebacks: http://wwwapps.rdu.redhat.com/w3xpastebin/pastebin.php?show=15272
+n Certain fields marked as present by --show-fields absent in report: http://wwwapps.rdu.redhat.com/w3xpastebin/pastebin.php?show=15279:
+cpu.cpu_family
+dmi.bios-version
+uname.all
+cpu.model_ver
+dmi.system-manufacturer
+dmi.processor-family
+etc-issue.etc-issue
+cpu.bogomips
+uname.hostname
+n shell-init error upon 'rho profile list': http://wwwapps.rdu.redhat.com/w3xpastebin/pastebin.php?show=15280
