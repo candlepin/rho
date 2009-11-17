@@ -59,6 +59,7 @@ class ScanReport(object):
         else:
             self.ips[ssh_job.ip] = {'ip': ssh_job.ip,
                                     'port':ssh_job.port,
+                                    'error':'',
                                     'auth.type': ssh_job.auth.type,
                                     'auth.name': ssh_job.auth.name,
                                     'auth.username': ssh_job.auth.username,
@@ -76,12 +77,12 @@ class ScanReport(object):
         csv_format = self.csv_format
         if report_format:
             csv_format = report_format
-            
+
         dict_writer = csv.DictWriter(fileobj, csv_format,
                 extrasaction='ignore')
         ip_list = self.ips.keys()
         ip_list.sort()
         if fileobj is not sys.stdout:
-            dict_writer.writerow(self.gen_header(self.csv_format))
+            dict_writer.writerow(self.gen_header(csv_format))
         for ip in ip_list:
             dict_writer.writerow(self.ips[ip])
