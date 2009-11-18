@@ -18,12 +18,28 @@ import netaddr
 ip_regex = re.compile(r'\d+\.\d+\.\d+\.\d+')
 
 
-class _OldNetAddr(object):
-
+# aka, python-netaddr 0.5.2, aka, rhel5
+class _ReallyOldNetAddr(object):
     @staticmethod
     def get_address(ip):
         return [netaddr.IP(ip)]
 
+    @staticmethod
+    def get_range(start_ip, end_ip):
+        return list(netaddr.AddrRange(start_ip, end_ip))
+
+    @staticmethod
+    def get_network(range_str):
+        return list(netaddr.CIDR(strict_bitmask=False))
+
+    @staticmethod
+    def get_glob(range_str):
+        wildcard = netaddr.Wildcard(range_str)
+        return list(wildcard)
+
+
+# aka 0.6 of python netaddr (aka, f11)
+class _OldNetAddr(_ReallyOldNetAddr):
     @staticmethod
     def get_range(start_ip, end_ip):
         return list(netaddr.IPRange(start_ip, end_ip))
@@ -33,12 +49,8 @@ class _OldNetAddr(object):
         cidr = netaddr.IP(range_str)
         return list(cidr.iprange())
 
-    @staticmethod
-    def get_glob(range_str):
-        wildcard = netaddr.Wildcard(range_str)
-        return list(wildcard)
 
-
+# aka 0.7 of python-netaddr, aka, f12
 class _NewNetAddr(object):
 
     @staticmethod
@@ -63,7 +75,9 @@ class _NewNetAddr(object):
 
 class RhoIpRange(object):
     def __init__(self, ipranges):
-        if getattr(netaddr, "IP", None) != None:
+        if getattr(netaddr, "AddrRange", None) != None:
+            self.netaddr = _ReallyOldNetAddr
+        elif getattr(netaddr, "IP", None) != None:
             # 'old' netaddr
             self.netaddr = _OldNetAddr
         else:
