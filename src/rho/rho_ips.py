@@ -30,7 +30,7 @@ class _ReallyOldNetAddr(object):
 
     @staticmethod
     def get_network(range_str):
-        return list(netaddr.CIDR(strict_bitmask=False))
+        return list(netaddr.CIDR(range_str, strict_bitmask=False))
 
     @staticmethod
     def get_glob(range_str):
