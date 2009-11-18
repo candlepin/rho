@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: rho
-Version: 0.0.19
+Version: 0.0.20
 Release: 1%{?dist}
 Summary: An SSH system profiler
 
@@ -45,6 +45,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/rho.1.gz
 
 %changelog
+* Wed Nov 18 2009 Adrian Likins <alikins@redhat.com> 0.0.20-1
+- RHEL5 is using an even older version of python-netaddr that requires most API
+  transmogrifying. Namely, lack of netaddr.IP class. (alikins@redhat.com)
+
 * Fri Nov 13 2009 Adrian Likins <alikins@redhat.com> 0.0.19-1
 - Merge Fedora Package review spec changes from Mark McLoughlin
   <markmc@redhat.com> (markmc@redhat.com)
