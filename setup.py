@@ -23,12 +23,13 @@ import subprocess
 class BuildLangs(Command):
 
     description = "generate pot/po/mo translation files"
-    user_options = [("gen-messages", None, "generate message catalog from strings")]
+    user_options = [
+        ("gen-messages", None, "generate message catalog from strings")]
     boolean_options = ["gen-messages"]
-    
+
     def initialize_options(self):
         self.gen_messages = False
-	    
+
     def finalize_options(self):
         pass
 
@@ -36,18 +37,20 @@ class BuildLangs(Command):
         self._gen_pot_file()
 
     def _gen_pot_file(self):
-	py_dirs = ["src/rho/"]
-	py_files = ['bin/rho']
-	for py_dir in py_dirs:
+        py_dirs = ["src/rho/"]
+        py_files = ['bin/rho']
+        for py_dir in py_dirs:
             py_files = py_files + glob.glob("%s/*.py" % py_dir)
         print(py_files)
-	args = ["xgettext", "-L", "python", "-o", "locale/rho.pot", "-d", "rho"] + py_files
-	subprocess.Popen(args, stdout=subprocess.PIPE).communicate()
-	# we develop in en_US, so make the default pot a en_Us
+        args = ["xgettext", "-L", "python", "-o",
+                "locale/rho.pot", "-d", "rho"] + py_files
+        subprocess.Popen(args, stdout=subprocess.PIPE).communicate()
+        # we develop in en_US, so make the default pot a en_Us
 
     def _gen_po_file(self):
         # generate the en_US.po file, this is for dist maintainers only
-        args = ["msginit","--no-translator", "-i", "locale/rho.pot", "-o", "locale/en_US.po"]
+        args = ["msginit", "--no-translator", "-i",
+                "locale/rho.pot", "-o", "locale/en_US.po"]
         subprocess.Popen(args, stdout=subprocess.PIPE).communicate()
 
 
@@ -74,11 +77,10 @@ def gen_mo_files():
 def get_locale_paths():
     localepath = "share"
     mo_files = glob.glob("locale/*/LC_MESSAGES/*.mo")
-    data = []
     data_paths = []
     for mo_file in mo_files:
         data_dir = "%s/%s" % (localepath, os.path.split(mo_file)[0])
-        data_paths.append((data_dir,[mo_file]))
+        data_paths.append((data_dir, [mo_file]))
     return data_paths
 
 
@@ -98,17 +100,17 @@ setup(
     package_dir={
         'rho': 'src/rho',
     },
-    packages = find_packages('src'),
-    include_package_data = True,
+    packages=find_packages('src'),
+    include_package_data=True,
 
     # non-python scripts go here
-    scripts = [
+    scripts=[
         'bin/rho',
     ],
 
-    data_files = get_data_files(),  
+    data_files=get_data_files(),
 
-    classifiers = [
+    classifiers=[
         'License :: OSI Approved :: GNU General Public License (GPL)',
         'Development Status :: 2 - Pre-Alpha',
         'Environment :: Console',
@@ -120,9 +122,5 @@ setup(
         'Programming Language :: Python'
     ],
 
-    cmdclass = { 'build_langs': BuildLangs }
+    cmdclass={'build_langs': BuildLangs}
 )
-
-
-# XXX: this will also print on non-install targets
-print("rho target is complete")
