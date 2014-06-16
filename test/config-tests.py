@@ -110,8 +110,8 @@ class ConfigTests(unittest.TestCase):
         self.builder = ConfigBuilder()
 
     def test_profile_references_invalid_auths(self):
-        self.assertRaises(NoSuchAuthError, 
-                self.builder.build_config, BAD_CREDNAME_CONFIG)
+        self.assertRaises(NoSuchAuthError,
+                          self.builder.build_config, BAD_CREDNAME_CONFIG)
 
     def test_new_config(self):
         config = Config()
@@ -137,20 +137,20 @@ class ConfigTests(unittest.TestCase):
             USERNAME_KEY: "bob",
             PASSWORD_KEY: "password"})
         self.assertRaises(DuplicateNameError, config.add_auth,
-                creds1)
+                          creds1)
 
     def test_duplicate_profile_names(self):
         config = self.builder.build_config(SAMPLE_CONFIG1)
         g = Profile("accounting", ["192.168.1.1/24"], ["bobslogin"],
-                [22])
-            
+                    [22])
+
         self.assertRaises(DuplicateNameError, config.add_profile, g)
 
     def test_delete_auth_used_in_profile(self):
         config = self.builder.build_config(SAMPLE_CONFIG1)
         config.remove_auth("bobskey")
         config = self.builder.build_config(
-                self.builder.dump_config(config))
+            self.builder.dump_config(config))
         self.assertEquals(1, len(config.list_auths()))
         self.assertEquals(1, len(config.get_profile("accounting").auth_names))
         self.assertEquals(0, len(config.get_profile("it").auth_names))
@@ -158,7 +158,7 @@ class ConfigTests(unittest.TestCase):
     def test_remove_no_such_auth(self):
         config = self.builder.build_config(SAMPLE_CONFIG1)
         self.assertRaises(NoSuchAuthError, config.remove_auth,
-                "nosuchname")
+                          "nosuchname")
 
 
 class CredentialTests(unittest.TestCase):
@@ -166,19 +166,19 @@ class CredentialTests(unittest.TestCase):
     def setUp(self):
         self.builder = ConfigBuilder()
         self.auths_list = [
-                {
-                    NAME_KEY: "ansshlogin",
-                    TYPE_KEY: "ssh",
-                    USERNAME_KEY: "bob",
-                    PASSWORD_KEY: "password"
-                },
-                {
-                    NAME_KEY: "ansshkey",
-                    TYPE_KEY: "ssh_key",
-                    SSHKEY_KEY: "whatever",
-                    USERNAME_KEY: "bob",
-                    PASSWORD_KEY: "password"
-                },
+            {
+                NAME_KEY: "ansshlogin",
+                TYPE_KEY: "ssh",
+                USERNAME_KEY: "bob",
+                PASSWORD_KEY: "password"
+            },
+            {
+                NAME_KEY: "ansshkey",
+                TYPE_KEY: "ssh_key",
+                SSHKEY_KEY: "whatever",
+                USERNAME_KEY: "bob",
+                PASSWORD_KEY: "password"
+            },
         ]
         self.config_dict = {'auths': self.auths_list}
 
@@ -195,17 +195,17 @@ class CredentialTests(unittest.TestCase):
     def test_build_auths_bad_type(self):
         self.auths_list[0][TYPE_KEY] = "badtype"
         self.assertRaises(ConfigError,
-            self.builder.build_auths, self.auths_list)
+                          self.builder.build_auths, self.auths_list)
 
     def test_build_auths_missing_type(self):
         self.auths_list[0].pop(TYPE_KEY)
         self.assertRaises(ConfigError,
-            self.builder.build_auths, self.auths_list)
+                          self.builder.build_auths, self.auths_list)
 
     def test_build_auths_missing_username(self):
         self.auths_list[0].pop(USERNAME_KEY)
         self.assertRaises(ConfigError,
-            self.builder.build_auths, self.auths_list)
+                          self.builder.build_auths, self.auths_list)
 
     def test_build_auths_key_no_passphrase(self):
         # I think we're going to support a passphraseless key for now:
@@ -239,15 +239,15 @@ class ProfileTests(unittest.TestCase):
     def setUp(self):
         self.builder = ConfigBuilder()
         self.profile_dict = {
-                NAME_KEY: "accounting",
-                RANGE_KEY: [
-                    "192.168.0.0/24",
-                    "192.168.1.1-192.168.1.10",
-                    "192.168.5.0"
-                    ],
-                AUTHS_KEY: ["bobskey", "bobslogin"],
-                PORTS_KEY: [22, 2222]
-            }
+            NAME_KEY: "accounting",
+            RANGE_KEY: [
+                "192.168.0.0/24",
+                "192.168.1.1-192.168.1.10",
+                "192.168.5.0"
+            ],
+            AUTHS_KEY: ["bobskey", "bobslogin"],
+            PORTS_KEY: [22, 2222]
+        }
 
     def test_create_profile(self):
         g = self.builder.build_profiles([self.profile_dict])[0]
@@ -277,12 +277,12 @@ class ProfileTests(unittest.TestCase):
     def test_invalid_ports(self):
         self.profile_dict[PORTS_KEY] = ["aslkjdh"]
         self.assertRaises(ConfigError,
-                self.builder.build_profiles, [self.profile_dict])
+                          self.builder.build_profiles, [self.profile_dict])
 
     def test_name_required(self):
         self.profile_dict.pop(NAME_KEY)
-        self.assertRaises(ConfigError, 
-                self.builder.build_profiles, [self.profile_dict])
+        self.assertRaises(ConfigError,
+                          self.builder.build_profiles, [self.profile_dict])
 
     def test_to_dict(self):
         g = self.builder.build_profiles([self.profile_dict])[0]
@@ -293,17 +293,17 @@ class ProfileTests(unittest.TestCase):
         ranges = g_dict[RANGE_KEY]
         self.assertEquals(3, len(ranges))
         self.assertEquals(self.profile_dict[RANGE_KEY],
-                g_dict[RANGE_KEY])
+                          g_dict[RANGE_KEY])
 
         credential_names = g_dict[AUTHS_KEY]
         self.assertEquals(2, len(credential_names))
         self.assertEquals(self.profile_dict[AUTHS_KEY],
-                g_dict[AUTHS_KEY])
+                          g_dict[AUTHS_KEY])
 
         ports = g_dict[PORTS_KEY]
         self.assertEquals(2, len(ports))
         self.assertEquals(self.profile_dict[PORTS_KEY],
-                g_dict[PORTS_KEY])
+                          g_dict[PORTS_KEY])
 
 
 class MiscTests(unittest.TestCase):
@@ -319,13 +319,12 @@ class MiscTests(unittest.TestCase):
 
     def test_verify_keys_missing_required(self):
         self.assertRaises(ConfigError,
-                verify_keys, {'b': 2}, required=['a'], optional=['b'])
+                          verify_keys, {'b': 2}, required=['a'], optional=['b'])
 
     def test_extraneous_keys(self):
-        self.assertRaises(ConfigError, verify_keys, 
-                {'a': 1, 'b': 2}, required=['a'], optional=[])
+        self.assertRaises(ConfigError, verify_keys,
+                          {'a': 1, 'b': 2}, required=['a'], optional=[])
 
     def test_only_check_required(self):
         # b is ignored because we didn't specify optional keys.
         verify_keys({'a': 1, 'b': 2}, required=['a'])
-

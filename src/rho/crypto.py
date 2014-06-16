@@ -18,29 +18,34 @@ import string
 from rho.log import log
 
 # From the python-crypto package
-from Crypto.Cipher import  AES
+from Crypto.Cipher import AES
 
 from rho.PBKDF2 import PBKDF2
 
 from config import CONFIG_VERSION
 
+
 class BadKeyException(Exception):
     pass
+
 
 class NoSuchFileException(Exception):
     pass
 
+
 class DecryptionException(Exception):
     pass
 
+
 class AESEncrypter(object):
+
     """
     Simple to use object for AES-128 encryption.
 
     Based on contribution from Steve Milner.
     """
 
-    def __init__(self, password, salt, iv, key_length=16 ):
+    def __init__(self, password, salt, iv, key_length=16):
         """
         Creates a new instance of AESEncrypter.
 
@@ -53,10 +58,10 @@ class AESEncrypter(object):
 
         if self.__key_length != len(self.__key):
             raise Exception("Key does not match length: %s" %
-                    self.__key_length)
+                            self.__key_length)
 
         self.__pad_char = " "
-        self.__cipher_obj = AES.new(self.__key,AES.MODE_CFB, iv)
+        self.__cipher_obj = AES.new(self.__key, AES.MODE_CFB, iv)
 
     def __create_key(self, salt, password):
         """
@@ -104,7 +109,6 @@ class AESEncrypter(object):
         assert data[-padlen:] == padlen * chr(padlen)
         return data[:-padlen]
 
-
     # read-only properties
     pad_char = property(lambda self: self.__pad_char)
     key = property(lambda self: self.__key)
@@ -113,7 +117,7 @@ class AESEncrypter(object):
 
 def encrypt(plaintext, key, salt, iv):
     """
-    Encrypt the plaintext using the given key. 
+    Encrypt the plaintext using the given key.
     """
     encrypter = AESEncrypter(key, salt, iv)
 
@@ -122,23 +126,23 @@ def encrypt(plaintext, key, salt, iv):
 
 def decrypt(ciphertext, key, salt, iv):
     """
-    Decrypt the ciphertext with the given key. 
+    Decrypt the ciphertext with the given key.
     """
     encrypter = AESEncrypter(key, salt, iv)
     decrypted_plaintext = encrypter.decrypt(ciphertext)
     return decrypted_plaintext
 
     # TODO: is there a way to know decryption failed?
-    #if return_me is None:
-    #    # Looks like decryption failed, probably a bad key:
+    # if return_me is None:
+    # Looks like decryption failed, probably a bad key:
     #    raise BadKeyException
 
 
 def write_file(filename, plaintext, key):
-    """ 
-    Encrypt plaintext with the given key and write to file. 
-    
-    Existing file will be overwritten so be careful. 
+    """
+    Encrypt plaintext with the given key and write to file.
+
+    Existing file will be overwritten so be careful.
     """
     f = open(filename, 'w')
     salt = os.urandom(8)
@@ -180,11 +184,10 @@ def read_file(filename, password):
     cont = f.read()
     try:
         return_me = decrypt(cont, password, salt, iv)
-    except Exception, e:
+    except Exception as e:
         log.warn("Exception while decrypting the configuration file: %s" % e)
 #        raise
         raise DecryptionException
 
     f.close()
     return return_me
-

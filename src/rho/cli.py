@@ -18,9 +18,8 @@ import os
 import rho.clicommands
 
 
-
-
 class CLI:
+
     def __init__(self):
         self.cli_commands = {}
         for clazz in rho.clicommands.__dict__.values():
@@ -30,19 +29,18 @@ class CLI:
                 cmd = clazz()
                 # ignore the base class
                 if cmd.name != "cli":
-                    self.cli_commands[cmd.name] = cmd 
+                    self.cli_commands[cmd.name] = cmd
 
     def _add_command(self, cmd):
         self.cli_commands[cmd.name] = cmd
-        
+
     def _usage(self):
         print _("\nUsage: %s [options] MODULENAME --help\n" %
-            (os.path.basename(sys.argv[0])))
+                (os.path.basename(sys.argv[0])))
         print _("Supported modules:\n")
 
         # want the output sorted
-        items = self.cli_commands.items()
-        items.sort()
+        items = sorted(self.cli_commands.items())
         for (name, cmd) in items:
             print("\t%-14s %-25s" % (name, cmd.shortdesc))
         print("")
@@ -67,16 +65,16 @@ class CLI:
 
         cmd = None
         key = " ".join(possiblecmd)
-        if self.cli_commands.has_key(" ".join(possiblecmd)):
+        if " ".join(possiblecmd) in self.cli_commands:
             cmd = self.cli_commands[key]
 
         i = -1
-        while cmd == None:
+        while cmd is None:
             key = " ".join(possiblecmd[:i])
             if key is None or key == "":
                 break
 
-            if self.cli_commands.has_key(key):
+            if key in self.cli_commands:
                 cmd = self.cli_commands[key]
             i -= 1
 
@@ -93,4 +91,3 @@ class CLI:
             sys.exit(1)
 
         cmd.main()
-

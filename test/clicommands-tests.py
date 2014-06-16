@@ -19,6 +19,7 @@ import sys
 
 
 class HushUpStderr(object):
+
     def write(self, s):
         pass
 
@@ -43,7 +44,7 @@ class CliCommandsTests(unittest.TestCase):
         os.environ[RHO_PASSWORD] = "blerg"
         os.environ[RHO_AUTH_PASSWORD] = "somepass"
 
-        sys.argv = ["bin/rho" ]  + args + ["--config", self.conffile]
+        sys.argv = ["bin/rho"] + args + ["--config", self.conffile]
         cmd.main()
 
     def test_scan(self):
@@ -56,8 +57,8 @@ class CliCommandsTests(unittest.TestCase):
         self._run_test(ProfileListCommand(), ["profile", "list"])
 
     def test_profile_add(self):
-        self._run_test(ProfileAddCommand(), ["profile", "add", "--name", 
-            "profilename"])
+        self._run_test(ProfileAddCommand(), ["profile", "add", "--name",
+                                             "profilename"])
 
     def test_profile_add_duplicate(self):
         self.test_profile_add()
@@ -75,28 +76,28 @@ class CliCommandsTests(unittest.TestCase):
 
     def test_delete_in_use_auth(self):
         self._run_test(AuthAddCommand(), ["auth", "add", "--name=bill",
-            "--username=bill"])
+                                          "--username=bill"])
         self._run_test(ProfileAddCommand(), ["profile", "add", "--name",
-            "profilename", "--auth=bill"])
+                                             "profilename", "--auth=bill"])
         self._run_test(ProfileClearCommand(), ["auth", "clear", "--name=bill"])
         self._run_test(DumpConfigCommand(), ["dumpconfig"])
 
     def test_auth_add_duplicate(self):
         self._run_test(AuthAddCommand(), ["auth", "add", "--name=bill",
-            "--username=bill"])
-        self.assertRaises(SystemExit, self._run_test, AuthAddCommand(), 
-                ["auth", "add", "--name=bill", "--username=bill"])
+                                          "--username=bill"])
+        self.assertRaises(SystemExit, self._run_test, AuthAddCommand(),
+                          ["auth", "add", "--name=bill", "--username=bill"])
 
     def test_profile_add_nonexistent_auth(self):
-        self.assertRaises(SystemExit, self._run_test, ProfileAddCommand(), 
-                ["profile", "add", "--name", "profile", "--auth", 
-                    "doesnotexist"])
+        self.assertRaises(SystemExit, self._run_test, ProfileAddCommand(),
+                          ["profile", "add", "--name", "profile", "--auth",
+                           "doesnotexist"])
 
     # TODO: This test looks bad, don't think it tests anything.
     def test_dumpconfig(self):
         try:
             self._run_test(DumpConfigCommand(), ['dumpconfig',
-                                                 '--config', 
+                                                 '--config',
                                                  'test/data/encrypted.data'])
         except SystemExit:
             pass
@@ -104,15 +105,13 @@ class CliCommandsTests(unittest.TestCase):
     def test_scan_bad_range_options(self):
         # Should fail scanning range without a username:
         self.assertRaises(SystemExit, self._run_test, ScanCommand(),
-                ['scan', '--range=192.168.1.1'])
+                          ['scan', '--range=192.168.1.1'])
 
     def test_scan_range_auth_and_username(self):
         # Should fail scanning range without a username:
         self.assertRaises(SystemExit, self._run_test, ScanCommand(),
-                ['scan', '--range=192.168.1.1', '--auth=blerg',
-                    '--username=bob'])
+                          ['scan', '--range=192.168.1.1', '--auth=blerg',
+                           '--username=bob'])
 
     def test_scan_show_fields(self):
         self._run_test(ScanCommand(), ['scan', '--show-fields'])
-        
-        

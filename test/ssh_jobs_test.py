@@ -11,9 +11,12 @@ from rho import rho_cmds
 __test__ = False
 
 # this api is going to change...
+
+
 class TestSshJobs(unittest.TestCase):
 
-    ips = [] 
+    ips = []
+
     def setUp(self):
         self.jobs = ssh_jobs.SshJobs()
         self.output = []
@@ -39,7 +42,7 @@ class TestSshJobs(unittest.TestCase):
         for ip, auth in self.ips:
             self.ssh_jobs = self.ssh_jobs + [ssh_jobs.SshJob(ip=ip, rho_cmds=jobs, auths=auth)] * number
 #        print self.ssh_jobs
-        self.jobs.run_jobs(ssh_jobs=self.ssh_jobs, callback = self._callback)
+        self.jobs.run_jobs(ssh_jobs=self.ssh_jobs, callback=self._callback)
 
     def test_echo_blippy(self):
         self._run_jobs([rho_cmds.ScriptRhoCmd("echo blippy")])
@@ -101,30 +104,23 @@ class TestSshJobs(unittest.TestCase):
 # know what those are. But these should be examples. I'm not sure of
 # a better way to test this.
 
-#class TestSshJobsWorks(_TestSshJobs):
+# class TestSshJobsWorks(_TestSshJobs):
 #    ips = [(hostname, auth_good)]
 
-#class TestSshJobsNoUser(_TestSshJobs):
+# class TestSshJobsNoUser(_TestSshJobs):
 #    auth =  ssh_jobs.SshAuth(name="badadrian", username="badadrian")
-    
 
 
-
-
-#class TestSshJobsNoHost(_TestSshJobs):
+# class TestSshJobsNoHost(_TestSshJobs):
 #    auth = auth_good
 #    ip = bad_hostname
 
 
-
-#class TestSshJobsF11(_TestSshJobs):
+# class TestSshJobsF11(_TestSshJobs):
 #    ips = [("f11-virt-1.usersys.redhat.com", auth_test)]
 
-#class TestSshJobsAll(_TestSshJobs):
+# class TestSshJobsAll(_TestSshJobs):
 #    ips = [("f11-virt-1.usersys.redhat.com", auth_test),
 #           ("f11-virt-2.usersys.redhat.com", auth_test),
 #           ("f11-virt-1.usersys.redhat.com", auth_bad_password),
 #            (hostname, auth_good)]
-
-
-

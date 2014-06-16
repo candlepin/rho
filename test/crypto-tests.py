@@ -17,6 +17,7 @@ import unittest
 import rho.crypto
 import rho.config
 
+
 class CryptoTests(unittest.TestCase):
 
     def setUp(self):
@@ -43,7 +44,7 @@ class CryptoTests(unittest.TestCase):
         ciphertext = rho.crypto.encrypt(plaintext, key, self.salt, self.iv)
         decrypted = rho.crypto.decrypt(ciphertext, key, self.salt, self.iv)
         self.assertEquals(plaintext, decrypted)
-        
+
     # just trying to hit what might be corner cases for crypto bits with
     # padding/unpadding, etc
     def test_encryption_16_bytes(self):
@@ -59,7 +60,6 @@ class CryptoTests(unittest.TestCase):
         ciphertext = rho.crypto.encrypt(plaintext, key, self.salt, self.iv)
         decrypted = rho.crypto.decrypt(ciphertext, key, self.salt, self.iv)
         self.assertEquals(plaintext, decrypted)
-
 
     def test_encryption_big_key(self):
         plaintext = "hey look at my text $"
@@ -84,7 +84,7 @@ class CryptoTests(unittest.TestCase):
             # decrypt correctly
             pass
         # TODO: Guess we can't really verify if decryption failed:
-        #self.assertRaises(rho.crypto.BadKeyException,
+        # self.assertRaises(rho.crypto.BadKeyException,
         #        rho.crypto.decrypt, ciphertext, 'badkey')
         self.assertNotEqual(plaintext, result)
 
@@ -92,6 +92,7 @@ class CryptoTests(unittest.TestCase):
 class FileCryptoTests(unittest.TestCase):
 
     # NOTE: Not a true unit test, does write a temp file, comment out?
+
     def test_encrypt_file(self):
         """ Test file encryption/decryption. """
         plaintext = "i'm going into a file!"
@@ -126,8 +127,7 @@ class FileCryptoTests(unittest.TestCase):
 
     def test_bad_file_location(self):
         self.assertRaises(IOError, rho.crypto.write_file,
-                "/nosuchdir/nosuchfile.txt", 'blah', 'blah')
-        self.assertRaises(rho.crypto.NoSuchFileException, 
-                rho.crypto.read_file,
-                "/nosuchfile.txt", 'blah')
-
+                          "/nosuchdir/nosuchfile.txt", 'blah', 'blah')
+        self.assertRaises(rho.crypto.NoSuchFileException,
+                          rho.crypto.read_file,
+                          "/nosuchfile.txt", 'blah')
