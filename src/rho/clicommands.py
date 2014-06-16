@@ -206,7 +206,7 @@ class CliCommand(object):
 
     def _validate_port(self, port):
         try:
-            port_int = int(port)
+            int(port)
         except ValueError:
             # aka, we get a string here...
             return False
@@ -218,7 +218,8 @@ class CliCommand(object):
         # magic numbers, but these are valid tcp port ranges
         for port in ports:
             if not self._validate_port(port):
-                print _("%s includes an invalid port number. Ports should be between 1 and 65535") % string.join(ports, ",")
+                print _("%s includes an invalid port number. "
+                        "Ports should be between 1 and 65535") % string.join(ports, ",")
                 sys.exit(1)
 
     # see if the ip address we are given are at least sort of valid...
