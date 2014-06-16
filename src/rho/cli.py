@@ -17,6 +17,10 @@ import sys
 import os
 import rho.clicommands
 
+import gettext
+t = gettext.translation('rho', 'locale', fallback=True)
+_ = t.ugettext
+
 
 class CLI:
 
