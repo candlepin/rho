@@ -22,6 +22,10 @@ import sys
 import threading
 import traceback
 
+import gettext
+t = gettext.translation('rho', 'locale', fallback=True)
+_ = t.ugettext
+
 
 # probably should be in a different module, but nothing else
 # to go with it
@@ -182,9 +186,8 @@ class OutputThread(threading.Thread):
 
             self.out_queue.task_done()
 
+
 # thread/queue for progress stuff so it stays synced and in order...
-
-
 class ProgressThread(threading.Thread):
 
     def __init__(self):

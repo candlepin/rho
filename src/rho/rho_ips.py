@@ -14,6 +14,10 @@ import string
 
 import netaddr
 
+import gettext
+t = gettext.translation('rho', 'locale', fallback=True)
+_ = t.ugettext
+
 # model of an ip address range
 ip_regex = re.compile(r'\d+\.\d+\.\d+\.\d+')
 
