@@ -13,7 +13,6 @@
 
 import os
 import os.path
-import string
 
 from rho.log import log
 
