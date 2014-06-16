@@ -17,6 +17,7 @@ LEVELS = {'debug': logging.DEBUG,
           'error': logging.ERROR,
           'critical': logging.CRITICAL}
 
+
 def setup_logging(filename, level):
     """
     Configure logging to the given filename.
@@ -25,6 +26,6 @@ def setup_logging(filename, level):
     """
     log_level = LEVELS[level.lower()]
     logging.basicConfig(filename=filename, level=log_level, filemode='w',
-            format="%(asctime)s %(name)s %(levelname)s - %(message)s (%(module)s/%(lineno)d)")
+                        format="%(asctime)s %(name)s %(levelname)s - %(message)s (%(module)s/%(lineno)d)")
 
 log = logging.getLogger("rho")

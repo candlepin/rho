@@ -6,6 +6,7 @@ from rho import rho_ips
 
 
 class TestRhoIps(unittest.TestCase):
+
     def setUp(self):
         pass
 #        self.ipr = rho_ips.RhoIpRange(self.iprange)
@@ -27,10 +28,9 @@ class TestRhoIps(unittest.TestCase):
 
     def _check_ipr(self, iprange, expected):
         self.ipr = rho_ips.RhoIpRange(iprange)
-        list_of_ips= list(self.ipr.ips)
-        ips = map(str, list_of_ips)
+        list_of_ips = list(self.ipr.ips)
+        ips = sorted(map(str, list_of_ips))
 #        list_of_ips = self.ipr.list_ips()
-        ips.sort()
         expected.sort()
 
 #        print len(ips), len(expected)
@@ -52,13 +52,12 @@ class TestRhoIps(unittest.TestCase):
     def testCommaSeperatedIpsWithSpaces(self):
         self._check_ipr("10.0.0.1 , 10.0.0.2 ", ["10.0.0.1", "10.0.0.2"])
 
-
     def testCommaSeperatedRanges(self):
-        self._check_ipr("10.0.0.1 - 10.0.0.2, 10.0.1.1 - 10.0.1.2", 
+        self._check_ipr("10.0.0.1 - 10.0.0.2, 10.0.1.1 - 10.0.1.2",
                         ["10.0.0.1", "10.0.0.2", "10.0.1.1", "10.0.1.2"])
 
     def testCommaSeperatedTrueCIDR(self):
-        self._check_ipr("10.0.0.0/31, 10.0.1.0/31", 
+        self._check_ipr("10.0.0.0/31, 10.0.1.0/31",
                         ["10.0.0.0", "10.0.0.1", "10.0.1.0", "10.0.1.1"])
 
     def testIPOver(self):
@@ -77,7 +76,7 @@ class TestRhoIps(unittest.TestCase):
         self._check_ipr("10.0.0.300 - 10.0.0.301", [])
 
 #    def testHostname(self):
-#        # any suggests for a hostname whose ip won't change?
+# any suggests for a hostname whose ip won't change?
 #        self._check_ipr("bugzilla.redhat.com", ["209.132.176.231"])
 
 #    def testBadHostname(self):
@@ -85,32 +84,29 @@ class TestRhoIps(unittest.TestCase):
 
     def testWildcard(self):
         expected = []
-        for i in range(0,256):
+        for i in range(0, 256):
             expected.append("10.0.0.%s" % i)
         self._check_ipr("10.0.0.*", expected)
 
     def testIpRange(self):
-        
+
         expected = []
-        for i in range(1,6):
+        for i in range(1, 6):
             expected.append("10.0.0.%s" % i)
         self._check_ipr("10.0.0.1 - 10.0.0.5", expected)
 
     def testCIDR_24(self):
         expected = []
-        for i in range(0,256):
+        for i in range(0, 256):
             expected.append("10.0.0.%s" % i)
         self._check_ipr("10.0.0.0/24", expected)
 
     def testCider(self):
         self._check_ipr("10.0.0.1/31", ["10.0.0.0", "10.0.0.1"])
 
-
     def testIpRangeLarge(self):
         expected = []
-        for i in range(0,4):
-            for j in range(0,256):
+        for i in range(0, 4):
+            for j in range(0, 256):
                 expected.append("10.0.%s.%s" % (i, j))
         self._check_ipr("10.0.0.0 - 10.0.3.255", expected)
-
-    

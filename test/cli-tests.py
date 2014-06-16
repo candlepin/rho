@@ -15,8 +15,8 @@ import rho.cli
 
 import unittest
 
+
 class CliTests(unittest.TestCase):
 
     def test_nothing(self):
         pass
-

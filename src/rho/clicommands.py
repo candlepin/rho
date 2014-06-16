@@ -39,6 +39,7 @@ RHO_PASSWORD = "RHO_PASSWORD"
 RHO_AUTH_PASSWORD = "RHO_AUTH_PASSWORD"
 DEFAULT_RHO_CONF = "~/.rho.conf"
 
+
 def _read_key_file(filename):
     keyfile = open(os.path.expanduser(
         os.path.expandvars(filename)), "r")
@@ -50,6 +51,8 @@ def _read_key_file(filename):
 # basically, just try to read the key sans password
 # and see if it works... Pass in a passphrase to
 # see if it is the correct passphrase
+
+
 def ssh_key_passphrase_is_good(filename, password=None):
     good_key = True
     try:
@@ -60,10 +63,11 @@ def ssh_key_passphrase_is_good(filename, password=None):
         good_key = False
     return good_key
 
+
 def get_key_from_file(filename, password=None):
     pkey = None
     keyfile = open(os.path.expanduser(
-             os.path.expandvars(filename)), "r")
+        os.path.expandvars(filename)), "r")
     if keyfile.readline().find("-----BEGIN DSA PRIVATE KEY-----") > -1:
         keyfile.seek(0)
         pkey = paramiko.DSSKey.from_private_key_file(filename, password=password)
@@ -79,17 +83,20 @@ def get_passphrase(for_key):
     passphrase = getpass(_("Passphrase for '%s':" % for_key))
     return passphrase
 
+
 def get_password(for_username, env_var_to_check):
     password = ""
     if env_var_to_check in os.environ:
         log.info("Using password from %s environment variable." %
-                env_var_to_check)
+                 env_var_to_check)
         password = os.environ[env_var_to_check]
     else:
         password = getpass(_("Password for '%s':" % for_username))
     return password
 
+
 class OutputPrinter(object):
+
     def __init__(self, keys, delimeter="\t", pad=2, dontpad=[]):
         self.keys = keys
         # seed the rows with the header
@@ -106,7 +113,7 @@ class OutputPrinter(object):
     def add_row(self, row):
         line = []
         for k in self.keys:
-            if row.has_key(k):
+            if k in row:
                 if isinstance(row[k], list):
                     line.append(", ".join(["%s" % i for i in row[k]]))
                 else:
@@ -120,7 +127,7 @@ class OutputPrinter(object):
         # find the max length of each column
         # store them in order in collens.
         collens = []
-        
+
         i = 0
         for key in self.keys:
             length = len(key) + self.pad
@@ -146,7 +153,9 @@ class OutputPrinter(object):
 
             self.writer.writerow(line)
 
+
 class ProfilePrinter(object):
+
     def __init__(self, profiles):
         self.profiles = profiles
 
@@ -166,11 +175,13 @@ class ProfilePrinter(object):
             for ip_range in p.ranges:
                 print("        %s" % ip_range)
 
+
 class CliCommand(object):
+
     """ Base class for all sub-commands. """
 
     def __init__(self, name="cli", usage=None, shortdesc=None,
-            description=None):
+                 description=None):
 
         self.shortdesc = shortdesc
         if shortdesc is not None and description is None:
@@ -180,27 +191,26 @@ class CliCommand(object):
         self.name = name
         self.passphrase = None
 
-
     def _add_common_options(self):
         """ Add options that apply to all sub-commands. """
 
         # Default is expanded later:
         self.parser.add_option("--config", dest="config",
-                help=_("config file name"), default=DEFAULT_RHO_CONF)
+                               help=_("config file name"), default=DEFAULT_RHO_CONF)
 
         self.parser.add_option("--log", dest="log_file", metavar="FILENAME",
-                help=_("log file name (will be overwritten)"))
+                               help=_("log file name (will be overwritten)"))
         self.parser.add_option("--log-level", dest="log_level",
-                default="critical", metavar="LEVEL",
-                help=_("log level (debug/info/warning/error/critical)"))
+                               default="critical", metavar="LEVEL",
+                               help=_("log level (debug/info/warning/error/critical)"))
 
     def _validate_port(self, port):
         try:
-            port_int = int(port)
+            int(port)
         except ValueError:
-            # aka, we get a string here... 
+            # aka, we get a string here...
             return False
-        if int(port) < 1 or int(port) >65535:
+        if int(port) < 1 or int(port) > 65535:
             return False
         return True
 
@@ -208,21 +218,22 @@ class CliCommand(object):
         # magic numbers, but these are valid tcp port ranges
         for port in ports:
             if not self._validate_port(port):
-                print _("%s includes an invalid port number. Ports should be between 1 and 65535") % string.join(ports, ",")
+                print _("%s includes an invalid port number. "
+                        "Ports should be between 1 and 65535") % string.join(ports, ",")
                 sys.exit(1)
 
     # see if the ip address we are given are at least sort of valid...
     def _validate_ranges(self, ipranges):
         for iprange in ipranges:
-            ipr =  rho_ips.RhoIpRange(iprange)
+            ipr = rho_ips.RhoIpRange(iprange)
             if not ipr.valid:
                 print _("""ip range "%s" is invalid""" % string.join(ipranges, ','))
                 sys.exit(1)
 
     def _validate_options(self):
-        """ 
-        Sub-commands can override to do any argument validation they 
-        require. 
+        """
+        Sub-commands can override to do any argument validation they
+        require.
         """
         pass
 
@@ -273,7 +284,7 @@ class CliCommand(object):
 
         if RHO_PASSWORD in os.environ:
             log.info("Using passphrase from %s environment variable." %
-                    RHO_PASSWORD)
+                     RHO_PASSWORD)
             self.passphrase = os.environ[RHO_PASSWORD]
         else:
             self.passphrase = getpass(_("Config Encryption Password:"))
@@ -283,10 +294,10 @@ class CliCommand(object):
         # do the work, catch most common errors here:
         try:
             self._do_command()
-        except config.DuplicateNameError, e:
+        except config.DuplicateNameError as e:
             print _("ERROR: Name already exists: %s") % e.dupe_name
             sys.exit(1)
-        except config.NoSuchAuthError, e:
+        except config.NoSuchAuthError as e:
             print _("ERROR: No such auth: %s") % e.authname
             sys.exit(1)
 
@@ -301,35 +312,35 @@ class ScanCommand(CliCommand):
         CliCommand.__init__(self, "scan", usage, shortdesc, desc)
 
         self.parser.add_option("--range", dest="ranges", action="append",
-                metavar="RANGE", default=[],
-                help=_("IP range to scan. See 'man rho' for supported formats."))
+                               metavar="RANGE", default=[],
+                               help=_("IP range to scan. See 'man rho' for supported formats."))
 
         self.parser.add_option("--ports", dest="ports", metavar="PORTS",
-                help=_("list of ssh ports to try i.e. '22, 2222, 5402'"))
+                               help=_("list of ssh ports to try i.e. '22, 2222, 5402'"))
         self.parser.add_option("--username", dest="username",
-                metavar="USERNAME",
-                help=_("user name for authenticating against target machine"))
+                               metavar="USERNAME",
+                               help=_("user name for authenticating against target machine"))
         self.parser.add_option("--auth", dest="auth", action="append",
-                metavar="AUTH", default=[],
-                help=_("auth class name to use"))
+                               metavar="AUTH", default=[],
+                               help=_("auth class name to use"))
         self.parser.add_option("--output", dest="reportfile",
-                metavar="REPORTFILE",
-                help=_("write out to this file"))
+                               metavar="REPORTFILE",
+                               help=_("write out to this file"))
         self.parser.add_option("--profile", dest="profiles", action="append",
-                metavar="PROFILE", default=[],
-                help=_("profile class to scan")),
+                               metavar="PROFILE", default=[],
+                               help=_("profile class to scan")),
         self.parser.add_option("--cache", dest="cachefile",
-                metavar="PASTREPORTFILE",
-                help=_("past output, used to cache successful credentials and ports"))
-        self.parser.add_option("--allow-agent", dest="allowagent", action="store_true", 
-               metavar="ALLOWAGENT", default=False,
-               help=_("Use keys from local ssh-agent"))
-        self.parser.add_option("--show-fields", dest="showfields", action="store_true", 
-              metavar="SHOWFIELDS", 
-              help=_("show fields available for reports"))
+                               metavar="PASTREPORTFILE",
+                               help=_("past output, used to cache successful credentials and ports"))
+        self.parser.add_option("--allow-agent", dest="allowagent", action="store_true",
+                               metavar="ALLOWAGENT", default=False,
+                               help=_("Use keys from local ssh-agent"))
+        self.parser.add_option("--show-fields", dest="showfields", action="store_true",
+                               metavar="SHOWFIELDS",
+                               help=_("show fields available for reports"))
         self.parser.add_option("--report-format", dest="reportformat",
-              metavar="REPORTFORMAT", 
-              help=_("specify report format (see --show-fields for options)"))
+                               metavar="REPORTFORMAT",
+                               help=_("specify report format (see --show-fields for options)"))
 
         self.parser.set_defaults(ports="22")
 
@@ -346,14 +357,13 @@ class ScanCommand(CliCommand):
         hasProfiles = len(self.options.profiles) > 0
         hasAuths = len(self.options.auth) > 0
 
-
         if self.options.cachefile:
             self.options.cachefile = os.path.abspath(os.path.expanduser(
                 self.options.cachefile))
             log.debug("Using cached output: %s" % self.options.cachefile)
             if not os.path.exists(self.options.cachefile):
                 self.parser.error(_("No such file: %s" % self.options.cachefile))
-                
+
         if hasRanges:
             self._validate_ranges(self.options.ranges)
 
@@ -402,7 +412,7 @@ class ScanCommand(CliCommand):
         if self.options.cachefile:
             cache = self._build_cache(self.options.cachefile)
 
-        self.scanner = scanner.Scanner(config=self.config, cache=cache, 
+        self.scanner = scanner.Scanner(config=self.config, cache=cache,
                                        allow_agent=self.options.allowagent)
 
         # If username was specified, we need to prompt for a password
@@ -410,18 +420,16 @@ class ScanCommand(CliCommand):
         user_password = ""
         if self.options.username:
             user_password = get_password(self.options.username,
-                    RHO_AUTH_PASSWORD)
+                                         RHO_AUTH_PASSWORD)
 
         # hmm, some possible report values don't come from cmds...
         if self.options.showfields:
             fields = self.scanner.get_cmd_fields()
             fields.update(scan_report.report_fields)
-            field_keys = fields.keys()
-            field_keys.sort()
+            field_keys = sorted(fields.keys())
             for field_key in field_keys:
-                print "%s:%s" % (field_key, fields[field_key]) 
+                print "%s:%s" % (field_key, fields[field_key])
             sys.exit(0)
-            
 
         if len(self.options.auth) > 0:
             auths = []
@@ -431,7 +439,7 @@ class ScanCommand(CliCommand):
                     auths.append(a)
         else:
             # FIXME: need a more abstract credentials class -akl
-            auth = config.SshAuth({'name':"clioptions",
+            auth = config.SshAuth({'name': "clioptions",
                                    'username': self.options.username,
                                    'password': user_password,
                                    'type': 'ssh'})
@@ -443,16 +451,15 @@ class ScanCommand(CliCommand):
 
         # this is all temporary, but make the tests pass
         if len(self.options.ranges) > 0:
-            # create a temporary profile named "clioptions" for anything 
+            # create a temporary profile named "clioptions" for anything
             # specified on the command line
             ports = []
             if self.options.ports:
                 ports = self.options.ports.strip().split(",")
                 self._validate_ports(ports)
-            
 
             g = config.Profile(name="clioptions", ranges=self.options.ranges,
-                         auth_names=self.options.auth, ports=ports)
+                               auth_names=self.options.auth, ports=ports)
 
             self.config.add_profile(g)
             self.scanner.scan_profiles(["clioptions"])
@@ -465,7 +472,7 @@ class ScanCommand(CliCommand):
                     sys.exit(1)
                 if len(self.config.get_profile(profile).auth_names) == 0:
                     print(_("ERROR: Profile %s has no auths to try.") %
-                            profile)
+                          profile)
                     sys.exit(1)
 
             missing = self.scanner.scan_profiles(self.options.profiles)
@@ -473,7 +480,7 @@ class ScanCommand(CliCommand):
                 print _("The following profile names were not found:")
                 for name in missing:
                     print name
-        
+
         fileobj = sys.stdout
         if self.options.reportfile:
             fileobj = open(os.path.expanduser(os.path.expandvars(
@@ -487,6 +494,7 @@ class ScanCommand(CliCommand):
 
 
 class DumpConfigCommand(CliCommand):
+
     """
     Dumps the config file to stdout.
     """
@@ -509,7 +517,6 @@ class DumpConfigCommand(CliCommand):
             self.parser.print_help()
             sys.exit(1)
 
-
     def _do_command(self):
         """
         Executes the command.
@@ -518,10 +525,11 @@ class DumpConfigCommand(CliCommand):
             content = crypto.read_file(self.options.config, self.passphrase)
         except crypto.DecryptionException:
             print self.parser.error(_("Error decrypting configuration file"))
-        print(json.dumps(json.loads(content), sort_keys = True, indent = 4))
+        print(json.dumps(json.loads(content), sort_keys=True, indent=4))
 
-        
+
 class ImportConfigCommand(CliCommand):
+
     """
     Import a plaintext config file.
     """
@@ -533,10 +541,9 @@ class ImportConfigCommand(CliCommand):
 
         CliCommand.__init__(self, "importconfig", usage, shortdesc, desc)
 
-        self.parser.add_option("--from-file", dest="sourcefile", 
-                metavar="FROMFILE",
-                help=_("import configuration from raw json file"))
-
+        self.parser.add_option("--from-file", dest="sourcefile",
+                               metavar="FROMFILE",
+                               help=_("import configuration from raw json file"))
 
     def _validate_options(self):
         CliCommand._validate_options(self)
@@ -550,14 +557,14 @@ class ImportConfigCommand(CliCommand):
 
         # Ensure the source file exists:
         if not os.path.exists(self.options.sourcefile):
-            self.parser.error(_("File does not exist") % 
-                    self.options.sourcefile)
+            self.parser.error(_("File does not exist") %
+                              self.options.sourcefile)
 
         # Make sure destination config file *doesn't* already exist, don't
         # want to accidentally overwrite config with this command.
         if os.path.exists(self.options.config):
             self.parser.error(_("Destination config file already exists: %s") %
-                    self.options.config)
+                              self.options.config)
 
     def _do_command(self):
         """
@@ -569,9 +576,10 @@ class ImportConfigCommand(CliCommand):
         c = config.ConfigBuilder().dump_config(imported_config)
 
         crypto.write_file(self.options.config, c, self.passphrase)
-        
+
 
 class ProfileShowCommand(CliCommand):
+
     def __init__(self):
         usage = _("usage: %prog profile show [options]")
         shortdesc = _("show a network profile")
@@ -580,7 +588,7 @@ class ProfileShowCommand(CliCommand):
         CliCommand.__init__(self, "profile show", usage, shortdesc, desc)
 
         self.parser.add_option("--name", dest="name", metavar="NAME",
-                help=_("profile name - REQUIRED"))
+                               help=_("profile name - REQUIRED"))
 
     def _validate_options(self):
         CliCommand._validate_options(self)
@@ -592,7 +600,6 @@ class ProfileShowCommand(CliCommand):
     def _do_command(self):
         if not self.config.list_profiles():
             print(_("No profiles found"))
-
 
         p = self.config.get_profile(self.options.name)
 
@@ -607,6 +614,7 @@ class ProfileShowCommand(CliCommand):
 
 
 class ProfileListCommand(CliCommand):
+
     def __init__(self):
         usage = _("usage: %prog profile list [options]")
         shortdesc = _("list the network profiles")
@@ -627,6 +635,7 @@ class ProfileListCommand(CliCommand):
 
 
 class ProfileEditCommand(CliCommand):
+
     def __init__(self):
         usage = _("usage: %prog profile edit [options]")
         shortdesc = _("edits a given profile")
@@ -635,16 +644,16 @@ class ProfileEditCommand(CliCommand):
         CliCommand.__init__(self, "profile edit", usage, shortdesc, desc)
 
         self.parser.add_option("--name", dest="name", metavar="NAME",
-                help=_("NAME of the profile - REQUIRED"))
+                               help=_("NAME of the profile - REQUIRED"))
         self.parser.add_option("--range", dest="ranges", action="append",
-                metavar="RANGE", default=[],
-                help=_("IP range to scan. See 'man rho' for supported formats."))
+                               metavar="RANGE", default=[],
+                               help=_("IP range to scan. See 'man rho' for supported formats."))
 
         self.parser.add_option("--ports", dest="ports", metavar="PORTS",
-                help=_("list of ssh ports to try i.e. '22, 2222, 5402'")),
+                               help=_("list of ssh ports to try i.e. '22, 2222, 5402'")),
         self.parser.add_option("--auth", dest="auth", metavar="AUTH",
-                action="append", default=[],
-                help=_("auth class to associate with profile"))
+                               action="append", default=[],
+                               help=_("auth class to associate with profile"))
 
         self.parser.set_defaults(ports="22")
 
@@ -683,7 +692,7 @@ class ProfileEditCommand(CliCommand):
             for a in auth.strip().split(","):
                 try:
                     self.config.get_auth(a)
-                except config.NoSuchAuthError, e:
+                except config.NoSuchAuthError as e:
                     print _("ERROR: No such auth: %s") % e.authname
                     sys.exit(1)
 
@@ -691,7 +700,9 @@ class ProfileEditCommand(CliCommand):
         crypto.write_file(self.options.config, c, self.passphrase)
         print(_("Profile %s edited" % self.options.name))
 
+
 class ProfileClearCommand(CliCommand):
+
     def __init__(self):
         usage = _("usage: %prog profile clear [--name | --all] [options]")
         shortdesc = _("removes 1 or all profiles from list")
@@ -700,9 +711,9 @@ class ProfileClearCommand(CliCommand):
         CliCommand.__init__(self, "profile clear", usage, shortdesc, desc)
 
         self.parser.add_option("--name", dest="name", metavar="NAME",
-                help=_("NAME of the profile to be removed"))
+                               help=_("NAME of the profile to be removed"))
         self.parser.add_option("--all", dest="all", action="store_true",
-                help=_("remove ALL profiles"))
+                               help=_("remove ALL profiles"))
 
         self.parser.set_defaults(all=False)
 
@@ -733,7 +744,9 @@ class ProfileClearCommand(CliCommand):
             crypto.write_file(self.options.config, c, self.passphrase)
             print(_("All network profiles removed"))
 
+
 class ProfileAddCommand(CliCommand):
+
     def __init__(self):
         usage = _("usage: %prog profile add [options]")
         shortdesc = _("add a network profile")
@@ -742,22 +755,22 @@ class ProfileAddCommand(CliCommand):
         CliCommand.__init__(self, "profile add", usage, shortdesc, desc)
 
         self.parser.add_option("--name", dest="name", metavar="NAME",
-                help=_("NAME of the profile - REQUIRED"))
+                               help=_("NAME of the profile - REQUIRED"))
         self.parser.add_option("--range", dest="ranges", action="append",
-                metavar="RANGE", default=[],
-                help=_("IP range to scan. See 'man rho' for supported formats."))
+                               metavar="RANGE", default=[],
+                               help=_("IP range to scan. See 'man rho' for supported formats."))
 
         self.parser.add_option("--ports", dest="ports", metavar="PORTS",
-                help=_("list of ssh ports to try i.e. '22, 2222, 5402'")),
+                               help=_("list of ssh ports to try i.e. '22, 2222, 5402'")),
         self.parser.add_option("--auth", dest="auth", metavar="AUTH",
-                action="append", default=[],
-                help=_("auth class to associate with profile"))
+                               action="append", default=[],
+                               help=_("auth class to associate with profile"))
 
         self.parser.set_defaults(ports="22")
 
     def _validate_options(self):
         CliCommand._validate_options(self)
-        
+
         if self.options.ranges:
             self._validate_ranges(self.options.ranges)
 
@@ -782,18 +795,19 @@ class ProfileAddCommand(CliCommand):
             for a in auth.strip().split(","):
                 try:
                     self.config.get_auth(a)
-                except config.NoSuchAuthError, e:
+                except config.NoSuchAuthError as e:
                     print _("ERROR: No such auth: %s") % e.authname
                     sys.exit(1)
 
         g = config.Profile(name=self.options.name, ranges=self.options.ranges,
-                         auth_names=auth_names, ports=ports)
+                           auth_names=auth_names, ports=ports)
         self.config.add_profile(g)
         c = config.ConfigBuilder().dump_config(self.config)
         crypto.write_file(self.options.config, c, self.passphrase)
 
 
 class AuthEditCommand(CliCommand):
+
     def __init__(self):
         usage = _("usage: %prog auth edit [options]")
         shortdesc = _("edits a given auth")
@@ -802,16 +816,16 @@ class AuthEditCommand(CliCommand):
         CliCommand.__init__(self, "auth edit", usage, shortdesc, desc)
 
         self.parser.add_option("--name", dest="name", metavar="NAME",
-                help=_("NAME of the auth - REQUIRED"))
+                               help=_("NAME of the auth - REQUIRED"))
 
         self.parser.add_option("--file", dest="filename", metavar="FILENAME",
-                help=_("file containing SSH key"))
+                               help=_("file containing SSH key"))
         self.parser.add_option("--username", dest="username",
-                metavar="USERNAME",
-                help=_("user name for authenticating against target machine - REQUIRED"))
+                               metavar="USERNAME",
+                               help=_("user name for authenticating against target machine - REQUIRED"))
         self.parser.add_option("--password", dest="password",
-                action="store_true",
-                help=_("password for authenticating against target machine"))
+                               action="store_true",
+                               help=_("password for authenticating against target machine"))
 
         self.parser.set_defaults(password=False)
 
@@ -841,10 +855,10 @@ class AuthEditCommand(CliCommand):
 
             if a.type == config.SSH_TYPE:
                 cred = config.SshKeyAuth({"name": a.name,
-                                          "key":sshkey,
+                                          "key": sshkey,
                                           "username": a.username,
                                           "password": a.password,
-                                          "type":"ssh_key"})
+                                          "type": "ssh_key"})
                 # remove the old ssh, and new key type
                 self.config.remove_auth(self.options.name)
                 self.config.add_auth(cred)
@@ -857,8 +871,8 @@ class AuthEditCommand(CliCommand):
         print(_("Auth %s updated" % self.options.name))
 
 
-
 class AuthClearCommand(CliCommand):
+
     def __init__(self):
         usage = _("usage: %prog auth clear")
         shortdesc = _("clears out the credentials")
@@ -867,9 +881,9 @@ class AuthClearCommand(CliCommand):
         CliCommand.__init__(self, "auth clear", usage, shortdesc, desc)
 
         self.parser.add_option("--name", dest="name", metavar="NAME",
-                help=_("NAME of the auth credential to be removed"))
+                               help=_("NAME of the auth credential to be removed"))
         self.parser.add_option("--all", dest="all", action="store_true",
-                help=_("remove ALL auth credentials"))
+                               help=_("remove ALL auth credentials"))
 
     def _validate_options(self):
         CliCommand._validate_options(self)
@@ -891,7 +905,9 @@ class AuthClearCommand(CliCommand):
         c = config.ConfigBuilder().dump_config(self.config)
         crypto.write_file(self.options.config, c, self.passphrase)
 
+
 class AuthShowCommand(CliCommand):
+
     def __init__(self):
         usage = _("usage: %prog auth show [options]")
         shortdesc = _("show auth credential")
@@ -900,9 +916,9 @@ class AuthShowCommand(CliCommand):
         CliCommand.__init__(self, "auth show", usage, shortdesc, desc)
 
         self.parser.add_option("--name", dest="name", metavar="NAME",
-                help=_("auth credential name - REQUIRED"))
+                               help=_("auth credential name - REQUIRED"))
         self.parser.add_option("--showkeys", dest="keys", action="store_true",
-                help=_("show ssh keys in the list"))
+                               help=_("show ssh keys in the list"))
 
     def _validate_options(self):
         CliCommand._validate_options(self)
@@ -930,7 +946,9 @@ class AuthShowCommand(CliCommand):
         out.write()
         print("")
 
+
 class AuthListCommand(CliCommand):
+
     def __init__(self):
         usage = _("usage: %prog auth list [options]")
         shortdesc = _("list auth credentials")
@@ -939,13 +957,12 @@ class AuthListCommand(CliCommand):
         CliCommand.__init__(self, "auth list", usage, shortdesc, desc)
 
         self.parser.add_option("--showkeys", dest="keys", action="store_true",
-                help=_("show ssh keys in the list"))
+                               help=_("show ssh keys in the list"))
 
     def _do_command(self):
         if not self.config.list_auths():
             print(_("No auth credentials found"))
             return
-
 
         keys = ["name", "type", "username", "password", "key"]
         out = OutputPrinter(keys, dontpad=["key"])
@@ -964,8 +981,8 @@ class AuthListCommand(CliCommand):
         print("")
 
 
-
 class AuthAddCommand(CliCommand):
+
     def __init__(self):
         usage = _("usage: %prog auth add [options]")
         shortdesc = _("add auth credentials to config")
@@ -974,12 +991,12 @@ class AuthAddCommand(CliCommand):
         CliCommand.__init__(self, "auth add", usage, shortdesc, desc)
 
         self.parser.add_option("--name", dest="name", metavar="NAME",
-                help=_("auth credential name - REQUIRED"))
+                               help=_("auth credential name - REQUIRED"))
         self.parser.add_option("--file", dest="filename", metavar="FILENAME",
-                help=_("file containing SSH key"))
+                               help=_("file containing SSH key"))
         self.parser.add_option("--username", dest="username",
-                metavar="USERNAME",
-                help=_("user name for authenticating against target machine - REQUIRED"))
+                               metavar="USERNAME",
+                               help=_("user name for authenticating against target machine - REQUIRED"))
 
     def _validate_options(self):
         CliCommand._validate_options(self)
@@ -1008,8 +1025,6 @@ class AuthAddCommand(CliCommand):
                 print _("Wrong passphrase for %s" % self.options.filename)
                 sys.exit(1)
 
-
-
     def _do_command(self):
         if self.options.filename:
             # using sshkey
@@ -1017,21 +1032,20 @@ class AuthAddCommand(CliCommand):
             sshkey = _read_key_file(self.options.filename)
 
             cred = config.SshKeyAuth({"name": self.options.name,
-                "key": sshkey,
-                "username": self.options.username,
-                "password": self.auth_passphrase,
-                "type": "ssh_key"})
+                                      "key": sshkey,
+                                      "username": self.options.username,
+                                      "password": self.auth_passphrase,
+                                      "type": "ssh_key"})
 
             self._save_cred(cred)
-
 
         elif self.options.username:
             auth_password = get_password(self.options.username,
                                          RHO_AUTH_PASSWORD)
 
             # using ssh
-            cred = config.SshAuth({"name":self.options.name,
-                "username": self.options.username,
-                "password": auth_password,
-                "type": "ssh"})
+            cred = config.SshAuth({"name": self.options.name,
+                                   "username": self.options.username,
+                                   "password": auth_password,
+                                   "type": "ssh"})
             self._save_cred(cred)

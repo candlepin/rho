@@ -66,17 +66,18 @@ def verify_keys(check_dict, required=[], optional=None):
     """
     for required_key in required:
         if required_key not in check_dict:
-            raise ConfigError("Missing required key: %s" % 
-                    required_key)
+            raise ConfigError("Missing required key: %s" %
+                              required_key)
 
     if optional is not None:
         for key in check_dict:
             if (key not in required) and (key not in optional):
                 raise ConfigError("Extraneous key: %s" %
-                        required_key)
+                                  required_key)
 
 
 class Config(object):
+
     """ Simple object represeting Rho configuration. """
 
     def __init__(self, auths=None, profiles=None):
@@ -109,7 +110,7 @@ class Config(object):
         self._auth_index[c.name] = c
 
     def remove_auth(self, cname):
-        if self._auth_index.has_key(cname):
+        if cname in self._auth_index:
             c = self._auth_index[cname]
             self._auths.remove(c)
             del self._auth_index[cname]
@@ -137,7 +138,7 @@ class Config(object):
         self._auth_index = {}
 
     def add_profile(self, profile):
-        """ 
+        """
         Add a new profile to this configuration, and ensure it references valid
         auths.
         """
@@ -166,7 +167,7 @@ class Config(object):
         return pname in self._profile_index
 
     def remove_profile(self, gname):
-        if self._profile_index.has_key(gname):
+        if gname in self._profile_index:
             g = self._profile_index[gname]
             self._profiles.remove(g)
             del self._profile_index[gname]
@@ -181,9 +182,9 @@ class Config(object):
         for g in self._profiles:
             profiles.append(g.to_dict())
         return {
-                VERSION_KEY: CONFIG_VERSION,
-                AUTHS_KEY: creds,
-                PROFILES_KEY: profiles
+            VERSION_KEY: CONFIG_VERSION,
+            AUTHS_KEY: creds,
+            PROFILES_KEY: profiles
         }
 
 
@@ -198,7 +199,7 @@ class SshAuth(Auth):
     def __init__(self, json_dict):
 
         verify_keys(json_dict, required=[NAME_KEY, TYPE_KEY,
-                USERNAME_KEY, PASSWORD_KEY], optional=[])
+                                         USERNAME_KEY, PASSWORD_KEY], optional=[])
 
         self.name = json_dict[NAME_KEY]
         self.username = json_dict[USERNAME_KEY]
@@ -207,10 +208,10 @@ class SshAuth(Auth):
 
     def to_dict(self):
         return {
-                NAME_KEY: self.name,
-                USERNAME_KEY: self.username,
-                PASSWORD_KEY: self.password,
-                TYPE_KEY: SSH_TYPE
+            NAME_KEY: self.name,
+            USERNAME_KEY: self.username,
+            PASSWORD_KEY: self.password,
+            TYPE_KEY: SSH_TYPE
         }
 
 
@@ -219,7 +220,7 @@ class SshKeyAuth(Auth):
     def __init__(self, json_dict):
 
         verify_keys(json_dict, required=[NAME_KEY, TYPE_KEY,
-                USERNAME_KEY, SSHKEY_KEY], optional=[PASSWORD_KEY])
+                                         USERNAME_KEY, SSHKEY_KEY], optional=[PASSWORD_KEY])
 
         self.name = json_dict[NAME_KEY]
         self.username = json_dict[USERNAME_KEY]
@@ -233,11 +234,11 @@ class SshKeyAuth(Auth):
 
     def to_dict(self):
         return {
-                NAME_KEY: self.name,
-                USERNAME_KEY: self.username,
-                PASSWORD_KEY: self.password,
-                TYPE_KEY: SSH_KEY_TYPE,
-                SSHKEY_KEY: self.key
+            NAME_KEY: self.name,
+            USERNAME_KEY: self.username,
+            PASSWORD_KEY: self.password,
+            TYPE_KEY: SSH_KEY_TYPE,
+            SSHKEY_KEY: self.key
         }
 
 
@@ -261,10 +262,10 @@ class Profile(object):
 
     def to_dict(self):
         return {
-                NAME_KEY: self.name,
-                RANGE_KEY: self.ranges,
-                AUTHS_KEY: self.auth_names,
-                PORTS_KEY: self.ports
+            NAME_KEY: self.name,
+            RANGE_KEY: self.ranges,
+            AUTHS_KEY: self.auth_names,
+            PORTS_KEY: self.ports
         }
 
     def remove_auth_name(self, auth_name):
@@ -278,12 +279,13 @@ class Profile(object):
 
 # Needs to follow the class definitions:
 CREDENTIAL_TYPES = {
-        SSH_TYPE: SshAuth,
-        SSH_KEY_TYPE: SshKeyAuth
+    SSH_TYPE: SshAuth,
+    SSH_KEY_TYPE: SshKeyAuth
 }
 
 
 class ConfigBuilder(object):
+
     """
     Stateless object used to parse JSON into actual objects.
 
@@ -302,7 +304,7 @@ class ConfigBuilder(object):
             raise BadJsonException
 
         verify_keys(config_dict, required=[VERSION_KEY, AUTHS_KEY,
-            PROFILES_KEY], optional=[])
+                                           PROFILES_KEY], optional=[])
 
         # Credentials needs to be parsed first so we can check that the profiles
         # reference valid credential keys.
@@ -328,7 +330,7 @@ class ConfigBuilder(object):
 
             if type_key not in CREDENTIAL_TYPES:
                 raise ConfigError("Unsupported credential type: %s",
-                        auths_dict[TYPE_KEY])
+                                  auths_dict[TYPE_KEY])
 
             creds_obj = CREDENTIAL_TYPES[type_key](auths_dict)
             creds.append(creds_obj)
@@ -340,7 +342,7 @@ class ConfigBuilder(object):
         profiles = []
         for profile_dict in profiles_list:
             verify_keys(profile_dict, required=[NAME_KEY, RANGE_KEY,
-                AUTHS_KEY, PORTS_KEY], optional=[])
+                                                AUTHS_KEY, PORTS_KEY], optional=[])
             name = profile_dict[NAME_KEY]
             ranges = profile_dict[RANGE_KEY]
             auth_names = profile_dict[AUTHS_KEY]
@@ -363,5 +365,3 @@ class ConfigBuilder(object):
         config_dict = config.to_dict()
         json_text = json.dumps(config_dict)
         return json_text
-
-

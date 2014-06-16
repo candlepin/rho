@@ -22,6 +22,10 @@ import sys
 import threading
 import traceback
 
+import gettext
+t = gettext.translation('rho', 'locale', fallback=True)
+_ = t.ugettext
+
 
 # probably should be in a different module, but nothing else
 # to go with it
@@ -47,7 +51,10 @@ def get_pkey(auth):
 
 # on python 2.4, the Queue class doesnt .join and .task_done,which we use and
 # are nice. So we add them to Queue24 if we need to
+
+
 class Queue24(Queue.Queue):
+
     def __init__(self, maxsize=0):
         # Notify all_tasks_done whenever the number of unfinished tasks
         # drops to zero; thread waiting to join() is notified to resume
@@ -98,10 +105,10 @@ class Queue24(Queue.Queue):
             self.all_tasks_done.release()
 
     # not exactly the way the 2.6+ Queue class does it, but it's
-    # easier and a lot less code this way. 
+    # easier and a lot less code this way.
     def _put(self, item):
-	self.queue.append(item)
-	self.unfinished_tasks +=1
+        self.queue.append(item)
+        self.unfinished_tasks += 1
 
 
 # if I were fancy, this might be a factory
@@ -113,11 +120,10 @@ def OurQueue(*args, **kwargs):
     return Queue24(*args, **kwargs)
 
 
-
-
 class SshJob(object):
+
     def __init__(self, ip=None, ports=[22], rho_cmds=None, auths=None,
-            timeout=30, cache={}, allow_agent=False):
+                 timeout=30, cache={}, allow_agent=False):
         # rho_cmds really needs to be list like, easy mistake to make...
         assert getattr(rho_cmds, "__iter__")
 
@@ -132,7 +138,7 @@ class SshJob(object):
 
         # list of auths to try
         self.auths = auths
-        
+
         # the auth we actually used
         self.auth = None
 
@@ -153,13 +159,15 @@ class SshJob(object):
     def output_callback(self):
         pass
 
+
 class OutputThread(threading.Thread):
+
     def __init__(self, report=None):
         self.out_queue = OurQueue()
         self.report = scan_report.ScanReport()
         self.quitting = False
         threading.Thread.__init__(self, name="rho_output_thread")
-       
+
     def quit(self):
         self.quitting = True
 
@@ -171,20 +179,22 @@ class OutputThread(threading.Thread):
 
             try:
                 self.report.add(ssh_job)
-            except Exception, e:
+            except Exception as e:
                 log.error("Exception: %s" % e)
                 log.error(traceback.print_tb(sys.exc_info()[2]))
                 self.quit()
 
             self.out_queue.task_done()
 
+
 # thread/queue for progress stuff so it stays synced and in order...
 class ProgressThread(threading.Thread):
+
     def __init__(self):
         self.prog_queue = OurQueue()
         self.quitting = False
         threading.Thread.__init__(self, name="rho_output_thread")
-       
+
     def quit(self):
         self.quitting = True
 
@@ -196,7 +206,9 @@ class ProgressThread(threading.Thread):
 
             self.prog_queue.task_done()
 
+
 class SshThread(threading.Thread):
+
     def __init__(self, thread_id, ssh_queue, output_queue, prog_queue):
         self.ssh_queue = ssh_queue
         self.out_queue = output_queue
@@ -214,23 +226,22 @@ class SshThread(threading.Thread):
         log.info(buf)
         self.prog_queue.put(buf)
 
-
     def connect(self, ssh_job):
         # do the actual paramiko ssh connection
 
         # Copy the list of ports, we'll modify it as we go:
         ports_to_try = list(ssh_job.ports)
 
-        found_port = None # we'll set this once we identify a port that works
+        found_port = None  # we'll set this once we identify a port that works
         found_auth = False
 
         while True:
             if found_auth:
                 break
 
-            if found_port != None:
+            if found_port is not None:
                 log.warn("Found ssh on %s:%s, but no auths worked." %
-                        (ssh_job.ip, found_port))
+                         (ssh_job.ip, found_port))
                 break
 
             if len(ports_to_try) == 0:
@@ -248,7 +259,7 @@ class SshThread(threading.Thread):
                 # this checks the case of a passphrase we can't decrypt
                 try:
                     pkey = get_pkey(auth)
-                except paramiko.SSHException, e:
+                except paramiko.SSHException as e:
                     # paramiko throws an SSHException for pretty much everything... ;-<
                     log.error("ssh key error for %s: %s" % (debug_str, str(e)))
                     ssh_job.error = str(e)
@@ -261,7 +272,7 @@ class SshThread(threading.Thread):
                     log.info("trying: %s" % debug_str)
 
                     self.show_connect(ssh_job, port, auth)
-                    self.ssh.connect(ssh_job.ip, port=int(port), 
+                    self.ssh.connect(ssh_job.ip, port=int(port),
                                      username=auth.username,
                                      password=auth.password,
                                      pkey=pkey,
@@ -276,7 +287,7 @@ class SshThread(threading.Thread):
                     break
 
                 # Implies we've found an SSH server listening:
-                except paramiko.AuthenticationException, e:
+                except paramiko.AuthenticationException as e:
                     # Because we stop checking ports once we find one where ssh
                     # is listening, we can report the error message here and it
                     # will end up in the final report correctly:
@@ -287,7 +298,7 @@ class SshThread(threading.Thread):
                     continue
 
                 # No route to host:
-                except socket.error, e:
+                except socket.error as e:
                     log.warn("No route to host, skipping port: %s" % debug_str)
                     ssh_job.error = str(e)
                     break
@@ -296,12 +307,11 @@ class SshThread(threading.Thread):
                 # paramiko.SSHException, do we need to handle this explicitly?
 
                 # Something else happened:
-                except Exception, detail:
+                except Exception as detail:
                     log.warn("Connection error: %s - %s" % (debug_str,
-                        str(detail)))
+                                                            str(detail)))
                     ssh_job.error = str(detail)
                     continue
-
 
     def run_cmds(self, ssh_job,):
         for rho_cmd in ssh_job.rho_cmds:
@@ -326,14 +336,12 @@ class SshThread(threading.Thread):
             self.run_cmds(ssh_job)
             self.ssh.close()
 
-
-        except Exception, e:
+        except Exception as e:
             log.error("Exception on %s: %s" % (ssh_job.ip, e))
             log.error(sys.exc_info())
             log.error(traceback.print_tb(sys.exc_info()[2]))
             ssh_job.connection_result = False
             ssh_job.command_output = e
-
 
     def run(self):
         while not self.quitting:
@@ -343,13 +351,14 @@ class SshThread(threading.Thread):
                 self.get_transport(ssh_job)
                 self.out_queue.put(ssh_job)
                 self.ssh_queue.task_done()
-            except Exception, e:
+            except Exception as e:
                 log.error("Exception: %s" % e)
                 log.error(traceback.print_tb(sys.exc_info()[2]))
                 self.ssh_queue.task_done()
-            
-        
+
+
 class SshJobs(object):
+
     def __init__(self):
         # cmdSrc is some sort of list/iterator thing
 
@@ -364,7 +373,7 @@ class SshJobs(object):
 
     def start_ssh_queue(self):
         for thread_num in range(self.max_threads):
-            ssh_thread = SshThread(thread_num, 
+            ssh_thread = SshThread(thread_num,
                                    self.ssh_queue,
                                    self.output_thread.out_queue,
                                    self.prog_thread.prog_queue)
@@ -381,7 +390,6 @@ class SshJobs(object):
         self.prog_thread.setDaemon(True)
         self.prog_thread.start()
 
-
     def run_jobs(self, ssh_jobs=None, callback=None):
         if ssh_jobs:
             self.ssh_jobs = ssh_jobs
@@ -389,14 +397,14 @@ class SshJobs(object):
         # no point in spinning up 10 threads for one connection...
         if len(self.ssh_jobs) < self.max_threads:
             self.max_threads = len(self.ssh_jobs)
-        
+
         self.start_prog_queue()
         self.start_output_queue()
         self.start_ssh_queue()
 
         while self.ssh_jobs:
             for ssh_job in self.ssh_jobs:
-                # we don't set a cap on Queue size, should we? 
+                # we don't set a cap on Queue size, should we?
                 if not self.ssh_queue.full():
                     self.queue_jobs(ssh_job)
                     self.ssh_jobs.remove(ssh_job)
@@ -404,4 +412,3 @@ class SshJobs(object):
         self.ssh_queue.join()
         self.prog_thread.prog_queue.join()
         self.output_thread.out_queue.join()
-

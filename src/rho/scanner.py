@@ -19,6 +19,7 @@ _ = t.ugettext
 
 
 class Scanner(object):
+
     def __init__(self, config=None, cache={}, allow_agent=False):
         self.config = config
         self.profiles = []
@@ -27,7 +28,7 @@ class Scanner(object):
 
         # FIXME: we could probably hook this via a plugin/module loader to
         # make it more dynamic... -akl
-        self.default_rho_cmd_classes = [rho_cmds.UnameRhoCmd, 
+        self.default_rho_cmd_classes = [rho_cmds.UnameRhoCmd,
                                         rho_cmds.RedhatReleaseRhoCmd,
                                         rho_cmds.InstnumRhoCmd,
                                         rho_cmds.SystemIdRhoCmd,
@@ -51,7 +52,7 @@ class Scanner(object):
         auth_objs = []
         for authname in authnames:
             auth = self.config.get_auth(authname)
-            #FIXME: what do we do if an authname is invalid? 
+            # FIXME: what do we do if an authname is invalid?
             # for now, we ignore it
             if auth:
                 auth_objs.append(auth)
@@ -85,7 +86,7 @@ class Scanner(object):
                     log.debug("Cache hit for: %s" % ip)
                     cached_port = self.cache[ip]['port']
                     log.debug("Cached port: %s %s" % (cached_port,
-                        type(cached_port)))
+                                                      type(cached_port)))
                     cached_authname = self.cache[ip]['auth']
                     if cached_port in ports:
                         ports.remove(cached_port)
@@ -110,14 +111,14 @@ class Scanner(object):
     def get_rho_cmds(self, rho_cmd_classes=None):
         if not rho_cmd_classes:
             rho_cmd_classes = self.default_rho_cmd_classes
-        rho_cmds_list  = []
+        rho_cmds_list = []
         for rho_cmd_class in rho_cmd_classes:
             rho_cmds_list.append(rho_cmd_class())
         return rho_cmds_list
 
     def _run_scan(self):
         self.ssh_jobs.run_jobs(callback=self._callback)
-        
+
     def report(self, fileobj, report_format=None):
         self.ssh_jobs.output_thread.report.report(fileobj, report_format=report_format)
 
@@ -133,4 +134,4 @@ class Scanner(object):
 
 # assuming profile with be iterable'ish
 # for host in profile:
-#     # host will be a class 
+# host will be a class

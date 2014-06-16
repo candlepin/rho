@@ -22,29 +22,29 @@ _ = t.ugettext
 
 
 # basic idea, wrapper classes around the cli cmds we run on the machines
-# to be inventories. the rho_cmd class will have a string for the 
+# to be inventories. the rho_cmd class will have a string for the
 # actually command to run, a name, a 'data' attrib storing the
 # data retrivied (probably just a dict). I think it makes the most
 # sense to go ahead and parse the results of the remote cmd when we
 # run it and store it then in the data (as opposed to doing it at
 # data read time). I think it's pretty small data sets either way, so
-# not a big deal. 
+# not a big deal.
 
 # If we use a dict like class for the data, we maybe able to make
-# the report generation as simple as python string formatting tricks. 
+# the report generation as simple as python string formatting tricks.
 # I'd like to try to avoid type'ing the data fields and just treating
-# everything as strings, since the primary target seems to be csv 
-# output. 
+# everything as strings, since the primary target seems to be csv
+# output.
 
 
 class RhoCmd(object):
     name = "base"
     fields = {}
+
     def __init__(self):
-#        self.cmd_strings = cmd
+        #        self.cmd_strings = cmd
         self.cmd_results = []
         self.data = {}
-    
 
     # we're not actually running the class on the hosts, so
     # we will need to populate it with the output of the ssh stuff
@@ -55,11 +55,10 @@ class RhoCmd(object):
         # results is a tuple of (stdout, stderr)
         self.cmd_results = results
         # where do we error check? In the parse_data() step I guess... -akl
-        # 
+        #
         # FIXME: how do we handle errors in rho_cmds? we could add a "errors" list
         # to the ssh_job and include the info about each job that failed? --akl
         self.parse_data()
-
 
     # subclasses need to implement this, this is what parses the output
     # and packs in the self.data.
@@ -67,20 +66,19 @@ class RhoCmd(object):
 
         # but more or less something like:
 
-
         raise NotImplementedError
 
-    
+
 class UnameRhoCmd(RhoCmd):
     name = "uname"
     cmd_strings = ["uname -s", "uname -n", "uname -p", "uname -r", "uname -a", "uname -i"]
 
-    fields = {'uname.os':_('uname -s (os)'),
-              'uname.hostname':_('uname -n (hostname)'),
-              'uname.processor':_('uname -p (processor)'),
-              'uname.kernel':_('uname -r (kernel)'),
-              'uname.all':_('uname -a (all)'),
-              'uname.hardware_platform':_('uname -i (hardware_platform)')}
+    fields = {'uname.os': _('uname -s (os)'),
+              'uname.hostname': _('uname -n (hostname)'),
+              'uname.processor': _('uname -p (processor)'),
+              'uname.kernel': _('uname -r (kernel)'),
+              'uname.all': _('uname -a (all)'),
+              'uname.hardware_platform': _('uname -i (hardware_platform)')}
 
     def parse_data(self):
         self.data['uname.os'] = self.cmd_results[0][0].strip()
@@ -91,18 +89,19 @@ class UnameRhoCmd(RhoCmd):
         if not self.cmd_results[3][1]:
             self.data['uname.hardware_platform'] = self.cmd_results[5][0].strip()
 
+
 class RedhatReleaseRhoCmd(RhoCmd):
     name = "redhat-release"
     cmd_strings = ["""rpm -q --queryformat "%{NAME}\n%{VERSION}\n%{RELEASE}\n" --whatprovides redhat-release"""]
-    fields = {'redhat-release.name':_("name of package that provides 'redhat-release'"),
-              'redhat-release.version':_("version of package that provides 'redhat-release'"),
-              'redhat-release.release':_("release of package that provides 'redhat-release'")}
+    fields = {'redhat-release.name': _("name of package that provides 'redhat-release'"),
+              'redhat-release.version': _("version of package that provides 'redhat-release'"),
+              'redhat-release.release': _("release of package that provides 'redhat-release'")}
 
     def parse_data(self):
         # new line seperated string, one result only
         if self.cmd_results[0][1]:
             # and/or, something not dumb
-            self.data = {'name':'error', 'version':'error', 'release':'error'}
+            self.data = {'name': 'error', 'version': 'error', 'release': 'error'}
             return
         fields = self.cmd_results[0][0].splitlines()
         # no shell gives a single bogus line of output, we expect 3
@@ -112,9 +111,12 @@ class RedhatReleaseRhoCmd(RhoCmd):
             self.data['redhat-release.release'] = fields[2].strip()
 
 # take a blind drunken flailing stab at guessing the os
+
+
 class EtcReleaseRhoCmd(RhoCmd):
     name = "etc-release"
-    fields = {'etc-release.etc-release':_('contents of /etc/release (or equilivent)')}
+    fields = {'etc-release.etc-release': _('contents of /etc/release (or equilivent)')}
+
     def __init__(self):
         release_files = ["/etc/redhat-release", "/etc/release", "/etc/lsb-release",
                          "/etc/debian_release", "/etc/SuSE-release",
@@ -124,7 +126,7 @@ class EtcReleaseRhoCmd(RhoCmd):
         cmd_string = """for i in %s; do if [ -f "$i" ] ; then cat $i; fi ;  done""" % string.join(release_files, ' ')
         self.cmd_strings = [cmd_string]
         RhoCmd.__init__(self)
- 
+
     def parse_data(self):
         self.data['etc-release.etc-release'] = string.join(self.cmd_results[0]).strip()
 
@@ -132,9 +134,9 @@ class EtcReleaseRhoCmd(RhoCmd):
 class ScriptRhoCmd(RhoCmd):
     name = "script"
     cmd_strings = []
-    fields = {'script.output':_('output of script'),
-              'script.error':_('error output of script'),
-              'script.command':_('name of script')}
+    fields = {'script.output': _('output of script'),
+              'script.error': _('error output of script'),
+              'script.command': _('name of script')}
 
     def __init__(self, command):
         self.command = command
@@ -150,15 +152,15 @@ class ScriptRhoCmd(RhoCmd):
 # linux only...
 class CpuRhoCmd(RhoCmd):
     name = "cpu"
-    fields = {'cpu.count':_('number of processors'),
-              'cpu.vendor_id':_("cpu vendor name"),
-              'cpu.bogomips':_("bogomips"),
-              'cpu.cpu_family':_("cpu family"),
-              'cpu.model_name':_("name of cpu model"),
-              'cpu.model_ver':_("cpu model version")}
-    
+    fields = {'cpu.count': _('number of processors'),
+              'cpu.vendor_id': _("cpu vendor name"),
+              'cpu.bogomips': _("bogomips"),
+              'cpu.cpu_family': _("cpu family"),
+              'cpu.model_name': _("name of cpu model"),
+              'cpu.model_ver': _("cpu model version")}
+
     def __init__(self):
-        self.cmd_strings = ["cat /proc/cpuinfo"] 
+        self.cmd_strings = ["cat /proc/cpuinfo"]
         RhoCmd.__init__(self)
 
     def parse_data(self):
@@ -180,7 +182,7 @@ class CpuRhoCmd(RhoCmd):
             if line == "":
                 break
             parts = line.split(':')
-             #should'nt be ':', but just in case, join all parts and strip
+            # should'nt be ':', but just in case, join all parts and strip
             cpu_dict[parts[0].strip()] = ("".join(parts[1:])).strip()
 
         # we don't need everything, just parse out the interesting bits
@@ -191,11 +193,11 @@ class CpuRhoCmd(RhoCmd):
         # available to it, which we don't currently have a way of plumbing in. So
         # x86* only for now... -akl
         # empty bits to return if we are on say, ia64
-        data.update({'cpu.vendor_id':'',
-                     'cpu.model_name':'',
-                     'cpu.bogomips':'',
-                     'cpu.cpu_family':'',
-                     'cpu.model_ver':''})
+        data.update({'cpu.vendor_id': '',
+                     'cpu.model_name': '',
+                     'cpu.bogomips': '',
+                     'cpu.cpu_family': '',
+                     'cpu.model_ver': ''})
 
         try:
             self.get_x86_cpu_info(data, cpu_dict)
@@ -212,6 +214,7 @@ class CpuRhoCmd(RhoCmd):
         data["cpu.bogomips"] = cpu_dict.get("bogomips")
         data["cpu.cpu_family"] = cpu_dict.get("cpu family")
         data["cpu.model_ver"] = cpu_dict.get("model")
+
 
 class _GetFileRhoCmd(RhoCmd):
     name = "file"
@@ -230,25 +233,28 @@ class _GetFileRhoCmd(RhoCmd):
 class EtcIssueRhoCmd(_GetFileRhoCmd):
     name = "etc-issue"
     filename = "/etc/issue"
-    fields = {'etc-issue.etc-issue':_('contents of /etc/issue')}
+    fields = {'etc-issue.etc-issue': _('contents of /etc/issue')}
 
     def parse_data(self):
         self.data["etc-issue.etc-issue"] = string.strip(self.cmd_results[0][0])
 
+
 class InstnumRhoCmd(_GetFileRhoCmd):
     name = "instnum"
     filename = "/etc/sysconfig/rhn/install-num"
-    fields = {'instnum.instnum':_('installation number')}
+    fields = {'instnum.instnum': _('installation number')}
 
     def parse_data(self):
-        self.data["instnum.instnum"] =  string.strip(self.cmd_results[0][0])
+        self.data["instnum.instnum"] = string.strip(self.cmd_results[0][0])
+
 
 class SystemIdRhoCmd(_GetFileRhoCmd):
     name = "systemid"
     filename = "/etc/sysconfig/rhn/systemid"
-    #FIXME: there are more fields here, not sure it's worth including them as options
-    fields = {'systemid.system_id':_('Red Hat Network system id'),
-              'systemid.username':_('Red Hat Network username')}
+    # FIXME: there are more fields here, not sure it's worth including them as options
+    fields = {'systemid.system_id': _('Red Hat Network system id'),
+              'systemid.username': _('Red Hat Network username')}
+
     def parse_data(self):
         # if file is empty, or we get errors, skip...
         if not self.cmd_results[0][0] or self.cmd_results[0][1]:
@@ -265,14 +271,15 @@ class SystemIdRhoCmd(_GetFileRhoCmd):
         for key in systemid:
             self.data["%s.%s" % (self.name, key)] = systemid[key]
 
+
 class DmiRhoCmd(RhoCmd):
     # note this test doesn't work well, or at all, for non root
-    # users by default. 
+    # users by default.
     name = "dmi"
-    fields = {'dmi.bios-vendor':_('BIOS vendor info from DMI'),
-              'dmi.bios-version':_('BIOS version info from DMI'),
-              'dmi.system-manufacturer':_('System manufacturer from DMI'), 
-              'dmi.processor-family':_('Processor family from DMI')}
+    fields = {'dmi.bios-vendor': _('BIOS vendor info from DMI'),
+              'dmi.bios-version': _('BIOS version info from DMI'),
+              'dmi.system-manufacturer': _('System manufacturer from DMI'),
+              'dmi.processor-family': _('Processor family from DMI')}
 
     def __init__(self):
         self.cmd_strings = ["dmidecode -s bios-vendor",
@@ -282,7 +289,7 @@ class DmiRhoCmd(RhoCmd):
         RhoCmd.__init__(self)
 
     def parse_data(self):
-        if self.cmd_results[0][0] and not self.cmd_results[0][1]: 
+        if self.cmd_results[0][0] and not self.cmd_results[0][1]:
             self.data['dmi.bios-vendor'] = string.strip(self.cmd_results[0][0])
         if self.cmd_results[1][0] and not self.cmd_results[1][1]:
             self.data['dmi.bios-version'] = string.strip(self.cmd_results[1][0])
@@ -295,14 +302,14 @@ class DmiRhoCmd(RhoCmd):
 class VirtRhoCmd(CpuRhoCmd):
     # try to determine if we are a virt guest, a host, or bare metal
     name = "virt"
-    fields = {'virt.virt':_("If a host is a virt guest, host, or bare metal"),
-              'virt.type':_("What type of virtualization a system is running")}
+    fields = {'virt.virt': _("If a host is a virt guest, host, or bare metal"),
+              'virt.type': _("What type of virtualization a system is running")}
 
     def __init__(self):
         CpuRhoCmd.__init__(self)
         cmd_template = "if [ -e %s ] ; then echo \"true\"; else echo \"false\"; fi"
         self.cmd_strings.extend(["dmidecode -s system-manufacturer",
-                                 "ps aux | grep xend | grep -v grep", 
+                                 "ps aux | grep xend | grep -v grep",
                                  cmd_template % "/proc/xen/privcmd",
                                  cmd_template % "/dev/kvm"])
 
@@ -333,17 +340,16 @@ class VirtRhoCmd(CpuRhoCmd):
     # it's also relys on root access...
 
     def _check_cpuinfo_for_qemu(self):
-        # look at model name of /proc/cpuinfo 
+        # look at model name of /proc/cpuinfo
         data = self.parse_data_cpu(self.cmd_results)
         # model_name can be an empty string...
         if data["cpu.model_name"] and data["cpu.model_name"][:4] == "QEMU":
-            #hmm, it could be regular old qemu here, but
+            # hmm, it could be regular old qemu here, but
             # this is probably close enough for reporting
             self.data["virt.type"] = "kvm"
             self.data["virt.virt"] = "virt-guest"
             return True
         return False
-
 
     def _check_for_dev_kvm(self):
         dev_kvm = None
@@ -355,7 +361,8 @@ class VirtRhoCmd(CpuRhoCmd):
     # look at the results of dmidecode for hints about what type of
     # virt we have. could probably also track vmware esx version with
     # bios version. None of this works as non root, so it's going to
-    # fail most of the time. 
+    # fail most of the time.
+
     def _check_dmidecode(self):
         manuf = None
         if self.cmd_results[1][0] and not self.cmd_results[1][1]:
@@ -373,11 +380,10 @@ class VirtRhoCmd(CpuRhoCmd):
                 self.data["virt.type"] = "virtualpc"
                 self.data["virt.virt"] = "virt-guest"
 
-
     def _check_for_xend(self):
         # It would be way cooler if we could poke the cpuid and see if
         # is a xen guest, but that requires a util to do it, and root
-        # access. 
+        # access.
         if self.cmd_results[2][0] and not self.cmd_results[2][1]:
             # is xend running? must be a xen host
             # ugly...
@@ -397,6 +403,7 @@ class VirtRhoCmd(CpuRhoCmd):
 
 # the list of commands to run on each host
 class RhoCmdList(object):
+
     def __init__(self):
         self.cmds = {}
         self.cmds['uname'] = UnameRhoCmd()

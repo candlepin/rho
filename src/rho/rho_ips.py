@@ -14,12 +14,17 @@ import string
 
 import netaddr
 
+import gettext
+t = gettext.translation('rho', 'locale', fallback=True)
+_ = t.ugettext
+
 # model of an ip address range
 ip_regex = re.compile(r'\d+\.\d+\.\d+\.\d+')
 
 
 # aka, python-netaddr 0.5.2, aka, rhel5
 class _ReallyOldNetAddr(object):
+
     @staticmethod
     def get_address(ip):
         return [netaddr.IP(ip)]
@@ -40,6 +45,7 @@ class _ReallyOldNetAddr(object):
 
 # aka 0.6 of python netaddr (aka, f11)
 class _OldNetAddr(_ReallyOldNetAddr):
+
     @staticmethod
     def get_range(start_ip, end_ip):
         return list(netaddr.IPRange(start_ip, end_ip))
@@ -74,10 +80,11 @@ class _NewNetAddr(object):
 
 
 class RhoIpRange(object):
+
     def __init__(self, ipranges):
-        if getattr(netaddr, "AddrRange", None) != None:
+        if getattr(netaddr, "AddrRange", None) is not None:
             self.netaddr = _ReallyOldNetAddr
-        elif getattr(netaddr, "IP", None) != None:
+        elif getattr(netaddr, "IP", None) is not None:
             # 'old' netaddr
             self.netaddr = _OldNetAddr
         else:
@@ -88,7 +95,7 @@ class RhoIpRange(object):
         self.ips = []
 
         self.valid = True
-        sub_ipranges = self._comma_split(ipranges) 
+        sub_ipranges = self._comma_split(ipranges)
         for sub_iprange in sub_ipranges:
             ret = self.parse_iprange(sub_iprange)
             if ret is None:
@@ -117,15 +124,15 @@ class RhoIpRange(object):
     def parse_iprange(self, range_str):
         ips = []
         if range_str.find(' - ') > -1:
-            #looks like a range
+            # looks like a range
             parts = range_str.split(' - ')
 
-            #FIXME: all of this error handling is crappy -akl
+            # FIXME: all of this error handling is crappy -akl
             try:
                 self.start_ip = parts[0]
                 self.end_ip = parts[1]
             except:
-                #FIXME: catchall excepts are bad
+                # FIXME: catchall excepts are bad
                 print _("unable to find ip for %s") % parts
                 self.start_ip = None
                 self.end_ip = None
@@ -136,13 +143,13 @@ class RhoIpRange(object):
                 except netaddr.AddrFormatError:
                     return None
             return ips
-        
-        # FIXME: not sure what to do about cases like 
+
+        # FIXME: not sure what to do about cases like
         # foo.example.com/24 or "*.example.com". punt? -akl
 
         if range_str.find('/') > -1:
             # looks like a cidr
-            # the netaddr.CIDR object is picky about being 
+            # the netaddr.CIDR object is picky about being
             # "true" CIDR which isn't really something we need to care about
             try:
                 return self.netaddr.get_network(range_str)
@@ -180,10 +187,10 @@ class RhoIpRange(object):
     def list_ips(self):
         """ Return a list of individual string IP addresses for this range. """
         return map(str, list(self.ips))
-        
+
     def _gen_list(self):
         pass
-    
+
     def next(self):
         pass
 
