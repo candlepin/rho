@@ -315,25 +315,30 @@ class VirtRhoCmd(CpuRhoCmd):
         self.cmd_strings.extend(["dmidecode -s system-manufacturer",
                                  "ps aux | grep xend | grep -v grep",
                                  cmd_template % "/proc/xen/privcmd",
-                                 cmd_template % "/dev/kvm"])
+                                 cmd_template % "/dev/kvm",
+                                 "virt-what",
+                                 "echo $?"]
+                                 )
 
     def parse_data(self):
         self.data["virt.virt"] = ""
         self.data["virt.type"] = ""
+        # Run virt-what and return if it was successful
+        if not self._check_virt_what():
+            # check /proc/cpuinfo to see if we are Qemu/kvm
+            self._check_cpuinfo_for_qemu()
 
-        # check /proc/cpuinfo to see if we are Qemu/kvm
-        self._check_cpuinfo_for_qemu()
+            self._check_for_dev_kvm()
+            # run dmidecode again, see what system-manufacturer is and
+            # and if know it (also, check to see if dmidecode fails, like it
+            # will for non root)
+            self._check_dmidecode()
+            # look for xen files (proc/xen/privcmd, /proc/xen/capabilities)
+            #
+            self._check_for_xen()
+            # see if we are running xend...
+            self._check_for_xend()
 
-        self._check_for_dev_kvm()
-        # run dmidecode again, see what system-manufacturer is and
-        # and if know it (also, check to see if dmidecode fails, like it
-        # will for non root)
-        self._check_dmidecode()
-        # look for xen files (proc/xen/privcmd, /proc/xen/capabilities)
-        #
-        self._check_for_xen()
-        # see if we are running xend...
-        self._check_for_xend()
 
     # We are going to try a variety of hacks and kluges to see if we are virt,
     # and if so, what kind. Mainly looking for xen/kvm here, but if anything else
@@ -403,6 +408,22 @@ class VirtRhoCmd(CpuRhoCmd):
             if string.strip(self.cmd_results[3][0]) == "true":
                 self.data["virt.type"] = "xen"
                 self.data["virt.virt"] = "virt-guest"
+
+    def _check_virt_what(self):
+        result = False
+        if self.cmd_results[5][0] and not self.cmd_results[5][1]:
+            output = self.cmd_results[5][0].strip()
+            exitcode = int(self.cmd_results[6][0].strip())
+            if exitcode == 0:
+                if output != "virt-what: this script must be run as root":
+                    if output != "":
+                        self.data["virt.type"] = output
+                        self.data["virt.virt"] = "virt-guest"
+                        result = True
+                    else:
+                        self.data["virt.type"] = "unknown"
+                        self.data["virt.virt"] = "virt-host"
+        return result
 
 
 # the list of commands to run on each host
