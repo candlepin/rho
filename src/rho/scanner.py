@@ -26,17 +26,7 @@ class Scanner(object):
         self.cache = cache
         self.allow_agent = allow_agent
 
-        # FIXME: we could probably hook this via a plugin/module loader to
-        # make it more dynamic... -akl
-        self.default_rho_cmd_classes = [rho_cmds.UnameRhoCmd,
-                                        rho_cmds.RedhatReleaseRhoCmd,
-                                        rho_cmds.InstnumRhoCmd,
-                                        rho_cmds.SystemIdRhoCmd,
-                                        rho_cmds.CpuRhoCmd,
-                                        rho_cmds.EtcReleaseRhoCmd,
-                                        rho_cmds.EtcIssueRhoCmd,
-                                        rho_cmds.DmiRhoCmd,
-                                        rho_cmds.VirtRhoCmd]
+        self.default_rho_cmd_classes = rho_cmds.default_cmds()  # loads RhoCmd subclasses from the rho_cmds module
         self.ssh_jobs = ssh_jobs.SshJobs()
         self.output = []
 
