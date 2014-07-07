@@ -95,7 +95,7 @@ def get_password(for_username, env_var_to_check):
     return password
 
 def _read_hosts_file(filename):
-    result = ""
+    result = None
     try:
         hosts = file(os.path.expanduser(os.path.expandvars(filename)))
         result = hosts.readlines()
@@ -347,6 +347,9 @@ class ScanCommand(CliCommand):
         self.parser.add_option("--show-fields", dest="showfields", action="store_true",
                                metavar="SHOWFIELDS",
                                help=_("show fields available for reports"))
+        self.parser.add_option("--hosts", dest="hosts", action="store",
+                               metavar="HOSTS",
+                               help=_("File of hostnames to scan."))
         self.parser.add_option("--report-format", dest="reportformat",
                                metavar="REPORTFORMAT",
                                help=_("specify report format (see --show-fields for options)"))
@@ -365,6 +368,7 @@ class ScanCommand(CliCommand):
         hasRanges = len(self.options.ranges) > 0
         hasProfiles = len(self.options.profiles) > 0
         hasAuths = len(self.options.auth) > 0
+        hasHosts = len(self.options.hosts) > 0
 
         if self.options.cachefile:
             self.options.cachefile = os.path.abspath(os.path.expanduser(
@@ -376,7 +380,7 @@ class ScanCommand(CliCommand):
         if hasRanges:
             self._validate_ranges(self.options.ranges)
 
-        if not hasRanges and not hasProfiles and not self.options.showfields:
+        if not hasRanges and not hasProfiles and not self.options.showfields and not hasHosts:
             self.parser.print_help()
             sys.exit(1)
 
@@ -458,6 +462,8 @@ class ScanCommand(CliCommand):
             # the same
             self.options.auth = ["clioptions"]
 
+        if self.options.hosts:    
+            self.options.ranges += _read_hosts_file(self.options.hosts)
         # this is all temporary, but make the tests pass
         if len(self.options.ranges) > 0:
             # create a temporary profile named "clioptions" for anything
