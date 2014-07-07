@@ -105,6 +105,28 @@ class UnameRhoCmd(RhoCmd):
         if not self.cmd_results[3][1]:
             self.data['uname.hardware_platform'] = self.cmd_results[5][0].strip()
 
+class RedhatPackagesRhoCmd(RhoCmd):
+    name = "redhat-packages"
+    cmd_strings = ['rpm -qa --qf "%{NAME}|%{VERSION}|%{RELEASE}|%{INSTALLTIME}|%{VENDOR}|%{BUILDTIME}|%{BUILDHOST}|%{SOURCERPM}|%{LICENSE}|%{PACKAGER}\n"']
+    fields = {'redhat-packages.is_redhat': _('Whether or not the system has any Red Hat packages installed (Y/N)'),
+              'redhat-packages.ratio': _('The ratio of Red Hat packages over total installed pacakges.'),
+              'redhat-packages.last_installed': _('Details of the last installed Red Hat package.'),
+              'redhat-packages.last_built': _('Details of the last built Red Hat package.')}
+
+    def parse_data(self):
+        if self.cmd_results[0][1]:
+            self.data = {key: 'error' for key in fields.keys()}
+            return
+        installed_packages = [PkgInfo(line) for line in self.cmd_results[0][0].splitlines()]
+        rh_packages = filter(PkgInfo.is_red_hat_pkg, installed_packages)
+        last_installed = max(rh_packages, key= lambda x: x.install_time)
+        last_built = max(rh_packages, key= lambda x: x.build_time)
+        is_red_hat = "Y" if len(rh_packages) > 0 else "N"
+        rhpkgs = "%s/%s" % (len(rh_packages), len(installed_packages))
+        self.data['redhat-packages.is_redhat'] = is_red_hat
+        self.data['redhat-packages.ratio'] = rhpkgs
+        self.data['redhat-packages.last_installed'] = last_installed.details_install()
+        self.data['redhat-packages.last_built'] = last_built.details_built()
 
 class RedhatReleaseRhoCmd(RhoCmd):
     name = "redhat-release"
@@ -453,3 +475,46 @@ def is_rho_cmd(clazz):
     return isinstance(clazz, type) and \
         issubclass(clazz, sys.modules[__name__].RhoCmd) and \
         clazz.name not in NONDEFAULT_CMDS
+
+class PkgInfo(object):
+    def __init__(self, row, separator='|'):
+        cols = row.split(separator)
+        if len(cols) < 10:
+            raise PkgInfoParseException()
+        else:
+            self.name = cols[0]
+            self.version = cols[1]
+            self.release = cols[2]
+            self.install_time = long(cols[3])
+            self.vendor = cols[4]
+            self.build_time = long(cols[5])
+            self.build_host = cols[6]
+            self.source_rpm = cols[7]
+            self.license = cols[8]
+            self.packager = cols[9]
+            self.is_red_hat = False
+            if ('redhat.com' in self.build_host and
+            'fedora' not in self.build_host and
+            'rhndev' not in self.build_host):
+                self.is_red_hat = True
+
+    def is_red_hat_pkg(self):
+        return self.is_red_hat
+
+    def details_built(self):
+        details = self.details()
+        local_time = time.localtime(float(self.build_time))
+        details += " Built: %s" % time.strftime("%x %X",local_time)
+        return details
+
+    def details_install(self):
+        details = self.details()
+        local_time = time.localtime(float(self.install_time))
+        details += " Installed: %s" % time.strftime("%x %X",local_time)
+        return details
+
+    def details(self):
+        return "%s-%s-%s" % (self.name, self.version, self.release)
+
+class PkgInfoParseException(BaseException):
+    pass
