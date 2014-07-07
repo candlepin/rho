@@ -191,6 +191,7 @@ class ScriptRhoCmd(RhoCmd):
 class CpuRhoCmd(RhoCmd):
     name = "cpu"
     fields = {'cpu.count': _('number of processors'),
+              'cpu.socket_count': _('number of sockets'),
               'cpu.vendor_id': _("cpu vendor name"),
               'cpu.bogomips': _("bogomips"),
               'cpu.cpu_family': _("cpu family"),
@@ -198,7 +199,7 @@ class CpuRhoCmd(RhoCmd):
               'cpu.model_ver': _("cpu model version")}
 
     def __init__(self):
-        self.cmd_strings = ["cat /proc/cpuinfo"]
+        self.cmd_strings = ["cat /proc/cpuinfo", "dmidecode -t 4"]
         RhoCmd.__init__(self)
 
     def parse_data(self):
@@ -211,6 +212,8 @@ class CpuRhoCmd(RhoCmd):
             if line.find("processor") == 0:
                 cpu_count = cpu_count + 1
         data["cpu.count"] = cpu_count
+        data['cpu.socket_count'] = results[1][1] if results[1][1] else \
+        len(re.findall('Socket Designation', results[1][0]))
 
         cpu_dict = {}
         for line in results[0][0].splitlines():
@@ -396,8 +399,8 @@ class VirtRhoCmd(CpuRhoCmd):
 
     def _check_for_dev_kvm(self):
         dev_kvm = None
-        if self.cmd_results[4][0] and not self.cmd_results[4][1]:
-            dev_kvm = string.strip(self.cmd_results[4][0])
+        if self.cmd_results[5][0] and not self.cmd_results[5][1]:
+            dev_kvm = string.strip(self.cmd_results[5][0])
         if dev_kvm == "true":
             self.data["virt.type"] = "kvm"
             self.data["virt.virt"] = "virt-host"
@@ -408,8 +411,8 @@ class VirtRhoCmd(CpuRhoCmd):
 
     def _check_dmidecode(self):
         manuf = None
-        if self.cmd_results[1][0] and not self.cmd_results[1][1]:
-            manuf = string.strip(self.cmd_results[1][0])
+        if self.cmd_results[2][0] and not self.cmd_results[2][1]:
+            manuf = string.strip(self.cmd_results[2][0])
         if manuf:
             if manuf.find("VMware") > -1:
                 self.data["virt.type"] = "vmware"
@@ -427,7 +430,7 @@ class VirtRhoCmd(CpuRhoCmd):
         # It would be way cooler if we could poke the cpuid and see if
         # is a xen guest, but that requires a util to do it, and root
         # access.
-        if self.cmd_results[2][0] and not self.cmd_results[2][1]:
+        if self.cmd_results[3][0] and not self.cmd_results[3][1]:
             # is xend running? must be a xen host
             # ugly...
             self.data["virt.type"] = "xen"
@@ -438,16 +441,16 @@ class VirtRhoCmd(CpuRhoCmd):
         # Note: xen show "qemu" as cputype as well, so we do this
         # after looking at cpuinfo
 
-        if self.cmd_results[3][0] and not self.cmd_results[3][1]:
-            if string.strip(self.cmd_results[3][0]) == "true":
+        if self.cmd_results[4][0] and not self.cmd_results[4][1]:
+            if string.strip(self.cmd_results[4][0]) == "true":
                 self.data["virt.type"] = "xen"
                 self.data["virt.virt"] = "virt-guest"
 
     def _check_virt_what(self):
         result = False
-        if self.cmd_results[5][0] and not self.cmd_results[5][1]:
-            output = self.cmd_results[5][0].strip()
-            exitcode = int(self.cmd_results[6][0].strip())
+        if self.cmd_results[6][0] and not self.cmd_results[6][1]:
+            output = self.cmd_results[6][0].strip()
+            exitcode = int(self.cmd_results[7][0].strip())
             if exitcode == 0:
                 if output != "virt-what: this script must be run as root":
                     if output != "":
