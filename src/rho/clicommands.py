@@ -94,6 +94,16 @@ def get_password(for_username, env_var_to_check):
         password = getpass(_("Password for '%s':" % for_username))
     return password
 
+def _read_hosts_file(filename):
+    result = ""
+    try:
+        hosts = file(os.path.expanduser(os.path.expandvars(filename)))
+        result = hosts.readlines()
+        hosts.close()
+    except EnvironmentError, e:
+        sys.stderr.write('Error reading from %s: %s\n' % (filename, e))
+        hosts.close()
+    return result
 
 class OutputPrinter(object):
 
@@ -281,7 +291,6 @@ class CliCommand(object):
 
         if len(sys.argv) < 2:
             print(self.parser.error(_("Please enter at least 2 args")))
-
         if RHO_PASSWORD in os.environ:
             log.info("Using passphrase from %s environment variable." %
                      RHO_PASSWORD)
@@ -648,7 +657,9 @@ class ProfileEditCommand(CliCommand):
         self.parser.add_option("--range", dest="ranges", action="append",
                                metavar="RANGE", default=[],
                                help=_("IP range to scan. See 'man rho' for supported formats."))
-
+        self.parser.add_option("--hosts", dest="hosts", action="store",
+                               metavar="HOST", default='',
+                               help=_("File of hostnames to scan."))
         self.parser.add_option("--ports", dest="ports", metavar="PORTS",
                                help=_("list of ssh ports to try i.e. '22, 2222, 5402'")),
         self.parser.add_option("--auth", dest="auth", metavar="AUTH",
@@ -676,6 +687,9 @@ class ProfileEditCommand(CliCommand):
 
         if self.options.ranges:
             g.ranges = self.options.ranges
+
+        if self.options.hosts:
+           g.ranges += _read_hosts_file(self.options.hosts)
 
         if self.options.ports:
             g.ports = self.options.ports.strip().split(",")
@@ -759,7 +773,9 @@ class ProfileAddCommand(CliCommand):
         self.parser.add_option("--range", dest="ranges", action="append",
                                metavar="RANGE", default=[],
                                help=_("IP range to scan. See 'man rho' for supported formats."))
-
+        self.parser.add_option("--hosts", dest="hosts", action="store",
+                               metavar="HOST", default='',
+                               help=_("File of hostnames to scan."))
         self.parser.add_option("--ports", dest="ports", metavar="PORTS",
                                help=_("list of ssh ports to try i.e. '22, 2222, 5402'")),
         self.parser.add_option("--auth", dest="auth", metavar="AUTH",
@@ -783,6 +799,8 @@ class ProfileAddCommand(CliCommand):
         if self.options.ports:
             ports = self.options.ports.strip().split(",")
             self._validate_ports(ports)
+        if self.options.hosts:
+           self.options.ranges += _read_hosts_file(self.options.hosts)
 
         auth_names = []
         for auth in self.options.auth:
