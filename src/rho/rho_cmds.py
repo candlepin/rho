@@ -17,6 +17,8 @@ import xmlrpclib
 import xml
 
 import sys
+import time
+import re
 
 import gettext
 t = gettext.translation('rho', 'locale', fallback=True)
@@ -72,6 +74,16 @@ class RhoCmd(object):
 
         raise NotImplementedError
 
+# a RhoCmd subclass for commands that don't fit elsewhere
+class MiscRhoCmd(RhoCmd):
+    name = "misc"
+    cmd_strings = ['date']
+
+    fields = {'misc.date': _('date')}
+
+    def parse_data(self):
+
+        self.data['misc.date'] = self.cmd_results[0][0].strip()
 
 class UnameRhoCmd(RhoCmd):
     name = "uname"
