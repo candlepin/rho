@@ -349,7 +349,8 @@ class ScanCommand(CliCommand):
                                help=_("show fields available for reports"))
         self.parser.add_option("--hosts", dest="hosts", action="store",
                                metavar="HOSTS",
-                               help=_("File of hostnames to scan."))
+                               help=_("File of hostnames to scan."),
+                               default="")
         self.parser.add_option("--report-format", dest="reportformat",
                                metavar="REPORTFORMAT",
                                help=_("specify report format (see --show-fields for options)"))
