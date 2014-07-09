@@ -344,7 +344,8 @@ class VirtRhoCmd(CpuRhoCmd):
     # try to determine if we are a virt guest, a host, or bare metal
     name = "virt"
     fields = {'virt.virt': _("If a host is a virt guest, host, or bare metal"),
-              'virt.type': _("What type of virtualization a system is running")}
+              'virt.type': _("What type of virtualization a system is running"),
+              'virt.num_guests': _("The number of virtualized guests")}
 
     def __init__(self):
         CpuRhoCmd.__init__(self)
@@ -354,13 +355,15 @@ class VirtRhoCmd(CpuRhoCmd):
                                  cmd_template % "/proc/xen/privcmd",
                                  cmd_template % "/dev/kvm",
                                  "virt-what",
-                                 "echo $?"]
+                                 "echo $?",
+                                 "virsh list --all"]
                                  )
 
     def parse_data(self):
         self.data["virt.virt"] = ""
         self.data["virt.type"] = ""
         # Run virt-what and return if it was successful
+        self._num_guests()
         if not self._check_virt_what():
             # check /proc/cpuinfo to see if we are Qemu/kvm
             self._check_cpuinfo_for_qemu()
@@ -375,7 +378,7 @@ class VirtRhoCmd(CpuRhoCmd):
             self._check_for_xen()
             # see if we are running xend...
             self._check_for_xend()
-
+        
 
     # We are going to try a variety of hacks and kluges to see if we are virt,
     # and if so, what kind. Mainly looking for xen/kvm here, but if anything else
@@ -462,6 +465,13 @@ class VirtRhoCmd(CpuRhoCmd):
                         self.data["virt.virt"] = "virt-host"
         return result
 
+    def _num_guests(self):
+        if self.cmd_results[8][0] and not self.cmd_results[8][1]:
+            # we want to remove the title and seperator lines of virsh output
+            output = self.cmd_results[8][0].strip().split('\n')[2:]
+            self.data["virt.num_guests"] = len(output)
+        else:
+            self.data["virt.num_guests"] = 0
 
 # the list of commands to run on each host
 class RhoCmdList(object):
@@ -469,6 +479,7 @@ class RhoCmdList(object):
     def __init__(self):
         self.cmds = {}
         self.cmds['uname'] = UnameRhoCmd()
+
 
 def default_cmds():
     return filter(is_rho_cmd, list(sys.modules[__name__].__dict__.values()))
@@ -478,6 +489,7 @@ def is_rho_cmd(clazz):
     return isinstance(clazz, type) and \
         issubclass(clazz, sys.modules[__name__].RhoCmd) and \
         clazz.name not in NONDEFAULT_CMDS
+
 
 class PkgInfo(object):
     def __init__(self, row, separator='|'):
