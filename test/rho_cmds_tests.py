@@ -103,3 +103,22 @@ class TestDmiRhoCmd(_TestRhoCmd):
     def test_dmi_decode(self):
         self.rho_cmd.populate_data(self.out)
         print self.rho_cmd.data
+
+class TestRedHatPackagesRhoCmd(_TestRhoCmd):
+    cmd_class = rho_cmds.RedhatPackagesRhoCmd
+
+    def test_is_red_hat(self):
+        self.rho_cmd.populate_data(self.out)
+        print "redhat-packages.is_redhat: %(redhat-packages.is_redhat)s" % self.rho_cmd.data
+
+    def test_ratio(self):
+        self.rho_cmd.populate_data(self.out)
+        print "redhat-packages.ratio: %(redhat-packages.ratio)s" % self.rho_cmd.data
+
+    def test_last_installed(self):
+        self.rho_cmd.populate_data(self.out)
+        print "redhat-packages.last_installed: %(redhat-packages.last_installed)s" % self.rho_cmd.data
+
+    def test_last_built(self):
+        self.rho_cmd.populate_data(self.out)
+        print "redhat-packages.last_built: %(redhat-packages.last_built)s" % self.rho_cmd.data
