@@ -370,7 +370,8 @@ class VirtRhoCmd(CpuRhoCmd):
     name = "virt"
     fields = {'virt.virt': _("If a host is a virt guest, host, or bare metal"),
               'virt.type': _("What type of virtualization a system is running"),
-              'virt.num_guests': _("The number of virtualized guests")}
+              'virt.num_guests': _("The number of virtualized guests"),
+              'virt.num_running_guests': _("The number of running virtualized guests")}
 
     def __init__(self):
         CpuRhoCmd.__init__(self)
@@ -379,10 +380,9 @@ class VirtRhoCmd(CpuRhoCmd):
                                  "ps aux | grep xend | grep -v grep",
                                  cmd_template % "/proc/xen/privcmd",
                                  cmd_template % "/dev/kvm",
-                                 "virt-what",
-                                 "echo $?",
-                                 "virsh list --all"]
-                                 )
+                                 "virsh -c qemu:///system --readonly list --all",
+                                 "virsh -c qemu:///system --readonly list --uuid"]
+                                )
 
     def parse_data(self):
         self.data["virt.virt"] = ""
@@ -484,6 +484,13 @@ class VirtRhoCmd(CpuRhoCmd):
             self.data["virt.num_guests"] = len(output)
         else:
             self.data["virt.num_guests"] = 0
+
+    def _num_running_guests(self):
+        if self.cmd_resutls[9][0] and not self.cmd_results[9][1]:
+            self.data['virt.num_running_guests'] = len(self.cmd_results[9][0].strip())
+        else:
+            self.data['virt.num_running_guests'] = 0
+
 
 # the list of commands to run on each host
 class RhoCmdList(object):
