@@ -56,6 +56,11 @@ class TestScriptRhoCmd(_TestRhoCmd):
         self.rho_cmd = self.cmd_class(command="ls -rho /tmp")
         self.out = self._run_cmds()
 
+class TestVirtWhatRhoCmd(_TestRhoCmd):
+    cmd_class = rho_cmds.VirtWhatRhoCmd
+
+    def test_virt_what_smoke(self):
+        self.rho_cmd.populate_data(self.out)
 
 class TestVirtRhoCmd(_TestRhoCmd):
     # this is all dependent on system level stuff, so hard to
