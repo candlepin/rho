@@ -343,6 +343,28 @@ class DmiRhoCmd(RhoCmd):
             self.data['dmi.processor-family'] = string.strip(self.cmd_results[3][0])
 
 
+class VirtWhatRhoCmd(RhoCmd):
+    name = "virt-what"
+    fields = {'virt-what.type': _("What type of virtualization a system is running, as determined by virt-what")}
+
+    def __init__(self):
+        self.cmd_strings = ["virt-what;echo $?"]
+
+        RhoCmd.__init__(self)
+
+    def parse_data(self):
+        if self.cmd_results[0][0] and not self.cmd_results[0][1]:
+            results = [line for line in self.cmd_results[0][0].strip().split('\n')]
+            error = int(results[-1:])
+            virt_what_output = results[:len(results)-1]
+            if error == 0:
+                if len(virt_what_output) > 0:
+                    # quote the results and join on ',' as virt-what can return multiple values
+                    self.data['virt-what.type'] = '"%s"' % ",".join(virt_what_output)
+                else:
+                    self.data['virt-what.type'] = "bare metal"
+
+
 class VirtRhoCmd(CpuRhoCmd):
     # try to determine if we are a virt guest, a host, or bare metal
     name = "virt"
@@ -365,23 +387,26 @@ class VirtRhoCmd(CpuRhoCmd):
     def parse_data(self):
         self.data["virt.virt"] = ""
         self.data["virt.type"] = ""
-        # Run virt-what and return if it was successful
-        self._num_guests()
-        if not self._check_virt_what():
-            # check /proc/cpuinfo to see if we are Qemu/kvm
-            self._check_cpuinfo_for_qemu()
 
-            self._check_for_dev_kvm()
-            # run dmidecode again, see what system-manufacturer is and
-            # and if know it (also, check to see if dmidecode fails, like it
-            # will for non root)
-            self._check_dmidecode()
-            # look for xen files (proc/xen/privcmd, /proc/xen/capabilities)
-            #
-            self._check_for_xen()
-            # see if we are running xend...
-            self._check_for_xend()
-        
+        # calculate number of guests
+        self._num_guests()
+
+        # calculate number of running guests
+        self._num_running_guests()
+
+        # check /proc/cpuinfo to see if we are Qemu/kvm
+        self._check_cpuinfo_for_qemu()
+
+        self._check_for_dev_kvm()
+        # run dmidecode again, see what system-manufacturer is and
+        # and if know it (also, check to see if dmidecode fails, like it
+        # will for non root)
+        self._check_dmidecode()
+        # look for xen files (proc/xen/privcmd, /proc/xen/capabilities)
+        #
+        self._check_for_xen()
+        # see if we are running xend...
+        self._check_for_xend()
 
     # We are going to try a variety of hacks and kluges to see if we are virt,
     # and if so, what kind. Mainly looking for xen/kvm here, but if anything else
@@ -451,22 +476,6 @@ class VirtRhoCmd(CpuRhoCmd):
             if string.strip(self.cmd_results[4][0]) == "true":
                 self.data["virt.type"] = "xen"
                 self.data["virt.virt"] = "virt-guest"
-
-    def _check_virt_what(self):
-        result = False
-        if self.cmd_results[6][0] and not self.cmd_results[6][1]:
-            output = self.cmd_results[6][0].strip()
-            exitcode = int(self.cmd_results[7][0].strip())
-            if exitcode == 0:
-                if output != "virt-what: this script must be run as root":
-                    if output != "":
-                        self.data["virt.type"] = output
-                        self.data["virt.virt"] = "virt-guest"
-                        result = True
-                    else:
-                        self.data["virt.type"] = "unknown"
-                        self.data["virt.virt"] = "virt-host"
-        return result
 
     def _num_guests(self):
         if self.cmd_results[8][0] and not self.cmd_results[8][1]:
