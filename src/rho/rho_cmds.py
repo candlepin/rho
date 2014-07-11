@@ -71,16 +71,17 @@ class RhoCmd(object):
 
         raise NotImplementedError
 
-# a RhoCmd subclass for commands that don't fit elsewhere
-class MiscRhoCmd(RhoCmd):
-    name = "misc"
+
+class DateRhoCmd(RhoCmd):
+    name = "date"
     cmd_strings = ['date']
 
-    fields = {'misc.date': _('date')}
+    fields = {'date.date': _('date')}
 
     def parse_data(self):
 
-        self.data['misc.date'] = self.cmd_results[0][0].strip()
+        self.data['date.date'] = self.cmd_results[0][0].strip()
+
 
 class UnameRhoCmd(RhoCmd):
     name = "uname"
