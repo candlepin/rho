@@ -26,7 +26,7 @@ class Scanner(object):
         self.cache = cache
         self.allow_agent = allow_agent
 
-        self.default_rho_cmd_classes = rho_cmds.default_cmds()  # loads RhoCmd subclasses from the rho_cmds module
+        self.default_rho_cmd_classes = rho_cmds.DEFAULT_CMDS
         self.ssh_jobs = ssh_jobs.SshJobs()
         self.output = []
 

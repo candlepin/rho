@@ -40,9 +40,6 @@ _ = t.ugettext
 # everything as strings, since the primary target seems to be csv
 # output.
 
-# any command in this list will not be automatically added to the default list of commands
-NONDEFAULT_CMDS = ['base', 'file', 'script']
-
 class RhoCmd(object):
     name = "base"
     fields = {}
@@ -480,15 +477,20 @@ class RhoCmdList(object):
         self.cmds = {}
         self.cmds['uname'] = UnameRhoCmd()
 
-
-def default_cmds():
-    return filter(is_rho_cmd, list(sys.modules[__name__].__dict__.values()))
-
-# essentially from rho cli. Determines if a given class is an RhoCmd that we want as a default
-def is_rho_cmd(clazz):
-    return isinstance(clazz, type) and \
-        issubclass(clazz, sys.modules[__name__].RhoCmd) and \
-        clazz.name not in NONDEFAULT_CMDS
+# List of default commands
+DEFAULT_CMDS = [UnameRhoCmd,
+                RedhatReleaseRhoCmd,
+                InstnumRhoCmd,
+                SystemIdRhoCmd,
+                CpuRhoCmd,
+                EtcReleaseRhoCmd,
+                EtcIssueRhoCmd,
+                DmiRhoCmd,
+                VirtRhoCmd,
+                RedhatPackagesRhoCmd,
+                VirtWhatRhoCmd,
+                DateRhoCmd
+                ]
 
 
 class PkgInfo(object):
