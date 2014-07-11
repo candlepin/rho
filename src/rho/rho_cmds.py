@@ -103,9 +103,10 @@ class UnameRhoCmd(RhoCmd):
         if not self.cmd_results[3][1]:
             self.data['uname.hardware_platform'] = self.cmd_results[5][0].strip()
 
+
 class RedhatPackagesRhoCmd(RhoCmd):
     name = "redhat-packages"
-    cmd_strings = ['rpm -qa --qf "%{NAME}|%{VERSION}|%{RELEASE}|%{INSTALLTIME}|%{VENDOR}|%{BUILDTIME}|%{BUILDHOST}|%{SOURCERPM}|%{LICENSE}|%{PACKAGER}\n"']
+    cmd_strings = ['rpm -qa --qf "%{NAME}|%{VERSION}|%{RELEASE}|%{INSTALLTIME}|%{VENDOR}|%{BUILDTIME}|%{BUILDHOST}|%{SOURCERPM}|%{LICENSE}|%{PACKAGER}|%{INSTALLTIME:date}|%{BUILDTIME:date}\n"']
     fields = {'redhat-packages.is_redhat': _('Whether or not the system has any Red Hat packages installed (Y/N)'),
               'redhat-packages.ratio': _('The ratio of Red Hat packages over total installed pacakges.'),
               'redhat-packages.last_installed': _('Details of the last installed Red Hat package.'),
@@ -510,6 +511,8 @@ class PkgInfo(object):
             self.source_rpm = cols[7]
             self.license = cols[8]
             self.packager = cols[9]
+            self.install_date = cols[10]
+            self.build_date = cols[11]
             self.is_red_hat = False
             if ('redhat.com' in self.build_host and
             'fedora' not in self.build_host and
@@ -520,16 +523,10 @@ class PkgInfo(object):
         return self.is_red_hat
 
     def details_built(self):
-        details = self.details()
-        local_time = time.localtime(float(self.build_time))
-        details += " Built: %s" % time.strftime("%x %X",local_time)
-        return details
+        return "%s Built: %s" % (self.details(), self.build_date)
 
     def details_install(self):
-        details = self.details()
-        local_time = time.localtime(float(self.install_time))
-        details += " Installed: %s" % time.strftime("%x %X",local_time)
-        return details
+        return "%s Installed: %s" % (self.details(), self.install_date)
 
     def details(self):
         return "%s-%s-%s" % (self.name, self.version, self.release)
