@@ -16,8 +16,6 @@ import xmlrpclib
 # for expat exceptions...
 import xml
 
-import sys
-import time
 import re
 
 import gettext
@@ -123,14 +121,15 @@ class RedhatPackagesRhoCmd(RhoCmd):
             return
         installed_packages = [PkgInfo(line) for line in self.cmd_results[0][0].splitlines()]
         rh_packages = filter(PkgInfo.is_red_hat_pkg, installed_packages)
-        last_installed = max(rh_packages, key= lambda x: x.install_time)
-        last_built = max(rh_packages, key= lambda x: x.build_time)
+        last_installed = max(rh_packages, key=lambda x: x.install_time)
+        last_built = max(rh_packages, key=lambda x: x.build_time)
         is_red_hat = "Y" if len(rh_packages) > 0 else "N"
         self.data['redhat-packages.is_redhat'] = is_red_hat
         self.data['redhat-packages.num_rh_packages'] = len(rh_packages)
         self.data['redhat-packages.num_installed_packages'] = len(installed_packages)
         self.data['redhat-packages.last_installed'] = last_installed.details_install()
         self.data['redhat-packages.last_built'] = last_built.details_built()
+
 
 class RedhatReleaseRhoCmd(RhoCmd):
     name = "redhat-release"
@@ -217,7 +216,7 @@ class CpuRhoCmd(RhoCmd):
                 cpu_count = cpu_count + 1
         data["cpu.count"] = cpu_count
         data['cpu.socket_count'] = results[1][1] if results[1][1] else \
-        len(re.findall('Socket Designation', results[1][0]))
+            len(re.findall('Socket Designation', results[1][0]))
 
         cpu_dict = {}
         for line in results[0][0].splitlines():
@@ -520,8 +519,8 @@ class PkgInfo(object):
             self.build_date = cols[11]
             self.is_red_hat = False
             if ('redhat.com' in self.build_host and
-            'fedora' not in self.build_host and
-            'rhndev' not in self.build_host):
+                    'fedora' not in self.build_host and
+                    'rhndev' not in self.build_host):
                 self.is_red_hat = True
 
     def is_red_hat_pkg(self):
@@ -535,6 +534,7 @@ class PkgInfo(object):
 
     def details(self):
         return "%s-%s-%s" % (self.name, self.version, self.release)
+
 
 class PkgInfoParseException(BaseException):
     pass
