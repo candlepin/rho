@@ -108,22 +108,27 @@ class RedhatPackagesRhoCmd(RhoCmd):
     name = "redhat-packages"
     cmd_strings = ['rpm -qa --qf "%{NAME}|%{VERSION}|%{RELEASE}|%{INSTALLTIME}|%{VENDOR}|%{BUILDTIME}|%{BUILDHOST}|%{SOURCERPM}|%{LICENSE}|%{PACKAGER}|%{INSTALLTIME:date}|%{BUILDTIME:date}\n"']
     fields = {'redhat-packages.is_redhat': _('Whether or not the system has any Red Hat packages installed (Y/N)'),
-              'redhat-packages.ratio': _('The ratio of Red Hat packages over total installed pacakges.'),
+              'redhat-packages.num_rh_packages': _('The number of Red Hat packages installed.'),
+              'redhat-packages.num_installed_packages': _("The total number of installed packages."),
               'redhat-packages.last_installed': _('Details of the last installed Red Hat package.'),
               'redhat-packages.last_built': _('Details of the last built Red Hat package.')}
 
     def parse_data(self):
         if self.cmd_results[0][1]:
-            self.data = {key: 'error' for key in fields.keys()}
+            self.data['redhat-packages.is_redhat'] = "error"
+            self.data['redhat-packages.num_rh_packages'] = "error"
+            self.data['redhat-packages.num_installed_packages'] = "error"
+            self.data['redhat-packages.last_installed'] = "error"
+            self.data['redhat-packages.last_built'] = "error"
             return
         installed_packages = [PkgInfo(line) for line in self.cmd_results[0][0].splitlines()]
         rh_packages = filter(PkgInfo.is_red_hat_pkg, installed_packages)
         last_installed = max(rh_packages, key= lambda x: x.install_time)
         last_built = max(rh_packages, key= lambda x: x.build_time)
         is_red_hat = "Y" if len(rh_packages) > 0 else "N"
-        rhpkgs = "%s/%s" % (len(rh_packages), len(installed_packages))
         self.data['redhat-packages.is_redhat'] = is_red_hat
-        self.data['redhat-packages.ratio'] = rhpkgs
+        self.data['redhat-packages.num_rh_packages'] = len(rh_packages)
+        self.data['redhat-packages.num_installed_packages'] = len(installed_packages)
         self.data['redhat-packages.last_installed'] = last_installed.details_install()
         self.data['redhat-packages.last_built'] = last_built.details_built()
 
