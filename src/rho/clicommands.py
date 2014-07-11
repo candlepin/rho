@@ -463,7 +463,7 @@ class ScanCommand(CliCommand):
             # the same
             self.options.auth = ["clioptions"]
 
-        if self.options.hosts:    
+        if self.options.hosts:
             self.options.ranges += _read_hosts_file(self.options.hosts)
         # this is all temporary, but make the tests pass
         if len(self.options.ranges) > 0:
