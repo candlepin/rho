@@ -121,7 +121,5 @@ class CliCommandsTests(unittest.TestCase):
                            '--username=bob'])
 
     def test_scan_show_fields(self):
-        try:
-            self._run_test(ScanCommand(), ['scan', '--show-fields'])
-        except SystemExit:
-            pass
+            self.assertRaises(SystemExit, self._run_test, ScanCommand(),
+                              ['scan', '--show-fields'])
