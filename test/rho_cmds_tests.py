@@ -95,7 +95,7 @@ class TestDateRhoCmd(_TestRhoCmd):
 
     def test_date(self):
         self.rho_cmd.populate_data(self.out)
-        print "date.date: %(date.date)" % self.rho_cmd.data
+        print "date.date: %(date.date)s" % self.rho_cmd.data
 
 class TestDmiRhoCmd(_TestRhoCmd):
     cmd_class = rho_cmds.DmiRhoCmd
@@ -111,9 +111,13 @@ class TestRedHatPackagesRhoCmd(_TestRhoCmd):
         self.rho_cmd.populate_data(self.out)
         print "redhat-packages.is_redhat: %(redhat-packages.is_redhat)s" % self.rho_cmd.data
 
-    def test_ratio(self):
+    def test_num_rh_packages(self):
         self.rho_cmd.populate_data(self.out)
-        print "redhat-packages.ratio: %(redhat-packages.ratio)s" % self.rho_cmd.data
+        print "redhat-packages.num_rh_packages: %(redhat-packages.num_rh_packages)s" % self.rho_cmd.data
+
+    def test_num_installed_packages(self):
+        self.rho_cmd.populate_data(self.out)
+        print "redhat-packages.num_installed_packages: %(redhat-packages.num_installed_packages)s" % self.rho_cmd.data
 
     def test_last_installed(self):
         self.rho_cmd.populate_data(self.out)
