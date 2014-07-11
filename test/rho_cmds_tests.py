@@ -86,6 +86,16 @@ class TestCpuCmd(_TestRhoCmd):
         self.rho_cmd.populate_data(self.out)
         print "cpu.vendor_id: %(cpu.vendor_id)s" % self.rho_cmd.data
 
+    def test_cpu_socket_count(self):
+        self.rho_cmd.populate_data(self.out)
+        print "cpu.socket_count: %(cpu.socket_count)s" % self.rho_cmd.data
+
+class TestDateRhoCmd(_TestRhoCmd):
+    cmd_class = rho_cmds.DateRhoCmd
+
+    def test_date(self):
+        self.rho_cmd.populate_data(self.out)
+        print "date.date: %(date.date)" % self.rho_cmd.data
 
 class TestDmiRhoCmd(_TestRhoCmd):
     cmd_class = rho_cmds.DmiRhoCmd
