@@ -119,7 +119,7 @@ class RedhatPackagesRhoCmd(RhoCmd):
             self.data['redhat-packages.last_installed'] = "error"
             self.data['redhat-packages.last_built'] = "error"
             return
-        installed_packages = [PkgInfo(line) for line in self.cmd_results[0][0].splitlines()]
+        installed_packages = [PkgInfo(line, "|") for line in self.cmd_results[0][0].splitlines()]
         rh_packages = filter(PkgInfo.is_red_hat_pkg, installed_packages)
         last_installed = max(rh_packages, key=lambda x: x.install_time)
         last_built = max(rh_packages, key=lambda x: x.build_time)
@@ -500,7 +500,7 @@ DEFAULT_CMDS = [UnameRhoCmd,
 
 
 class PkgInfo(object):
-    def __init__(self, row, separator='|'):
+    def __init__(self, row, separator):
         cols = row.split(separator)
         if len(cols) < 10:
             raise PkgInfoParseException()
