@@ -61,7 +61,7 @@ class CliCommandsTests(unittest.TestCase):
                                              "profilename"])
 
     def test_profile_add_hosts(self):
-        file("./test/add_hosts_test", "w").write("localhost,localhost")
+        open("./test/add_hosts_test", "w").write("localhost,localhost")
         self._run_test(ProfileAddCommand(), ["profile", "add", "--name",
                                              "profilename", "--hosts",
                                              "./test/add_hosts_test"])
