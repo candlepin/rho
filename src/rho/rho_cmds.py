@@ -478,16 +478,16 @@ class VirtRhoCmd(CpuRhoCmd):
                 self.data["virt.virt"] = "virt-guest"
 
     def _num_guests(self):
-        if self.cmd_results[8][0] and not self.cmd_results[8][1]:
+        if self.cmd_results[6][0] and not self.cmd_results[6][1]:
             # we want to remove the title and seperator lines of virsh output
-            output = self.cmd_results[8][0].strip().split('\n')[2:]
+            output = self.cmd_results[6][0].strip().split('\n')[2:]
             self.data["virt.num_guests"] = len(output)
         else:
             self.data["virt.num_guests"] = 0
 
     def _num_running_guests(self):
-        if self.cmd_resutls[9][0] and not self.cmd_results[9][1]:
-            self.data['virt.num_running_guests'] = len(self.cmd_results[9][0].strip())
+        if self.cmd_results[7][0] and not self.cmd_results[7][1]:
+            self.data['virt.num_running_guests'] = len(self.cmd_results[7][0].strip())
         else:
             self.data['virt.num_running_guests'] = 0
 
