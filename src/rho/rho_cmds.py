@@ -355,7 +355,7 @@ class VirtWhatRhoCmd(RhoCmd):
     def parse_data(self):
         if self.cmd_results[0][0] and not self.cmd_results[0][1]:
             results = [line for line in self.cmd_results[0][0].strip().split('\n')]
-            error = int(results[-1:])
+            error = int(results[-1:][0])
             virt_what_output = results[:len(results)-1]
             if error == 0:
                 if len(virt_what_output) > 0:
