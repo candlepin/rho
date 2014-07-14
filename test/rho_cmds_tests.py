@@ -2,6 +2,8 @@
 
 import subprocess
 import unittest
+# to check if root
+import os
 
 from rho import rho_cmds
 
@@ -69,6 +71,12 @@ class TestVirtRhoCmd(_TestRhoCmd):
 
     def test_virt_smoke(self):
         self.rho_cmd.populate_data(self.out)
+
+# Only add this test if run as root
+if os.geteuid() == 0:
+    # smoke test Subman Facts using inherited test_data method
+    class TestSubmanFactsRhoCmd(_TestRhoCmd):
+        cmd_class = rho_cmds.SubmanFactsRhoCmd
 
 
 class TestCpuCmd(_TestRhoCmd):

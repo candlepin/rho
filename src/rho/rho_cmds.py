@@ -102,6 +102,31 @@ class UnameRhoCmd(RhoCmd):
             self.data['uname.hardware_platform'] = self.cmd_results[5][0].strip()
 
 
+class SubmanFactsRhoCmd(RhoCmd):
+    name = "subscription-manager"
+    cmd_strings = ['subscription-manager facts --list', 'ls /etc/rhsm/facts | grep .facts']
+    fields = {'subman.cpu.core(s)_per_socket': _('cpu.core(s)_per_socket (from subscription-manager facts --list)'),
+              'subman.cpu.cpu(s)': _('cpu.cpu(s) (from subscription-manager facts --list)'),
+              'subman.cpu.cpu_socket(s)': _('cpu.cpu_socket(s) (from subscription-manager facts --list)'),
+              'subman.virt.host_type': _('virt.host_type (from subscription-manager facts --list)'),
+              'subman.virt.is_guest': _('virt.is_guest (from subscription-manager facts --list)'),
+              'subman.has_facts_file': _('Whether subscription-manager has a facts file')}
+
+    def parse_data(self):
+
+        # adds the facts returned by subscription-manager facts --list that are in SubmanFactsRhoCmd.fields to self.data
+        if self.cmd_results[0][0] and not self.cmd_results[0][1]:
+            result = self.cmd_results[0][0].strip()
+            result = [line.split(': ') for line in result.splitlines()]
+            subman_facts = [("subman.%s" % field, value) for field, value in result if "subman.%s" % field in SubmanFactsRhoCmd.fields.keys()]
+            self.data.update(subman_facts)
+
+        # Checks for the existance of at least one .facts file in /etc/rhsm/facts
+        if self.cmd_results[1][0] and not self.cmd_results[1][1]:
+            fact_files_list = self.cmd_results[1][0].strip().split('\n')
+            self.data['subman.has_facts_file'] = "Y" if len(fact_files_list) > 0 else "N"
+
+
 class RedhatPackagesRhoCmd(RhoCmd):
     name = "redhat-packages"
     cmd_strings = ['rpm -qa --qf "%{NAME}|%{VERSION}|%{RELEASE}|%{INSTALLTIME}|%{VENDOR}|%{BUILDTIME}|%{BUILDHOST}|%{SOURCERPM}|%{LICENSE}|%{PACKAGER}|%{INSTALLTIME:date}|%{BUILDTIME:date}\n"']
@@ -511,7 +536,8 @@ DEFAULT_CMDS = [UnameRhoCmd,
                 VirtRhoCmd,
                 RedhatPackagesRhoCmd,
                 VirtWhatRhoCmd,
-                DateRhoCmd
+                DateRhoCmd,
+                SubmanFactsRhoCmd
                 ]
 
 
