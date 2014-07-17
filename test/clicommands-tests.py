@@ -60,6 +60,13 @@ class CliCommandsTests(unittest.TestCase):
         self._run_test(ProfileAddCommand(), ["profile", "add", "--name",
                                              "profilename"])
 
+    def test_profile_add_hosts(self):
+        open("./test/add_hosts_test", "w").write("localhost,localhost")
+        self._run_test(ProfileAddCommand(), ["profile", "add", "--name",
+                                             "profilename", "--hosts",
+                                             "./test/add_hosts_test"])
+        os.remove("./test/add_hosts_test")
+
     def test_profile_add_duplicate(self):
         self.test_profile_add()
         self.assertRaises(SystemExit, self.test_profile_add)
@@ -79,7 +86,7 @@ class CliCommandsTests(unittest.TestCase):
                                           "--username=bill"])
         self._run_test(ProfileAddCommand(), ["profile", "add", "--name",
                                              "profilename", "--auth=bill"])
-        self._run_test(ProfileClearCommand(), ["auth", "clear", "--name=bill"])
+        self._run_test(AuthClearCommand(), ["auth", "clear", "--name=bill"])
         self._run_test(DumpConfigCommand(), ["dumpconfig"])
 
     def test_auth_add_duplicate(self):
@@ -114,4 +121,5 @@ class CliCommandsTests(unittest.TestCase):
                            '--username=bob'])
 
     def test_scan_show_fields(self):
-        self._run_test(ScanCommand(), ['scan', '--show-fields'])
+            self.assertRaises(SystemExit, self._run_test, ScanCommand(),
+                              ['scan', '--show-fields'])

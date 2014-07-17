@@ -2,6 +2,8 @@
 
 import subprocess
 import unittest
+# to check if root
+import os
 
 from rho import rho_cmds
 
@@ -56,6 +58,11 @@ class TestScriptRhoCmd(_TestRhoCmd):
         self.rho_cmd = self.cmd_class(command="ls -rho /tmp")
         self.out = self._run_cmds()
 
+class TestVirtWhatRhoCmd(_TestRhoCmd):
+    cmd_class = rho_cmds.VirtWhatRhoCmd
+
+    def test_virt_what_smoke(self):
+        self.rho_cmd.populate_data(self.out)
 
 class TestVirtRhoCmd(_TestRhoCmd):
     # this is all dependent on system level stuff, so hard to
@@ -64,6 +71,12 @@ class TestVirtRhoCmd(_TestRhoCmd):
 
     def test_virt_smoke(self):
         self.rho_cmd.populate_data(self.out)
+
+# Only add this test if run as root
+if os.geteuid() == 0:
+    # smoke test Subman Facts using inherited test_data method
+    class TestSubmanFactsRhoCmd(_TestRhoCmd):
+        cmd_class = rho_cmds.SubmanFactsRhoCmd
 
 
 class TestCpuCmd(_TestRhoCmd):
@@ -81,6 +94,16 @@ class TestCpuCmd(_TestRhoCmd):
         self.rho_cmd.populate_data(self.out)
         print "cpu.vendor_id: %(cpu.vendor_id)s" % self.rho_cmd.data
 
+    def test_cpu_socket_count(self):
+        self.rho_cmd.populate_data(self.out)
+        print "cpu.socket_count: %(cpu.socket_count)s" % self.rho_cmd.data
+
+class TestDateRhoCmd(_TestRhoCmd):
+    cmd_class = rho_cmds.DateRhoCmd
+
+    def test_date(self):
+        self.rho_cmd.populate_data(self.out)
+        print "date.date: %(date.date)s" % self.rho_cmd.data
 
 class TestDmiRhoCmd(_TestRhoCmd):
     cmd_class = rho_cmds.DmiRhoCmd
@@ -88,3 +111,26 @@ class TestDmiRhoCmd(_TestRhoCmd):
     def test_dmi_decode(self):
         self.rho_cmd.populate_data(self.out)
         print self.rho_cmd.data
+
+class TestRedHatPackagesRhoCmd(_TestRhoCmd):
+    cmd_class = rho_cmds.RedhatPackagesRhoCmd
+
+    def test_is_red_hat(self):
+        self.rho_cmd.populate_data(self.out)
+        print "redhat-packages.is_redhat: %(redhat-packages.is_redhat)s" % self.rho_cmd.data
+
+    def test_num_rh_packages(self):
+        self.rho_cmd.populate_data(self.out)
+        print "redhat-packages.num_rh_packages: %(redhat-packages.num_rh_packages)s" % self.rho_cmd.data
+
+    def test_num_installed_packages(self):
+        self.rho_cmd.populate_data(self.out)
+        print "redhat-packages.num_installed_packages: %(redhat-packages.num_installed_packages)s" % self.rho_cmd.data
+
+    def test_last_installed(self):
+        self.rho_cmd.populate_data(self.out)
+        print "redhat-packages.last_installed: %(redhat-packages.last_installed)s" % self.rho_cmd.data
+
+    def test_last_built(self):
+        self.rho_cmd.populate_data(self.out)
+        print "redhat-packages.last_built: %(redhat-packages.last_built)s" % self.rho_cmd.data

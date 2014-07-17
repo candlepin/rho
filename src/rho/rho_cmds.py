@@ -16,6 +16,8 @@ import xmlrpclib
 # for expat exceptions...
 import xml
 
+import re
+
 import gettext
 t = gettext.translation('rho', 'locale', fallback=True)
 _ = t.ugettext
@@ -35,7 +37,6 @@ _ = t.ugettext
 # I'd like to try to avoid type'ing the data fields and just treating
 # everything as strings, since the primary target seems to be csv
 # output.
-
 
 class RhoCmd(object):
     name = "base"
@@ -69,6 +70,17 @@ class RhoCmd(object):
         raise NotImplementedError
 
 
+class DateRhoCmd(RhoCmd):
+    name = "date"
+    cmd_strings = ['date']
+
+    fields = {'date.date': _('date')}
+
+    def parse_data(self):
+
+        self.data['date.date'] = self.cmd_results[0][0].strip()
+
+
 class UnameRhoCmd(RhoCmd):
     name = "uname"
     cmd_strings = ["uname -s", "uname -n", "uname -p", "uname -r", "uname -a", "uname -i"]
@@ -88,6 +100,60 @@ class UnameRhoCmd(RhoCmd):
         self.data['uname.all'] = self.cmd_results[4][0].strip()
         if not self.cmd_results[3][1]:
             self.data['uname.hardware_platform'] = self.cmd_results[5][0].strip()
+
+
+class SubmanFactsRhoCmd(RhoCmd):
+    name = "subscription-manager"
+    cmd_strings = ['subscription-manager facts --list', 'ls /etc/rhsm/facts | grep .facts']
+    fields = {'subman.cpu.core(s)_per_socket': _('cpu.core(s)_per_socket (from subscription-manager facts --list)'),
+              'subman.cpu.cpu(s)': _('cpu.cpu(s) (from subscription-manager facts --list)'),
+              'subman.cpu.cpu_socket(s)': _('cpu.cpu_socket(s) (from subscription-manager facts --list)'),
+              'subman.virt.host_type': _('virt.host_type (from subscription-manager facts --list)'),
+              'subman.virt.is_guest': _('virt.is_guest (from subscription-manager facts --list)'),
+              'subman.has_facts_file': _('Whether subscription-manager has a facts file')}
+
+    def parse_data(self):
+
+        # adds the facts returned by subscription-manager facts --list that are in SubmanFactsRhoCmd.fields to self.data
+        if self.cmd_results[0][0] and not self.cmd_results[0][1]:
+            result = self.cmd_results[0][0].strip()
+            result = [line.split(': ') for line in result.splitlines()]
+            subman_facts = [("subman.%s" % field, value) for field, value in result if "subman.%s" % field in SubmanFactsRhoCmd.fields.keys()]
+            self.data.update(subman_facts)
+
+        # Checks for the existance of at least one .facts file in /etc/rhsm/facts
+        if self.cmd_results[1][0] and not self.cmd_results[1][1]:
+            fact_files_list = self.cmd_results[1][0].strip().split('\n')
+            self.data['subman.has_facts_file'] = "Y" if len(fact_files_list) > 0 else "N"
+
+
+class RedhatPackagesRhoCmd(RhoCmd):
+    name = "redhat-packages"
+    cmd_strings = ['rpm -qa --qf "%{NAME}|%{VERSION}|%{RELEASE}|%{INSTALLTIME}|%{VENDOR}|%{BUILDTIME}|%{BUILDHOST}|%{SOURCERPM}|%{LICENSE}|%{PACKAGER}|%{INSTALLTIME:date}|%{BUILDTIME:date}\n"']
+    fields = {'redhat-packages.is_redhat': _('Whether or not the system has any Red Hat packages installed (Y/N)'),
+              'redhat-packages.num_rh_packages': _('The number of Red Hat packages installed.'),
+              'redhat-packages.num_installed_packages': _("The total number of installed packages."),
+              'redhat-packages.last_installed': _('Details of the last installed Red Hat package.'),
+              'redhat-packages.last_built': _('Details of the last built Red Hat package.')}
+
+    def parse_data(self):
+        if self.cmd_results[0][1]:
+            self.data['redhat-packages.is_redhat'] = "error"
+            self.data['redhat-packages.num_rh_packages'] = "error"
+            self.data['redhat-packages.num_installed_packages'] = "error"
+            self.data['redhat-packages.last_installed'] = "error"
+            self.data['redhat-packages.last_built'] = "error"
+            return
+        installed_packages = [PkgInfo(line, "|") for line in self.cmd_results[0][0].splitlines()]
+        rh_packages = filter(PkgInfo.is_red_hat_pkg, installed_packages)
+        last_installed = max(rh_packages, key=lambda x: x.install_time)
+        last_built = max(rh_packages, key=lambda x: x.build_time)
+        is_red_hat = "Y" if len(rh_packages) > 0 else "N"
+        self.data['redhat-packages.is_redhat'] = is_red_hat
+        self.data['redhat-packages.num_rh_packages'] = len(rh_packages)
+        self.data['redhat-packages.num_installed_packages'] = len(installed_packages)
+        self.data['redhat-packages.last_installed'] = last_installed.details_install()
+        self.data['redhat-packages.last_built'] = last_built.details_built()
 
 
 class RedhatReleaseRhoCmd(RhoCmd):
@@ -153,6 +219,7 @@ class ScriptRhoCmd(RhoCmd):
 class CpuRhoCmd(RhoCmd):
     name = "cpu"
     fields = {'cpu.count': _('number of processors'),
+              'cpu.socket_count': _('number of sockets'),
               'cpu.vendor_id': _("cpu vendor name"),
               'cpu.bogomips': _("bogomips"),
               'cpu.cpu_family': _("cpu family"),
@@ -160,7 +227,7 @@ class CpuRhoCmd(RhoCmd):
               'cpu.model_ver': _("cpu model version")}
 
     def __init__(self):
-        self.cmd_strings = ["cat /proc/cpuinfo"]
+        self.cmd_strings = ["cat /proc/cpuinfo", "dmidecode -t 4"]
         RhoCmd.__init__(self)
 
     def parse_data(self):
@@ -173,6 +240,8 @@ class CpuRhoCmd(RhoCmd):
             if line.find("processor") == 0:
                 cpu_count = cpu_count + 1
         data["cpu.count"] = cpu_count
+        data['cpu.socket_count'] = results[1][1] if results[1][1] else \
+            len(re.findall('Socket Designation', results[1][0]))
 
         cpu_dict = {}
         for line in results[0][0].splitlines():
@@ -299,11 +368,35 @@ class DmiRhoCmd(RhoCmd):
             self.data['dmi.processor-family'] = string.strip(self.cmd_results[3][0])
 
 
+class VirtWhatRhoCmd(RhoCmd):
+    name = "virt-what"
+    fields = {'virt-what.type': _("What type of virtualization a system is running, as determined by virt-what")}
+
+    def __init__(self):
+        self.cmd_strings = ["virt-what;echo $?"]
+
+        RhoCmd.__init__(self)
+
+    def parse_data(self):
+        if self.cmd_results[0][0] and not self.cmd_results[0][1]:
+            results = [line for line in self.cmd_results[0][0].strip().split('\n')]
+            error = int(results[-1:][0])
+            virt_what_output = results[:len(results)-1]
+            if error == 0:
+                if len(virt_what_output) > 0:
+                    # quote the results and join on ',' as virt-what can return multiple values
+                    self.data['virt-what.type'] = '"%s"' % ",".join(virt_what_output)
+                else:
+                    self.data['virt-what.type'] = "bare metal"
+
+
 class VirtRhoCmd(CpuRhoCmd):
     # try to determine if we are a virt guest, a host, or bare metal
     name = "virt"
     fields = {'virt.virt': _("If a host is a virt guest, host, or bare metal"),
-              'virt.type': _("What type of virtualization a system is running")}
+              'virt.type': _("What type of virtualization a system is running"),
+              'virt.num_guests': _("The number of virtualized guests"),
+              'virt.num_running_guests': _("The number of running virtualized guests")}
 
     def __init__(self):
         CpuRhoCmd.__init__(self)
@@ -311,11 +404,20 @@ class VirtRhoCmd(CpuRhoCmd):
         self.cmd_strings.extend(["dmidecode -s system-manufacturer",
                                  "ps aux | grep xend | grep -v grep",
                                  cmd_template % "/proc/xen/privcmd",
-                                 cmd_template % "/dev/kvm"])
+                                 cmd_template % "/dev/kvm",
+                                 "virsh -c qemu:///system --readonly list --all",
+                                 "virsh -c qemu:///system --readonly list --uuid"]
+                                )
 
     def parse_data(self):
         self.data["virt.virt"] = ""
         self.data["virt.type"] = ""
+
+        # calculate number of guests
+        self._num_guests()
+
+        # calculate number of running guests
+        self._num_running_guests()
 
         # check /proc/cpuinfo to see if we are Qemu/kvm
         self._check_cpuinfo_for_qemu()
@@ -353,8 +455,8 @@ class VirtRhoCmd(CpuRhoCmd):
 
     def _check_for_dev_kvm(self):
         dev_kvm = None
-        if self.cmd_results[4][0] and not self.cmd_results[4][1]:
-            dev_kvm = string.strip(self.cmd_results[4][0])
+        if self.cmd_results[5][0] and not self.cmd_results[5][1]:
+            dev_kvm = string.strip(self.cmd_results[5][0])
         if dev_kvm == "true":
             self.data["virt.type"] = "kvm"
             self.data["virt.virt"] = "virt-host"
@@ -365,8 +467,8 @@ class VirtRhoCmd(CpuRhoCmd):
 
     def _check_dmidecode(self):
         manuf = None
-        if self.cmd_results[1][0] and not self.cmd_results[1][1]:
-            manuf = string.strip(self.cmd_results[1][0])
+        if self.cmd_results[2][0] and not self.cmd_results[2][1]:
+            manuf = string.strip(self.cmd_results[2][0])
         if manuf:
             if manuf.find("VMware") > -1:
                 self.data["virt.type"] = "vmware"
@@ -384,7 +486,7 @@ class VirtRhoCmd(CpuRhoCmd):
         # It would be way cooler if we could poke the cpuid and see if
         # is a xen guest, but that requires a util to do it, and root
         # access.
-        if self.cmd_results[2][0] and not self.cmd_results[2][1]:
+        if self.cmd_results[3][0] and not self.cmd_results[3][1]:
             # is xend running? must be a xen host
             # ugly...
             self.data["virt.type"] = "xen"
@@ -395,10 +497,24 @@ class VirtRhoCmd(CpuRhoCmd):
         # Note: xen show "qemu" as cputype as well, so we do this
         # after looking at cpuinfo
 
-        if self.cmd_results[3][0] and not self.cmd_results[3][1]:
-            if string.strip(self.cmd_results[3][0]) == "true":
+        if self.cmd_results[4][0] and not self.cmd_results[4][1]:
+            if string.strip(self.cmd_results[4][0]) == "true":
                 self.data["virt.type"] = "xen"
                 self.data["virt.virt"] = "virt-guest"
+
+    def _num_guests(self):
+        if self.cmd_results[6][0] and not self.cmd_results[6][1]:
+            # we want to remove the title and seperator lines of virsh output
+            output = self.cmd_results[6][0].strip().split('\n')[2:]
+            self.data["virt.num_guests"] = len(output)
+        else:
+            self.data["virt.num_guests"] = 0
+
+    def _num_running_guests(self):
+        if self.cmd_results[7][0] and not self.cmd_results[7][1]:
+            self.data['virt.num_running_guests'] = len(self.cmd_results[7][0].strip())
+        else:
+            self.data['virt.num_running_guests'] = 0
 
 
 # the list of commands to run on each host
@@ -407,3 +523,60 @@ class RhoCmdList(object):
     def __init__(self):
         self.cmds = {}
         self.cmds['uname'] = UnameRhoCmd()
+
+# List of default commands
+DEFAULT_CMDS = [UnameRhoCmd,
+                RedhatReleaseRhoCmd,
+                InstnumRhoCmd,
+                SystemIdRhoCmd,
+                CpuRhoCmd,
+                EtcReleaseRhoCmd,
+                EtcIssueRhoCmd,
+                DmiRhoCmd,
+                VirtRhoCmd,
+                RedhatPackagesRhoCmd,
+                VirtWhatRhoCmd,
+                DateRhoCmd,
+                SubmanFactsRhoCmd
+                ]
+
+
+class PkgInfo(object):
+    def __init__(self, row, separator):
+        cols = row.split(separator)
+        if len(cols) < 10:
+            raise PkgInfoParseException()
+        else:
+            self.name = cols[0]
+            self.version = cols[1]
+            self.release = cols[2]
+            self.install_time = long(cols[3])
+            self.vendor = cols[4]
+            self.build_time = long(cols[5])
+            self.build_host = cols[6]
+            self.source_rpm = cols[7]
+            self.license = cols[8]
+            self.packager = cols[9]
+            self.install_date = cols[10]
+            self.build_date = cols[11]
+            self.is_red_hat = False
+            if ('redhat.com' in self.build_host and
+                    'fedora' not in self.build_host and
+                    'rhndev' not in self.build_host):
+                self.is_red_hat = True
+
+    def is_red_hat_pkg(self):
+        return self.is_red_hat
+
+    def details_built(self):
+        return "%s Built: %s" % (self.details(), self.build_date)
+
+    def details_install(self):
+        return "%s Installed: %s" % (self.details(), self.install_date)
+
+    def details(self):
+        return "%s-%s-%s" % (self.name, self.version, self.release)
+
+
+class PkgInfoParseException(BaseException):
+    pass
