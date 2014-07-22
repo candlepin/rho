@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: rho
-Version: 0.0.20
+Version: 0.0.21
 Release: 1%{?dist}
 Summary: An SSH system profiler
 
@@ -45,6 +45,47 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/rho.1.gz
 
 %changelog
+* Tue Jul 22 2014 jesus m. rodriguez <jesusr@redhat.com> 0.0.21-1
+- Adds a RhoCmd and smoke test for subman facts --list (csnyder@redhat.com)
+- Fixes VirtWhatRhoCmd.parse_data() exit code checking. (csnyder@redhat.com)
+- Changes test_scan_show_fields() to use assertRaises(). (csnyder@redhat.com)
+- Fixes date test. Adds redhat-packages tests for new fields.  (csnyder@redhat.com)
+- Uses open() instead of file(). (csnyder@redhat.com)
+- Fixes indexes of command results. (csnyder@redhat.com)
+- Adds tests for RedhatPackagesRhoCmd. (csnyder@redhat.com)
+- Adds tests for fields date.date and cpu.socket_count (csnyder@redhat.com)
+- Adds smoke test for VirtWhatRhoCmd. (csnyder@redhat.com)
+- Adds new field virt.num_running_guests. (csnyder@redhat.com)
+- Pulls virt-what out of VirtRhoCmd and into VirtWhatRhoCmd.  (csnyder@redhat.com)
+- Changes PkgInfo separator to required arg. (csnyder@redhat.com)
+- Removes unused imports. General code clean up. (csnyder@redhat.com)
+- Splits redhat-packages.ratio into two fields. (csnyder@redhat.com)
+- Adds install_date and build_date to rpm query. Updates PkgInfo to use these dates. (csnyder@redhat.com)
+- Renames MiscRhoCmd to DateRhoCmd and updates fields accordingly.  (csnyder@redhat.com)
+- Scanner now defaults to explicit list of default commands in rho_cmds.  (csnyder@redhat.com)
+- remove trailing whitespace (jesusr@redhat.com)
+- Adds virt.num_guests field to pack-scan report script. (csnyder@redhat.com)
+- Adds virt.num_guests field to VirtRhoCmd class. (csnyder@redhat.com)
+- Adds default of '' to scan --hosts option (csnyder@redhat.com)
+- Adds pack-scan.sh [USERNAME] [/path/to/file_of_hosts] (csnyder@redhat.com)
+- Adds --hosts option to the scan command. (csnyder@redhat.com)
+- Adds test for profile add --hosts and fixes up other tests (csnyder@redhat.com)
+- chmod -x clicommands-tests.py to enable testing with nosetests (csnyder@redhat.com)
+- Adds new option --hosts [path/to/file_of_hosts] to add a file of comma seperated hostnames to a profile. (csnyder@redhat.com)
+- Adds new cpu report field cpu.socket_count. (csnyder@redhat.com)
+- Adds RedHatPackagesRhoCmd that provides fields pertaining to Red Hat packages installed on a system. (csnyder@redhat.com)
+- Adds MiscRhoCmd class for all miscellaneous commands. (csnyder@redhat.com)
+- Adds virt-what command to help determine virt.virt and virt.type fields (csnyder@redhat.com)
+- Scanner loads all cmds defined in rho_cmds and not in NONDEFAULT_CMDS.  (csnyder@redhat.com)
+- stylish cleanups for setup.py (alikins@redhat.com)
+- Include gettext if we use it. (alikins@redhat.com)
+- Remove unused 'string' import. (alikins@redhat.com)
+- stylish cleanups (alikins@redhat.com)
+- import gettext (alikins@redhat.com)
+- autopep8'ify PBKDF2.py (alikins@redhat.com)
+- autopep8'ify the code because it needs it. (alikins@redhat.com)
+- added rhel 5 dep for python:  python-simplejson (whayutin@thinkdoe.localdomain)
+
 * Wed Nov 18 2009 Adrian Likins <alikins@redhat.com> 0.0.20-1
 - RHEL5 is using an even older version of python-netaddr that requires most API
   transmogrifying. Namely, lack of netaddr.IP class. (alikins@redhat.com)
