@@ -153,6 +153,8 @@ A profile is essentially a concise collection of the information that rho needs 
 .I name
 .B [--range
 .I ip_address
+.B ] [--hosts
+.I file
 .B ] [--ports
 .I ssh_ports
 .B ] [--auth
@@ -163,6 +165,10 @@ A profile is essentially a concise collection of the information that rho needs 
 --name name
 This required argument sets the name of the new profile. This name is used to identify the profile in later operations. Use a descriptive name, such as "ColoSubnet".
 .PP
+.TP
+--hosts file
+This adds the hostnames in the provided file (one per line) to the profile.
+.PP 
 .TP
 --range ip_address
 This sets the IP address, hostname, or IP address range to use when running discovery. There are several different formats that are allowed for the
@@ -218,6 +224,8 @@ The only required parameter when a profile is created is its name. Some paramete
 .I name
 .B [--range
 .I ip_address
+.B ] [--hosts
+.I file
 .B ] [--ports
 .I ssh_ports
 .B ] [--auth
@@ -265,6 +273,8 @@ There are two ways to run a scan. The simplest way is to specify the profile to 
 .I file
 .B ] [--allow-agent true|false] [--cache
 .I file
+.B ] [--hosts
+.I file
 .B ] [--show-fields true|false] [--report-format
 .I options
 .B ]
@@ -280,6 +290,10 @@ Prints the output to a comma-separated values (CSV) file instead of stdout.
 .TP
 --allow-agent true|false
 Tells 'rho' to use the keys stored in the local ssh-agent. By default, this is false, so that the credentials are used from the profile.
+.PP
+.TP
+--hosts file
+Adds the hosts (one per line) from the provided file to the current scan.
 .PP
 .TP
 --cache file
