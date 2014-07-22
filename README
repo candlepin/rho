@@ -369,6 +369,15 @@ subnet.
  * Outputs results to CSV file reports.
  * Allows the report format to be customized.
 
+*~*~*~*~*
+PACK-SCAN
+~*~*~*~*~
+Running pack-scan.sh [username] [file of hosts] will run the pack-scan report
+against the provided file of hosts using the given username. 
+If there is no shared ssh key with the provided username, you will be prompted
+for the password on the command line.
+The script will output the pack-scan report to pack-scan.csv in the directory
+from which it was run.
 
 *~*~*~*
 CONTACT
