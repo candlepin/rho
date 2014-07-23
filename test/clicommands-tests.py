@@ -53,6 +53,8 @@ class CliCommandsTests(unittest.TestCase):
         except SystemExit:
             pass
 
+    def test_initconfig(self):
+        self._run_test(InitConfigCommand(), ["initconfig"])
 
     def test_report_list(self):
         self._run_test(ReportListCommand(), ["report", "list"])

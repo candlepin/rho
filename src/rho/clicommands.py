@@ -285,8 +285,14 @@ class CliCommand(object):
                 print self.parser.error(_("Cannot parse configuration, check encryption password"))
 
         else:
-            print _("Creating new config file: %s" % filename)
-            return config.Config()
+            new_config = config.Config()
+            print (_("Creating new config file: %s") % self.options.config)
+            self._write_config(new_config)
+            return new_config
+
+    def _write_config(self, new_config):
+        c = config.ConfigBuilder().dump_config(new_config)
+        crypto.write_file(self.options.config, c, self.passphrase)
 
     def main(self):
 
@@ -325,6 +331,41 @@ class CliCommand(object):
         except config.NoSuchAuthError as e:
             print _("ERROR: No such auth: %s") % e.authname
             sys.exit(1)
+
+
+class InitConfigCommand(CliCommand):
+
+    def __init__(self):
+        usage = _("usage: %prog initconfig [options]")
+        shortdesc = _("initialize rho config")
+        desc = _("Adds a few defaults to the config to help getting started using rho\n")
+
+        CliCommand.__init__(self, "initconfig", usage, shortdesc, desc)
+
+    # need to stub out _read_config to avoid accidentally allowing _read_config to create a new empty config
+    def _read_config(self, filename, password):
+        pass
+
+    def _do_command(self):
+        # add any default config stuff here
+        auths = []
+        profiles = []
+        # a default set of reports (including pack-scan)
+        reports = [
+            config.Report("pack-scan", ['date.date',
+                                        'uname.hostname', 'redhat-release.release',
+                                        'redhat-packages.is_redhat',
+                                        'redhat-packages.num_rh_packages',
+                                        'redhat-packages.num_installed_packages',
+                                        'redhat-packages.last_installed',
+                                        'redhat-packages.last_built',
+                                        'virt-what.type', 'virt.virt',
+                                        'virt.num_guests', 'virt.num_running_guests',
+                                        'cpu.count', 'cpu.socket_count', 'ip', 'port']),
+        ]
+        new_config = config.Config(auths=auths, profiles=profiles, reports=reports)
+        print (_("Creating new config with defaults: %s") % self.options.config)
+        self._write_config(new_config)
 
 
 class ScanCommand(CliCommand):
