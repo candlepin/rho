@@ -7,7 +7,7 @@ Summary: An SSH system profiler
 
 Group: Applications/Internet
 License: GPLv2
-URL: http://github.com/jmrodri/rho
+URL: https://github.com/candlepin/rho
 Source0: http://alikins.fedorapeople.org/files/rho/rho-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
