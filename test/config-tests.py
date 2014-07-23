@@ -18,7 +18,7 @@ import simplejson as json
 
 SAMPLE_CONFIG1 = """
 {
-    "version": 1,
+    "version": 3,
     "auths": [
         {
             "name": "bobslogin",
@@ -53,6 +53,30 @@ SAMPLE_CONFIG1 = """
             "auths": ["bobskey"],
             "ports": []
         }
+    ],
+    "reports": [
+        {
+            "name": "pack-scan",
+            "output_filename": "pack-scan.csv",
+            "report_format": [
+                "date.date",
+                "uname.hostname",
+                "redhat-release.release",
+                "redhat-packages.is_redhat",
+                "redhat-packages.num_rh_packages",
+                "redhat-packages.num_installed_packages",
+                "redhat-packages.last_installed",
+                "redhat-packages.last_built",
+                "virt-what.type",
+                "virt.virt",
+                "virt.num_guests",
+                "virt.num_running_guests",
+                "cpu.count",
+                "cpu.socket_count",
+                "ip",
+                "port"
+            ]
+        }
     ]
 }
 """
@@ -77,6 +101,30 @@ BAD_CREDNAME_CONFIG = """
             ],
             "auths": ["nosuchcredentialname"],
             "ports": [22, 2222]
+        }
+    ],
+    "reports": [
+        {
+            "name": "pack-scan",
+            "output_filename": "pack-scan.csv",
+            "report_format": [
+                "date.date",
+                "uname.hostname",
+                "redhat-release.release",
+                "redhat-packages.is_redhat",
+                "redhat-packages.num_rh_packages",
+                "redhat-packages.num_installed_packages",
+                "redhat-packages.last_installed",
+                "redhat-packages.last_built",
+                "virt-what.type",
+                "virt.virt",
+                "virt.num_guests",
+                "virt.num_running_guests",
+                "cpu.count",
+                "cpu.socket_count",
+                "ip",
+                "port"
+            ]
         }
     ]
 }
@@ -123,10 +171,11 @@ class ConfigTests(unittest.TestCase):
     def test_to_dict(self):
         config = self.builder.build_config(SAMPLE_CONFIG1)
         config_dict = config.to_dict()
-        self.assertEquals(3, len(config_dict))
+        self.assertEquals(4, len(config_dict))
         self.assertEquals(CONFIG_VERSION, config_dict[VERSION_KEY])
         self.assertTrue(AUTHS_KEY in config_dict)
         self.assertTrue(PROFILES_KEY in config_dict)
+        self.assertTrue(REPORTS_KEY in config_dict)
 
     def test_duplicate_credential_names(self):
         config = self.builder.build_config(SAMPLE_CONFIG1)

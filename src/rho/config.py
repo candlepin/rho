@@ -15,6 +15,9 @@ import simplejson as json
 
 # Keys used in the configuration JSON:
 AUTHS_KEY = "auths"
+REPORTS_KEY = "reports"
+REPORT_FORMAT_KEY = "report_format"
+OUTPUT_FILENAME_KEY = "output_filename"
 PROFILES_KEY = "profiles"
 VERSION_KEY = "version"
 NAME_KEY = "name"
@@ -29,7 +32,7 @@ SSH_TYPE = "ssh"
 SSH_KEY_TYPE = "ssh_key"
 
 # Current config version, bump this if we ever change the format:
-CONFIG_VERSION = 2
+CONFIG_VERSION = 3
 
 
 class BadJsonException(Exception):
@@ -80,16 +83,18 @@ class Config(object):
 
     """ Simple object represeting Rho configuration. """
 
-    def __init__(self, auths=None, profiles=None):
+    def __init__(self, auths=None, profiles=None, reports=None):
         """
         Create a config object from the given auths and profiles.
         """
 
         self._auths = []
         self._profiles = []
+        self._reports = []
         # Will map auth key name to the auths object:
         self._auth_index = {}
         self._profile_index = {}
+        self._report_index = {}
 
         # Need to iterate auths first:
         if auths:
@@ -100,6 +105,10 @@ class Config(object):
             # Make sure none of the profiles reference invalid auth keys:
             for profile in profiles:
                 self.add_profile(profile)
+
+        if reports:
+            for report in reports:
+                self.add_report(report)
 
     def add_auth(self, c):
 
@@ -136,6 +145,37 @@ class Config(object):
     def clear_auths(self):
         self._auths = []
         self._auth_index = {}
+
+    # based on profile methods below
+    def add_report(self, report):
+        """
+        Add a new report to this configuration.
+        """
+        if report.name in self._report_index:
+            raise DuplicateNameError(report.name)
+
+        self._reports.append(report)
+        self._report_index[report.name] = report
+
+    def list_reports(self):
+        """ Return a list of all reports in this configuration. """
+        return self._reports
+
+    def get_report(self, gname):
+        return self._report_index.get(gname)
+
+    def clear_reports(self):
+        self._reports = []
+        self._report_index = {}
+
+    def has_report(self, pname):
+        return pname in self._report_index
+
+    def remove_report(self, gname):
+        if gname in self._report_index:
+            g = self._report_index[gname]
+            self._reports.remove(g)
+            del self._report_index[gname]
 
     def add_profile(self, profile):
         """
@@ -181,10 +221,14 @@ class Config(object):
         profiles = []
         for g in self._profiles:
             profiles.append(g.to_dict())
+        reports = []
+        for r in self._reports:
+            reports.append(r.to_dict())
         return {
             VERSION_KEY: CONFIG_VERSION,
             AUTHS_KEY: creds,
-            PROFILES_KEY: profiles
+            PROFILES_KEY: profiles,
+            REPORTS_KEY: reports
         }
 
 
@@ -284,6 +328,41 @@ CREDENTIAL_TYPES = {
 }
 
 
+class Report(object):
+    def __init__(self, name, report_format, output_filename=None):
+        """
+        Create a report object.
+
+        report_format is a list of report fields that constitute this report
+
+        output_filename is the filename to output to. Detaults to '%s.csv' % self.name
+        """
+
+        self.name = name
+        self.report_format = report_format
+        self.output_filename = output_filename if output_filename else "%s.csv" % self.name
+
+    def to_dict(self):
+        return {
+            NAME_KEY: self.name,
+            REPORT_FORMAT_KEY: self.report_format,
+            OUTPUT_FILENAME_KEY: self.output_filename
+        }
+
+    def remove_report_field(self, report_field):
+        """
+        Remove the given report field, if this report includes it.
+        """
+        if report_field in self.report_format:
+            self.report_format.remove(report_field)
+
+    def add_report_field(self, report_field):
+        """
+        Append the given report field to the report_format for this report
+        """
+        self.report_format.append(report_field)
+
+
 class ConfigBuilder(object):
 
     """
@@ -304,7 +383,7 @@ class ConfigBuilder(object):
             raise BadJsonException
 
         verify_keys(config_dict, required=[VERSION_KEY, AUTHS_KEY,
-                                           PROFILES_KEY], optional=[])
+                                           PROFILES_KEY, REPORTS_KEY], optional=[])
 
         # Credentials needs to be parsed first so we can check that the profiles
         # reference valid credential keys.
@@ -314,7 +393,10 @@ class ConfigBuilder(object):
         profiles_dict = config_dict[PROFILES_KEY]
         profiles = self.build_profiles(profiles_dict)
 
-        config = Config(auths=creds, profiles=profiles)
+        reports_dict = config_dict[REPORTS_KEY]
+        reports = self.build_reports(reports_dict)
+
+        config = Config(auths=creds, profiles=profiles, reports=reports)
 
         return config
 
@@ -359,6 +441,22 @@ class ConfigBuilder(object):
             profiles.append(profile_obj)
 
         return profiles
+
+    def build_reports(self, reports_list):
+        """ Create a list of report objects."""
+
+        reports = []
+        for report_dict in reports_list:
+            verify_keys(report_dict, required=[NAME_KEY, REPORT_FORMAT_KEY, OUTPUT_FILENAME_KEY],
+                        optional=[])
+            name = report_dict[NAME_KEY]
+            report_format = report_dict[REPORT_FORMAT_KEY]
+            output_filename = report_dict[OUTPUT_FILENAME_KEY]
+
+            report_obj = Report(name, report_format, output_filename)
+            reports.append(report_obj)
+
+        return reports
 
     def dump_config(self, config):
         """ Returns JSON text for the given Config object. """
