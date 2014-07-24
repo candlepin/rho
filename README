@@ -75,8 +75,18 @@ profile item has parameters for name, auth, ports, and range.) For example:
                 "192.168.123.1 - 192.168.123.200"
             ]
         }
-    ], 
-    "version": 1
+    ],
+    "reports": [
+        {
+            "name": "basic",
+            "output_filename": "basic.csv",
+            "report_format": [
+                "date.date",
+                "uname.os"
+            ]
+        },
+    ] 
+    "version": 3
 }
 
 Running the scan is simple. Just point the rho tool to the profile (or 
@@ -162,15 +172,17 @@ The basic syntax is:
 
      rho command subcommand [options]
 
-There are three rho commands:
+There are four rho commands:
 
  * auth, for managing auth entries
 
  * profile, for managing profile entries
 
+ * report, for managing report entries
+
  * scan, for running scans
 
-auth and profile both have three subcommands:
+auth, profile, and report both have three subcommands:
 
  * add to create a new entry
 
@@ -216,7 +228,14 @@ Then, create the profile to use for the scan. This should include a list of IP
 addresses or ranges, the auth identity to use, and the SSH ports to try.
 
     rho profile edit --name profile1 --range "1.2.3.0 - 1.2.3.255" --auth 
-    server1creds --auth server2creds --ports 22,318,415 
+    server1creds --auth server2creds --ports 22,318,415
+
+REPORTS
+Optionally, create a report to save report-formats for the scan. This should include a list of fields that constitute the report along with an optional output filename to always write this report to. The provided fields should be from the list reported by 'rho scan --show-fields'
+   
+    rho report add --name basic --fields date.date,uname.os
+
+With no output filename specified the output file name defaults to NAME.csv where NAME is the provided name of the report.
 
 
 SCANNING
@@ -282,7 +301,7 @@ available report fields (which may change with every version).
      uname.processor:uname -p (processor)
 
 The output can then be configured to contain any combination of these fields in 
-the --report-format option. The only three required fields are 
+the --report-format option or by defining a report using the report command. The only three required fields are 
 ip,port,authname. For example:
 
      rho scan --profile myprofile --output /home/me/custom.csv --report-format 
@@ -304,6 +323,14 @@ any potential damage or security problems.
 
 The rho user should have read permissions to things like install-num and the 
 RHN systemid files, which are normally only readable by root.
+
+INITIALIZING CONFIG
+*******************
+The rho tool can generate a config with a few default items to help get started (at this time this includes only pre-defined reports). 
+To do this run:
+    rho initconfig
+
+Note: if a new config file is not specified with --config this will overwrite the default config: ~/.rho.conf
 
 SCHEDULING SCANS
 ****************
@@ -368,16 +395,6 @@ subnet.
  * Allows existing JSON configuration files to be loaded for configuration.
  * Outputs results to CSV file reports.
  * Allows the report format to be customized.
-
-*~*~*~*~*
-PACK-SCAN
-~*~*~*~*~
-Running pack-scan.sh [username] [file of hosts] will run the pack-scan report
-against the provided file of hosts using the given username. 
-If there is no shared ssh key with the provided username, you will be prompted
-for the password on the command line.
-The script will output the pack-scan report to pack-scan.csv in the directory
-from which it was run.
 
 *~*~*~*
 CONTACT

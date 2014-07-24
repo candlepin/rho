@@ -9,11 +9,13 @@ rho
 .SH DESCRIPTION
 rho is a network discovery tool to identify the number of systems running on a network, their operating system, hardware, and release numbers for almost any Linux or Unix flavor. Being able to identify the systems running on the network is a vital component to managing licenses and renewals. Ultimately, discovery is part of the larger sysadmin task of managing inventories.
 .PP
-rho uses two configuration entries to manage the discovery process.
+rho uses three configuration entries to manage the discovery process.
 .I Profiles
 define the network or subnet that is being monitored.
 .I Credentials
 contains the usernames, passwords or, alternatively, the SSH keys of the user as which discovery runs. There can be multiple network profiles and authentication credentials, used in any combination.
+.I Reports
+define the fields and output filename that will be run with a scan.
 .PP
 rho is an
 .I agentless
@@ -22,7 +24,7 @@ discovery tool, so there is no need to install anything on multiple systems. OS 
 This man page covers the commands, subcommands and options for rho with basic usage information. For more detailed information and examples, including best practices, see the rho README.
 
 .SH USAGE
-rho performs three major tasks:
+rho performs four major tasks:
 .PP
 1. Creating authentication profiles. This has the basic command:
 .PP
@@ -32,15 +34,19 @@ rho performs three major tasks:
 .PP
 .B rho profiles add --name X --range X --auth X
 .PP
-3. Running discovery, such as:
+3. Creating report profiles. This has the basic command:
 .PP
-.B rho scan --profile X
+.B rho report add --name X --fields X,Y,Z 
+.PP
+4. Running discovery, such as:
+.PP
+.B rho scan --profile X --report Y
 .PP
 The following sections cover these commands in more detail.
 .PP
-The primary purpose of rho is to scan a network. This can be done using simply 'rho scan' and passing all of the required network parameters and authentication credentials with every discovery pass. Using network and authentication profiles, however, simplifies discovery.
+The primary purpose of rho is to scan a network. This can be done using simply 'rho scan' and passing all of the required network parameters and authentication credentials with every discovery pass. Using network, authentication, and report profiles, however, simplifies discovery.
 .PP
-By default, the authentication credentials and profiles created using rho are stored in an encrypted file, $HOME/.rho.conf. The file is encrypted with AES-128 encryption and is decrypted when the 'rho' command is run, using a passphrase to access the file.
+By default, the authentication credentials, profiles, and reports created using rho are stored in an encrypted file, $HOME/.rho.conf. The file is encrypted with AES-128 encryption and is decrypted when the 'rho' command is run, using a passphrase to access the file.
 
 
 .SS AUTHENTICATION
@@ -167,7 +173,7 @@ This required argument sets the name of the new profile. This name is used to id
 .PP
 .TP
 --hosts file
-This adds the hostnames in the provided file (one per line) to the profile.
+This adds the hostnames in the provided file (csv) to the profile.
 .PP 
 .TP
 --range ip_address
@@ -261,7 +267,61 @@ Any or all profiles can be deleted using the 'clear' subcommand.
 .I name
 .B | --all
 
-
+.SS REPORTS
+.I Reports
+define a list of fields along with a file to output to.
+IMPORTANT: The file specified is overwritten everytime the report is run.
+.PP
+.B
+Creating and Editing Reports
+.PP
+A report is a named set of fields along with an output file name. A report can be created as follows:
+.PP
+.B rho report add --name
+.I name
+.B --fields 
+.I <fields>
+.B [--output
+.I filename
+.B ]
+.PP
+Here <fields> is a comma seperated list of fields.
+.PP
+Editing a report is done in the same way as a profile with two extra options:
+.PP
+.B rho report edit --name
+.I name
+.B --fields
+.I <fields>
+.B [--output
+.I filename
+.B ] [--add]
+.B [--remove]
+.PP
+The --add and --remove options modify the behavior of the --fields option. With --add the fields provided by the --fields option are appended (added) to the list of fields in the report.
+.PP Note: This does not remove duplicates.
+.PP The --remove option removes the field(s) provided with the --fields option from the report.
+.PP If neither --add or --remove are specified the entire list of fields for the given report are overwritten.
+.B
+Listing and Showing Reports
+.PP Listing and showing reports can be done in the same way as with profiles.
+.PP To list reports:
+.PP
+.B rho report list
+.PP
+.PP To show a specific report:
+.PP
+.B rho report show --name
+.I name
+.PP
+.B
+Deleting Reports
+.PP All reports can be deleted as follows:
+.B rho report clear --all
+.PP A specific report can be deleted using the --name option:
+.B rho report clear --name 
+.I reportname
+.PP 
 .SS SCANNING
 The 'scan' command is the one that actually runs discovery on the network. This command scans all of the servers within the range, and then prints the information to a CSV file.
 .PP
