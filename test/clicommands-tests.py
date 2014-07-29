@@ -53,6 +53,21 @@ class CliCommandsTests(unittest.TestCase):
         except SystemExit:
             pass
 
+    def test_initconfig(self):
+        self._run_test(InitConfigCommand(), ["initconfig"])
+
+    def test_report_list(self):
+        self._run_test(ReportListCommand(), ["report", "list"])
+
+    def test_report_add(self):
+        self._run_test(ReportAddCommand(), ["report", "add", "--name",
+                                             "reportname",
+                                             "--fields",
+                                             "date.date"])
+    def test_report_add_duplicate(self):
+        self.test_report_add()
+        self.assertRaises(SystemExit, self.test_report_add)
+
     def test_profile_list(self):
         self._run_test(ProfileListCommand(), ["profile", "list"])
 

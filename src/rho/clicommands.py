@@ -94,6 +94,7 @@ def get_password(for_username, env_var_to_check):
         password = getpass(_("Password for '%s':" % for_username))
     return password
 
+
 def _read_hosts_file(filename):
     result = None
     try:
@@ -104,6 +105,7 @@ def _read_hosts_file(filename):
         sys.stderr.write('Error reading from %s: %s\n' % (filename, e))
         hosts.close()
     return result
+
 
 class OutputPrinter(object):
 
@@ -186,10 +188,24 @@ class ProfilePrinter(object):
                 print("        %s" % ip_range)
 
 
+class ReportPrinter(object):
+
+    def __init__(self, reports):
+        self.reports = reports
+
+    def write(self):
+        for r in self.reports:
+            print("\nname: %s" % r.name)
+
+            print("    output_filename:\n        %s" % r.output_filename)
+            print("    fields:")
+            for field in r.report_format:
+                print("        %s" % field)
+
+
 class CliCommand(object):
 
     """ Base class for all sub-commands. """
-
     def __init__(self, name="cli", usage=None, shortdesc=None,
                  description=None):
 
@@ -269,8 +285,14 @@ class CliCommand(object):
                 print self.parser.error(_("Cannot parse configuration, check encryption password"))
 
         else:
-            print _("Creating new config file: %s" % filename)
-            return config.Config()
+            new_config = config.Config()
+            print (_("Creating new config file: %s") % self.options.config)
+            self._write_config(new_config)
+            return new_config
+
+    def _write_config(self, new_config):
+        c = config.ConfigBuilder().dump_config(new_config)
+        crypto.write_file(self.options.config, c, self.passphrase)
 
     def main(self):
 
@@ -311,6 +333,41 @@ class CliCommand(object):
             sys.exit(1)
 
 
+class InitConfigCommand(CliCommand):
+
+    def __init__(self):
+        usage = _("usage: %prog initconfig [options]")
+        shortdesc = _("initialize rho config")
+        desc = _("Adds a few defaults to the config to help getting started using rho\n")
+
+        CliCommand.__init__(self, "initconfig", usage, shortdesc, desc)
+
+    # need to stub out _read_config to avoid accidentally allowing _read_config to create a new empty config
+    def _read_config(self, filename, password):
+        pass
+
+    def _do_command(self):
+        # add any default config stuff here
+        auths = []
+        profiles = []
+        # a default set of reports (including pack-scan)
+        reports = [
+            config.Report("pack-scan", ['date.date',
+                                        'uname.hostname', 'redhat-release.release',
+                                        'redhat-packages.is_redhat',
+                                        'redhat-packages.num_rh_packages',
+                                        'redhat-packages.num_installed_packages',
+                                        'redhat-packages.last_installed',
+                                        'redhat-packages.last_built',
+                                        'virt-what.type', 'virt.virt',
+                                        'virt.num_guests', 'virt.num_running_guests',
+                                        'cpu.count', 'cpu.socket_count', 'ip', 'port']),
+        ]
+        new_config = config.Config(auths=auths, profiles=profiles, reports=reports)
+        print (_("Creating new config with defaults: %s") % self.options.config)
+        self._write_config(new_config)
+
+
 class ScanCommand(CliCommand):
 
     def __init__(self):
@@ -334,7 +391,8 @@ class ScanCommand(CliCommand):
                                help=_("auth class name to use"))
         self.parser.add_option("--output", dest="reportfile",
                                metavar="REPORTFILE",
-                               help=_("write out to this file"))
+                               help=_("write out to this file"),
+                               default="")
         self.parser.add_option("--profile", dest="profiles", action="append",
                                metavar="PROFILE", default=[],
                                help=_("profile class to scan")),
@@ -353,7 +411,13 @@ class ScanCommand(CliCommand):
                                default="")
         self.parser.add_option("--report-format", dest="reportformat",
                                metavar="REPORTFORMAT",
-                               help=_("specify report format (see --show-fields for options)"))
+                               help=_("specify report format (see --show-fields for options)"),
+                               default="")
+        self.parser.add_option("--report", dest="report",
+                               metavar="REPORT",
+                               help=_("specify the report to run"),
+                               action="store",
+                               default="")
 
         self.parser.set_defaults(ports="22")
 
@@ -370,6 +434,9 @@ class ScanCommand(CliCommand):
         hasProfiles = len(self.options.profiles) > 0
         hasAuths = len(self.options.auth) > 0
         hasHosts = len(self.options.hosts) > 0
+        hasReportFormat = len(self.options.reportformat) > 0
+        hasReport = len(self.options.report) > 0
+        hasReportFile = len(self.options.reportfile) > 0
 
         if self.options.cachefile:
             self.options.cachefile = os.path.abspath(os.path.expanduser(
@@ -397,6 +464,13 @@ class ScanCommand(CliCommand):
         if hasRanges and not (self.options.username or hasAuths):
             self.parser.error(_(
                 "--username or --auth required to scan a range."))
+        if hasReport:
+            if hasReportFormat:
+                self.parser.error(_(
+                    "Cannot specify both report-format and report."))
+            if hasReportFile:
+                self.parser.error(_(
+                    "Cannot specify both report and output filename."))
 
     def _build_cache(self, report_filename):
         """
@@ -498,12 +572,19 @@ class ScanCommand(CliCommand):
                     print name
 
         fileobj = sys.stdout
-        if self.options.reportfile:
+        fields = None
+
+        if self.options.report:
+            reportobj = self.config.get_report(self.options.report)
+            fileobj = open(os.path.expanduser(os.path.expandvars(
+                reportobj.output_filename)), "w")
+            fields = reportobj.report_format
+
+        elif self.options.reportfile:
             fileobj = open(os.path.expanduser(os.path.expandvars(
                 self.options.reportfile)), "w")
 
-        fields = None
-        if self.options.reportformat:
+        if not fields and self.options.reportformat:
             fields = string.split(self.options.reportformat, ',')
         self.scanner.report(fileobj, report_format=fields)
         fileobj.close()
@@ -591,6 +672,200 @@ class ImportConfigCommand(CliCommand):
         imported_config = config.ConfigBuilder().build_config(json_buf)
         c = config.ConfigBuilder().dump_config(imported_config)
 
+        crypto.write_file(self.options.config, c, self.passphrase)
+
+
+class ReportShowCommand(CliCommand):
+
+    def __init__(self):
+        usage = _("usage: %prog report show [options]")
+        shortdesc = _("show a rho report")
+        desc = _("show a rho report")
+
+        CliCommand.__init__(self, "report show", usage, shortdesc, desc)
+
+        self.parser.add_option("--name", dest="name", metavar="NAME",
+                               help=_("report name - REQUIRED"))
+
+    def _validate_options(self):
+        CliCommand._validate_options(self)
+
+        if not self.options.name:
+            self.parser.print_help()
+            sys.exit(1)
+
+    def _do_command(self):
+        if not self.config.list_reports():
+            print(_("No reports found"))
+
+        r = self.config.get_report(self.options.name)
+
+        if not r:
+            print (_("No report '%s' found.") % self.options.name)
+            return
+
+        printer = ReportPrinter([r])
+        printer.write()
+
+
+class ReportListCommand(CliCommand):
+
+    def __init__(self):
+        usage = _("usage: %prog report list [options]")
+        shortdesc = _("list the rho reports")
+        desc = _("list the rho reports")
+
+        CliCommand.__init__(self, "report list", usage, shortdesc, desc)
+
+    def _do_command(self):
+
+        if not self.config.list_reports():
+            print(_("No reports found"))
+            return
+
+        # using OutputPrinter didn't look so
+        # nice for profiles
+        printer = ReportPrinter(self.config.list_reports())
+        printer.write()
+
+
+class ReportEditCommand(CliCommand):
+
+    def __init__(self):
+        usage = _("usage: %prog report edit [options]")
+        shortdesc = _("edits a given report")
+        desc = _("edit a given report")
+
+        CliCommand.__init__(self, "report edit", usage, shortdesc, desc)
+
+        self.parser.add_option("--name", dest="name", metavar="NAME",
+                               help=_("NAME of the report - REQUIRED"))
+        self.parser.add_option("--fields", "--report-format", dest="fields",
+                               metavar="FIELDS", help=_("Replace fields of the report with FIELDS"),
+                               action="store", default=[])
+        self.parser.add_option("--remove", "-r", dest="remove", action="store_true", default=False,
+                               help=_("Update report by removing field(s) provided by --fields option (REQUIRES --fields)"))
+        self.parser.add_option("--add", "--append", "-a", dest="add", action="store_true", default=False,
+                               help=_("Update report by appending field(s) provided by --fields option (REQUIRES --fields)"))
+        self.parser.add_option("--output", dest="output_filename",
+                               metavar="FILENAME", help=_("Change output filename to FILENAME"), action="store", default=None)
+
+    def _validate_options(self):
+        CliCommand._validate_options(self)
+
+        if self.options.remove and self.options.add:
+            print (_("--add cannot be used with --remove\n"))
+            sys.exit(1)
+
+        if (self.options.remove or self.options.add) and not self.options.fields:
+            option = "--add" if self.options.add else "--remove"
+            print(_("%s requires --fields\n") % option)
+            sys.exit(1)
+
+        if not self.options.name:
+            self.parser.print_help()
+            sys.exit(1)
+
+    def _do_command(self):
+        r = self.config.get_report(self.options.name)
+
+        if not r:
+            print(_("report %s does not exist.") % self.options.name)
+            sys.exit(1)
+
+        if self.options.output_filename:
+            r.output_filename = self.options.output_filename
+
+        if self.options.fields:
+            fields = self.options.fields.strip().split(",")
+            if self.options.add:
+                r.report_format.extend(fields)
+            elif self.options.remove:
+                r.report_format = [field for field in r.report_format if field not in fields]
+            else:
+                r.report_format = fields
+
+        c = config.ConfigBuilder().dump_config(self.config)
+        crypto.write_file(self.options.config, c, self.passphrase)
+        print(_("Report %s edited" % self.options.name))
+
+
+class ReportClearCommand(CliCommand):
+
+    def __init__(self):
+        usage = _("usage: %prog report clear [--name | --all] [options]")
+        shortdesc = _("removes 1 or all reports from list")
+        desc = _("removes reports")
+
+        CliCommand.__init__(self, "report clear", usage, shortdesc, desc)
+
+        self.parser.add_option("--name", dest="name", metavar="NAME",
+                               help=_("NAME of the report to be removed"))
+        self.parser.add_option("--all", dest="all", action="store_true",
+                               help=_("remove ALL reports"))
+
+        self.parser.set_defaults(all=False)
+
+    def _validate_options(self):
+        CliCommand._validate_options(self)
+
+        if not self.options.name and not self.options.all:
+            self.parser.print_help()
+            sys.exit(1)
+
+        if self.options.name and self.options.all:
+            self.parser.print_help()
+            sys.exit(1)
+
+    def _do_command(self):
+        if self.options.name:
+            if self.config.has_report(self.options.name):
+                self.config.remove_report(self.options.name)
+                c = config.ConfigBuilder().dump_config(self.config)
+                crypto.write_file(self.options.config, c, self.passphrase)
+                print(_("report %s removed" % self.options.name))
+            else:
+                print(_("ERROR: No such report: %s") % self.options.name)
+                sys.exit(1)
+        elif self.options.all:
+            self.config.clear_reports()
+            c = config.ConfigBuilder().dump_config(self.config)
+            crypto.write_file(self.options.config, c, self.passphrase)
+            print(_("All reports removed"))
+
+
+class ReportAddCommand(CliCommand):
+
+    def __init__(self):
+        usage = _("usage: %prog report add [options]")
+        shortdesc = _("add a report")
+        desc = _("add a report")
+
+        CliCommand.__init__(self, "report add", usage, shortdesc, desc)
+
+        self.parser.add_option("--name", dest="name", metavar="NAME",
+                               help=_("NAME of the report - REQUIRED"))
+        self.parser.add_option("--fields", "--report-format", dest="fields",
+                               metavar="FIELDS", help=_("set what FIELDS the report has - REQUIRED"),
+                               action="store", default=[])
+        self.parser.add_option("--output", dest="output_filename",
+                               metavar="FILENAME", help=_("output report to FILENAME"), action="store", default=None)
+
+    def _validate_options(self):
+        CliCommand._validate_options(self)
+
+        if not self.options.name or not self.options.fields:
+            self.parser.print_help()
+            sys.exit(1)
+
+    def _do_command(self):
+        fields = self.options.fields.strip().split(',')
+
+        g = config.Report(name=self.options.name,
+                          report_format=fields,
+                          output_filename=self.options.output_filename)
+        self.config.add_report(g)
+        c = config.ConfigBuilder().dump_config(self.config)
         crypto.write_file(self.options.config, c, self.passphrase)
 
 
@@ -696,7 +971,7 @@ class ProfileEditCommand(CliCommand):
             g.ranges = self.options.ranges
 
         if self.options.hosts:
-           g.ranges += _read_hosts_file(self.options.hosts)
+            g.ranges += _read_hosts_file(self.options.hosts)
 
         if self.options.ports:
             g.ports = self.options.ports.strip().split(",")
@@ -807,7 +1082,7 @@ class ProfileAddCommand(CliCommand):
             ports = self.options.ports.strip().split(",")
             self._validate_ports(ports)
         if self.options.hosts:
-           self.options.ranges += _read_hosts_file(self.options.hosts)
+            self.options.ranges += _read_hosts_file(self.options.hosts)
 
         auth_names = []
         for auth in self.options.auth:
