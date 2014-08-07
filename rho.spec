@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: rho
-Version: 0.0.21
+Version: 0.0.22
 Release: 1%{?dist}
 Summary: An SSH system profiler
 
@@ -45,6 +45,19 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/rho.1.gz
 
 %changelog
+* Thu Aug 07 2014 cnsnyder <csnyder@redhat.com> 0.0.22-1
+- update releasers (jesusr@redhat.com)
+- add f21 (jesusr@redhat.com)
+- add releasers.conf for tito (jesusr@redhat.com)
+- Updates docs to describe use of the new report command. (csnyder@redhat.com)
+- Updates URL to current git repo url. (csnyder@redhat.com)
+- removes the now uncessary pack-scan.sh script (csnyder@redhat.com)
+- Adds initconfig command to generate a default config with some preset data. (plus tests) (csnyder@redhat.com)
+- Adds report module (and tests) with commands largely matching profile. (csnyder@redhat.com)
+- Updates README to include a brief section on the pack-scan.sh script. (csnyder@redhat.com)
+- Updates man page with info on option --hosts where appropriate. (csnyder@redhat.com)
+- Changes field names to match the changes to the rho_cmds classes. Moves pack-scan.sh to /bin. (csnyder@redhat.com)
+
 * Tue Jul 22 2014 jesus m. rodriguez <jesusr@redhat.com> 0.0.21-1
 - Adds a RhoCmd and smoke test for subman facts --list (csnyder@redhat.com)
 - Fixes VirtWhatRhoCmd.parse_data() exit code checking. (csnyder@redhat.com)
