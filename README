@@ -266,6 +266,13 @@ the profile.
      rho scan --cache /home/me/cache.csv --profile profile1 --output 
      /home/me/newoutput.csv
 
+It's also possible to run a scan for a saved report, by passing in the report
+name created by 'rho report add'. 
+
+     rho scan --profile myprofile --report basic
+
+In the above example, rho will scan the machines specified in the myprofile
+profile and output the values into basic.csv.
 
 OUTPUT
 The important part about a scan is, obviously, the results report. By default, 
