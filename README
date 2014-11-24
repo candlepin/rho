@@ -210,7 +210,7 @@ for the SSH password, if required.
 Although there is a significant security risk, it is possible to set environment 
 variables for both of these passwords:
 
- * RHO_PASSPHRASE for the rho configuration file password
+ * RHO_PASSWORD for the rho configuration file password
 
  * RHO_AUTH_PASSWORD for the SSH password
 
