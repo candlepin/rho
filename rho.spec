@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: rho
-Version: 0.0.23
+Version: 0.0.24
 Release: 1%{?dist}
 Summary: An SSH system profiler
 
@@ -45,6 +45,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/rho.1.gz
 
 %changelog
+* Tue Nov 25 2014 jesus m. rodriguez <jesusr@redhat.com> 0.0.24-1
+- fix auth (add|edit) man page entries. (jesusr@redhat.com)
+
 * Mon Nov 24 2014 jesus m. rodriguez <jesusr@redhat.com> 0.0.23-1
 - update doc to reference actual variable used in code (jesusr@redhat.com)
 - add an example of using --report (jesusr@redhat.com)
