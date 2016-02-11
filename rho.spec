@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: rho
-Version: 0.0.24
+Version: 0.0.25
 Release: 1%{?dist}
 Summary: An SSH system profiler
 
@@ -45,6 +45,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/rho.1.gz
 
 %changelog
+* Thu Feb 11 2016 jesus m. rodriguez <jesusr@redhat.com> 0.0.25-1
+- added error checking for missing Red Hat packages scan (mvickstr@redhat.com)
+- add disttag (jesusr@redhat.com)
+
 * Tue Nov 25 2014 jesus m. rodriguez <jesusr@redhat.com> 0.0.24-1
 - fix auth (add|edit) man page entries. (jesusr@redhat.com)
 
