@@ -146,14 +146,26 @@ class RedhatPackagesRhoCmd(RhoCmd):
             return
         installed_packages = [PkgInfo(line, "|") for line in self.cmd_results[0][0].splitlines()]
         rh_packages = filter(PkgInfo.is_red_hat_pkg, installed_packages)
-        last_installed = max(rh_packages, key=lambda x: x.install_time)
-        last_built = max(rh_packages, key=lambda x: x.build_time)
-        is_red_hat = "Y" if len(rh_packages) > 0 else "N"
-        self.data['redhat-packages.is_redhat'] = is_red_hat
-        self.data['redhat-packages.num_rh_packages'] = len(rh_packages)
-        self.data['redhat-packages.num_installed_packages'] = len(installed_packages)
-        self.data['redhat-packages.last_installed'] = last_installed.details_install()
-        self.data['redhat-packages.last_built'] = last_built.details_built()
+        if len(rh_packages) > 0:
+            last_installed = max(rh_packages, key=lambda x: x.install_time)
+            last_built = max(rh_packages, key=lambda x: x.build_time)
+            is_red_hat = "Y" if len(rh_packages) > 0 else "N"
+
+            self.data['redhat-packages.is_redhat'] = is_red_hat
+            self.data['redhat-packages.num_rh_packages'] = len(rh_packages)
+            self.data['redhat-packages.num_installed_packages'] = len(installed_packages)
+            self.data['redhat-packages.last_installed'] = last_installed.details_install()
+            self.data['redhat-packages.last_built'] = last_built.details_built()
+        else:
+            last_installed = ""
+            last_built = ""
+            is_red_hat = ""
+
+            self.data['redhat-packages.is_redhat'] = is_red_hat
+            self.data['redhat-packages.num_rh_packages'] = len(rh_packages)
+            self.data['redhat-packages.num_installed_packages'] = len(installed_packages)
+            self.data['redhat-packages.last_installed'] = last_installed
+            self.data['redhat-packages.last_built'] = last_built
 
 
 class RedhatReleaseRhoCmd(RhoCmd):
