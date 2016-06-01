@@ -1,0 +1,17 @@
+---
+base_user_name: rho
+base_user_password: password
+
+base_packages:
+  - git
+  - python-pip
+  - gcc
+  - python-devel
+  - libffi-devel
+  - openssl-devel
+
+include_additional_packages: no
+
+ansible_git_pull: true
+ansible_git_repo: https://github.com/ansible/ansible.git
+ansible_checkout: /vagrant/ansible
