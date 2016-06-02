@@ -1,0 +1,10 @@
+cpu.bogomips,cpu.vendor_id,date.date,redhat-packages.num_installed_packages,redhat-release.name,uname.hostname,uname.os
+5587.07,GenuineIntel,Thu Jun 30 14:21:18 EDT 2016,379,error,test1.example.com,Linux
+5587.07,GenuineIntel,Thu Jun 30 14:21:17 EDT 2016,379,error,rho-dev.example.com,Linux
+5587.07,GenuineIntel,Thu Jun 30 14:21:13 EDT 2016,324,error,localhost.localdomain,Linux
+5587.07,GenuineIntel,Thu Jun 30 15:30:48 EDT 2016,379,error,test1.example.com,Linux
+5587.07,GenuineIntel,Thu Jun 30 15:30:47 EDT 2016,379,error,rho-dev.example.com,Linux
+5587.07,GenuineIntel,Thu Jun 30 15:30:44 EDT 2016,324,error,localhost.localdomain,Linux
+5587.07,GenuineIntel,Thu Jun 30 15:38:22 EDT 2016,379,error,test1.example.com,Linux
+5587.07,GenuineIntel,Thu Jun 30 15:38:22 EDT 2016,379,error,rho-dev.example.com,Linux
+5587.07,GenuineIntel,Thu Jun 30 15:38:18 EDT 2016,324,error,localhost.localdomain,Linux

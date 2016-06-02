@@ -4,6 +4,7 @@
 *$py.class
 *.swp
 *.patch
+.idea
 *#
 *~
 *.egg

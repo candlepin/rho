@@ -1,0 +1,4 @@
+[alpha]
+firstone ansible_ssh_host=192.168.121.33 ansible_ssh_user=vagrant
+secondone ansible_ssh_host=192.168.121.103 ansible_ssh_user=vagrant
+thirdone ansible_ssh_host=192.168.124.55 ansible_ssh_user=kbattula
