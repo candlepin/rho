@@ -1,0 +1,9 @@
+---
+#this playbook will grab pacscan information from client boxes
+
+-name: grab all pacscan fields information
+ hosts: all
+ remote-user: root
+
+ roles:
+   - common
