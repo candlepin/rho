@@ -1,0 +1,4 @@
+---
+ansible_git_pull: true
+ansible_git_repo: https://github.com/ansible/ansible.git
+ansible_checkout: /vagrant/ansible

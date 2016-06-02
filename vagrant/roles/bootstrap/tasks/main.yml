@@ -1,0 +1,40 @@
+---
+- name: Disable SELINUX
+  selinux:
+    state: disabled
+  tags:
+    - rho-dev-root
+
+- name: Enable EPEL
+  package:
+    name: epel-release
+    state: present
+  tags:
+    - rho-dev-root
+
+- name: Install base packages
+  package:
+    name: "{{item}}"
+    state: present
+  with_items: "{{ base_packages }}"
+  tags:
+    - rho-dev-root
+
+- name: Ensure that all packages are up to date
+  package:
+    name: "*"
+    state: latest
+  tags:
+    - rho-dev-root
+
+- name: Create Initial User
+  user:
+    name: "{{ base_user_name }}"
+    password: "{{ base_user_password }}"
+
+- name: Install Additional Packages
+  package:
+    name: "{{item}}"
+    state: present
+  with_items: "{{ additional_packages }}"
+  when: "{{ include_additional_packages }}"

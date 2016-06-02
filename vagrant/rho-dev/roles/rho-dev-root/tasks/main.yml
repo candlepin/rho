@@ -1,0 +1,32 @@
+---
+- name: Ensure there exists an ansible directory
+  file:
+    path: "{{ansible_checkout}}"
+    state: directory
+    owner: "{{ansible_user}}"
+  when: "{{ansible_git_pull}}"
+  tags:
+    - rho-dev-root
+
+- name: Checkout Ansible
+  git:
+    repo: "{{ansible_git_repo}}"
+    dest: "{{ansible_checkout}}"
+    force: yes
+    recursive: yes
+  when: "{{ansible_git_pull}}"
+  tags:
+    - rho-dev-root
+
+- name: Install Ansible deps with pip
+  pip:
+    name: "{{item}}"
+    state: latest
+  with_items:
+    - setuptools
+
+- name: Install Ansible from source
+  command: python ./setup.py build install
+  args:
+    chdir: "{{ ansible_checkout }}"
+    creates: /usr/bin/{ansible,ansible-*}

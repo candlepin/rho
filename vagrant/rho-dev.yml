@@ -1,0 +1,8 @@
+- hosts: rho-dev
+  roles:
+    - role: bootstrap
+      become: yes
+      become_user: root
+    - role: install-ansible
+      become: yes
+      become_user: root
