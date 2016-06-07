@@ -37,7 +37,7 @@ class BuildLangs(Command):
         self._gen_pot_file()
 
     def _gen_pot_file(self):
-        py_dirs = ["src/rho/"]
+        py_dirs = ["library/rho"]
         py_files = ['bin/rho']
         for py_dir in py_dirs:
             py_files = py_files + glob.glob("%s/*.py" % py_dir)
@@ -98,9 +98,9 @@ setup(
     license='GPLv2',
 
     package_dir={
-        'rho': 'src/rho',
+        'rho': 'library/rho',
     },
-    packages=find_packages('src'),
+    packages=find_packages('library'),
     include_package_data=True,
 
     # non-python scripts go here

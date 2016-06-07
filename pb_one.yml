@@ -1,9 +1,25 @@
 ---
-#this playbook will grab pacscan information from client boxes
 
--name: grab all pacscan fields information
- hosts: all
- remote-user: root
+- hosts: all
+  tasks:
+   - name: grab info
+     runCmds:
+     register: resultItem
 
- roles:
-   - common
+   - name: first set
+     set_fact:
+       res:'{{resultItem}}'
+
+   - debug: var=res
+
+
+   - name: add to dict list
+     set_fact:
+       resultList= "{{resultList| combine({item:resultItem})}}"
+     with_items: dictItem
+
+   - debug: var=resultList
+
+   - name :  spit info
+     spitResults: name=spit vals=resultList
+

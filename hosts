@@ -1,0 +1,2 @@
+firstone ansible_ssh_host=192.168.121.199 ansible_ssh_user=vagrant
+secondone ansible_ssh_host=192.168.121.199 ansible_ssh_user=vagrant
