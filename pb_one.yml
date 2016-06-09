@@ -1,9 +1,14 @@
+#This playbook consists of two plays. The first one pulls information about all the default rho facts and writes them to
+#a csv with the name specified. The second one pulls information about only those facts we intend to collect(as demonstrated
+#in the play where we collect all information regarding the Username and Red Hat release of the hosts).
+
 ---
 
-- hosts: all
+- name: Write all default facts to all hosts
+  hosts: all
   tasks:
    - name: grab info
-     runCmds:
+     runCmds: name=whatever fact_names=default
      register: resultItem
 
    - name: first set
@@ -15,12 +20,41 @@
    - set_fact: my_token=0
 
    - name: just header
-     local_action: spitResults name=header vals={{res}} token={{my_token}}
+     local_action: spitResults name=header file_path=report.csv vals={{res}} token={{my_token}}
      register: my_token
      run_once: true
 
    - name: spit info
-     local_action: spitResults name=spit vals={{res}} token={{my_token}}
+     local_action: spitResults name=spit file_path=report.csv vals={{res}} token={{my_token}}
+
+- name: Write user-provided list of facts to all hosts (Example)
+  hosts: all
+  tasks:
+   - name: Create list of facts
+     set_fact:
+       fact_list:
+         - Username
+         - RedhatRelease
+
+   - name: grab info from list
+     runCmds: name=whatever fact_names={{fact_list}}
+     register: resultItem
+
+   - name: first set
+     set_fact:
+       res={{resultItem.meta}}
+
+   - debug: var=res
+
+   - set_fact: my_token=0
+
+   - name: just header
+     local_action: spitResults name=header file_path=report_small.csv vals={{res}} token={{my_token}}
+     register: my_token
+     run_once: true
+
+   - name: spit info
+     local_action: spitResults name=spit file_path=report_small.csv vals={{res}} token={{my_token}}
 
 
 

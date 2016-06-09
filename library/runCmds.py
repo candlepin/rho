@@ -8,6 +8,7 @@ import string
 import xmlrpclib
 # for expat exceptions...
 import xml
+import ast
 
 import re
 import sys
@@ -566,6 +567,20 @@ DEFAULT_CMDS = [UnameRhoCmd,
                 SubmanFactsRhoCmd
                 ]
 
+DEFAULT_CMD_DICT = {"Username" : UnameRhoCmd,
+                    "RedhatRelease": RedhatReleaseRhoCmd,
+                    "Instnum": InstnumRhoCmd,
+                    "SysId": SystemIdRhoCmd,
+                    "Cpu": CpuRhoCmd,
+                    "EtcRelease": EtcReleaseRhoCmd,
+                    "EtcIssue": EtcIssueRhoCmd,
+                    "Dmi": DmiRhoCmd,
+                    "Virt": VirtRhoCmd,
+                    "RedhatPackages": RedhatPackagesRhoCmd,
+                    "VirtWhat": VirtWhatRhoCmd,
+                    "Date": DateRhoCmd,
+                    "SubmanFacys": SubmanFactsRhoCmd}
+
 
 class PkgInfo(object):
     def __init__(self, row, separator):
@@ -607,35 +622,50 @@ class PkgInfo(object):
 class PkgInfoParseException(BaseException):
     pass
 
+class RunCommands(object):
 
+    def __init__(self,module):
+        self.name = module.params["name"]
+        try:
+            self.fact_names = ast.literal_eval(module.params["fact_names"])
+        except:
+            self.fact_names = module.params["fact_names"]
 
-allCommands = DEFAULT_CMDS
+        if type(self.fact_names) == list:
+            self.available_facts = [DEFAULT_CMD_DICT[nam] for nam in self.fact_names if nam in DEFAULT_CMD_DICT.keys()]
+        elif type(self.fact_names) == str:
+            if self.fact_names.lower().strip() == "default":
+                self.available_facts = DEFAULT_CMDS
+            else:
+                print "COMMAND NOT RECOGNIZED. EXITING"
+                return
+        else:
+            print "COMMAND NOT RECOGNIZED. EXITING"
+            return
 
-infoDict = {} #stores the values of every command string run on the shell
+    def execute_commands(self):
+        # Goes through all the default commands and executes them on the host's shell
+        info_dict = {}
+        for rho_cmd in self.available_facts:
+            rcmd = rho_cmd()
+            output = []
+            for cmd_string in rcmd.cmd_strings:
+                process = sp.Popen(cmd_string, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
+                out, err = process.communicate()
+                errCode = process.returncode
+                output.append((out, err))
+            rcmd.populate_data(output)
+            info_dict.update(rcmd.data)
 
-def executeCommands():
-    #Goes through all the default commands and executes them in the local machine.
-
-    for rho_cmd in allCommands:
-        rcmd = rho_cmd()
-        output = []
-        for cmd_string in rcmd.cmd_strings:
-            process = sp.Popen(cmd_string,shell=True,stdout=sp.PIPE,stderr=sp.PIPE)
-            out,err = process.communicate()
-            errCode = process.returncode
-            output.append((out, err))
-        rcmd.populate_data(output)
-        infoDict.update(rcmd.data)
-
-
-executeCommands()
-jsonstuff= json.dumps(infoDict,ensure_ascii=False)
-
+        return info_dict #stores the values of every command string run on the shell
 
 from ansible.module_utils.basic import *
+
 def main():
-    module = AnsibleModule(argument_spec={})
-    response = jsonstuff
+    module = AnsibleModule(argument_spec=dict(name=dict(required=True), fact_names=dict(required= True)))
+    my_runner = RunCommands(module=module)
+    info_dict = my_runner.execute_commands()
+    response = json.dumps(info_dict,ensure_ascii=False)
     module.exit_json(changed=False,meta = response)
 
 if __name__ == '__main__':

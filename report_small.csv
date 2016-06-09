@@ -1,0 +1,9 @@
+uname.processor,redhat-release.name,redhat-release.version,uname.kernel,uname.os,redhat-release.release,uname.hardware_platform,uname.all,uname.hostname
+x86_64,centos-release,7,3.10.0-327.18.2.el7.x86_64,Linux,2.1511.el7.centos.2.10,x86_64,Linux rho-dev.example.com 3.10.0-327.18.2.el7.x86_64 #1 SMP Thu May 12 11:03:55 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux,rho-dev.example.com
+x86_64,centos-release,7,3.10.0-327.18.2.el7.x86_64,Linux,2.1511.el7.centos.2.10,x86_64,Linux test1.example.com 3.10.0-327.18.2.el7.x86_64 #1 SMP Thu May 12 11:03:55 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux,test1.example.com
+x86_64,centos-release,7,3.10.0-327.18.2.el7.x86_64,Linux,2.1511.el7.centos.2.10,x86_64,Linux test1.example.com 3.10.0-327.18.2.el7.x86_64 #1 SMP Thu May 12 11:03:55 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux,test1.example.com
+x86_64,centos-release,7,3.10.0-327.18.2.el7.x86_64,Linux,2.1511.el7.centos.2.10,x86_64,Linux rho-dev.example.com 3.10.0-327.18.2.el7.x86_64 #1 SMP Thu May 12 11:03:55 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux,rho-dev.example.com
+x86_64,centos-release,7,3.10.0-327.18.2.el7.x86_64,Linux,2.1511.el7.centos.2.10,x86_64,Linux rho-dev.example.com 3.10.0-327.18.2.el7.x86_64 #1 SMP Thu May 12 11:03:55 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux,rho-dev.example.com
+x86_64,centos-release,7,3.10.0-327.18.2.el7.x86_64,Linux,2.1511.el7.centos.2.10,x86_64,Linux test1.example.com 3.10.0-327.18.2.el7.x86_64 #1 SMP Thu May 12 11:03:55 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux,test1.example.com
+x86_64,centos-release,7,3.10.0-327.18.2.el7.x86_64,Linux,2.1511.el7.centos.2.10,x86_64,Linux rho-dev.example.com 3.10.0-327.18.2.el7.x86_64 #1 SMP Thu May 12 11:03:55 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux,rho-dev.example.com
+x86_64,centos-release,7,3.10.0-327.18.2.el7.x86_64,Linux,2.1511.el7.centos.2.10,x86_64,Linux test1.example.com 3.10.0-327.18.2.el7.x86_64 #1 SMP Thu May 12 11:03:55 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux,test1.example.com
