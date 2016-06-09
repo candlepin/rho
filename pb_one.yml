@@ -8,18 +8,20 @@
 
    - name: first set
      set_fact:
-       res:'{{resultItem}}'
+       res={{resultItem.meta}}
 
    - debug: var=res
 
+   - set_fact: my_token=0
 
-   - name: add to dict list
-     set_fact:
-       resultList= "{{resultList| combine({item:resultItem})}}"
-     with_items: dictItem
+   - name: just header
+     local_action: spitResults name=header vals={{res}} token={{my_token}}
+     register: my_token
+     run_once: true
 
-   - debug: var=resultList
+   - name: spit info
+     local_action: spitResults name=spit vals={{res}} token={{my_token}}
 
-   - name :  spit info
-     spitResults: name=spit vals=resultList
+
+
 
