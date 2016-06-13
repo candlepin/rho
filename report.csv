@@ -175,3 +175,15 @@ Kernel \r on an \m",x86_64,2.1511.el7.centos.2.10,CentOS Linux release 7.2.1511 
 "\S
 Kernel \r on an \m",x86_64,2.1511.el7.centos.2.10,CentOS Linux release 7.2.1511 (Core),"Intel Core Processor (Haswell, no TSX)",rho-dev.example.com,,60,5587.07,0,Linux,,Thu Jun  9 15:14:44 EDT 2016,0,GenuineIntel,,381,centos-release,3.10.0-327.18.2.el7.x86_64,,Linux rho-dev.example.com 3.10.0-327.18.2.el7.x86_64 #1 SMP Thu May 12 11:03:55 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux,"/bin/sh: dmidecode: command not found
 ",7,0,,1,,6,x86_64
+"\S
+Kernel \r on an \m",x86_64,2.1511.el7.centos.2.10,CentOS Linux release 7.2.1511 (Core),"Intel Core Processor (Haswell, no TSX)",rho-dev.example.com,,60,5587.07,0,Linux,,Mon Jun 13 09:30:17 EDT 2016,0,GenuineIntel,,381,centos-release,3.10.0-327.18.2.el7.x86_64,,Linux rho-dev.example.com 3.10.0-327.18.2.el7.x86_64 #1 SMP Thu May 12 11:03:55 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux,"/bin/sh: dmidecode: command not found
+",7,0,,1,,6,x86_64
+"\S
+Kernel \r on an \m",x86_64,2.1511.el7.centos.2.10,CentOS Linux release 7.2.1511 (Core),"Intel Core Processor (Haswell, no TSX)",test1.example.com,,60,5587.07,0,Linux,,Mon Jun 13 09:30:16 EDT 2016,0,GenuineIntel,,380,centos-release,3.10.0-327.18.2.el7.x86_64,,Linux test1.example.com 3.10.0-327.18.2.el7.x86_64 #1 SMP Thu May 12 11:03:55 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux,"/bin/sh: dmidecode: command not found
+",7,0,,1,,6,x86_64
+"\S
+Kernel \r on an \m",x86_64,2.1511.el7.centos.2.10,CentOS Linux release 7.2.1511 (Core),"Intel Core Processor (Haswell, no TSX)",rho-dev.example.com,,60,5587.07,0,Linux,,Mon Jun 13 09:47:50 EDT 2016,0,GenuineIntel,,381,centos-release,3.10.0-327.18.2.el7.x86_64,,Linux rho-dev.example.com 3.10.0-327.18.2.el7.x86_64 #1 SMP Thu May 12 11:03:55 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux,"/bin/sh: dmidecode: command not found
+",7,0,,1,,6,x86_64
+"\S
+Kernel \r on an \m",x86_64,2.1511.el7.centos.2.10,CentOS Linux release 7.2.1511 (Core),"Intel Core Processor (Haswell, no TSX)",test1.example.com,,60,5587.07,0,Linux,,Mon Jun 13 09:47:48 EDT 2016,0,GenuineIntel,,380,centos-release,3.10.0-327.18.2.el7.x86_64,,Linux test1.example.com 3.10.0-327.18.2.el7.x86_64 #1 SMP Thu May 12 11:03:55 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux,"/bin/sh: dmidecode: command not found
+",7,0,,1,,6,x86_64
