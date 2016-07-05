@@ -1,0 +1,29 @@
+---
+
+- name: Create list of facts
+  set_fact:
+     fact_list:
+       - Username_uname.hostname
+       - Username_uname.os
+       - Date_date.date
+       - Cpu_cpu.bogomips
+       - Cpu_cpu.vendor_id
+       - RedhatRelease_redhat-release.name
+       - RedhatPackages_redhat-packages.num_installed_packages
+
+  tags:
+    - eg
+
+- name: grab info from list
+  runCmds: name=whatever fact_names={{fact_list}}
+  register: facts_selected
+  failed_when:
+     - "'failed' in facts_selected.meta"
+  tags:
+    - eg
+
+- name: record host returned dictionary
+  set_fact:
+      res={{facts_selected.meta}}
+  tags:
+    - eg

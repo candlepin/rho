@@ -101,7 +101,6 @@ class RhoCmd(object):
                 print "OSError > ", e.errno
                 print "OSError > ", e.strerror
                 print "OSError > ", e.filename
-                return 1
 
         self.parse_data()
 
@@ -603,7 +602,7 @@ class CpuRhoCmd(RhoCmd):
     def parse_data_cpu(self, results):
         data = {}
         cpu_count = 0
-        process = sp.Popen("dmidecode -t 4",
+        process = sp.Popen("/usr/sbin/dmidecode -t 4",
                            shell=True,
                            stdout=sp.PIPE,
                            stderr=sp.PIPE)
@@ -805,10 +804,10 @@ class DmiRhoCmd(RhoCmd):
         self.cmd_names["bios_sys_manu"] = ['dmi.system-manufacturer']
         self.cmd_names["bios_processor_fam"] = ['dmi.processor-family']
 
-        self.cmd_strings["bios_vendor"] = "dmidecode -s bios-vendor"
-        self.cmd_strings["bios_version"] = "dmidecode -s bios-version"
-        self.cmd_strings["bios_sys_manu"] = "dmidecode -s system-manufacturer"
-        self.cmd_strings["bios_processor_fam"] = "dmidecode -s " \
+        self.cmd_strings["bios_vendor"] = "/usr/sbin/dmidecode -s bios-vendor"
+        self.cmd_strings["bios_version"] = "/usr/sbin/dmidecode -s bios-version"
+        self.cmd_strings["bios_sys_manu"] = "/usr/sbin/dmidecode -s system-manufacturer"
+        self.cmd_strings["bios_processor_fam"] = "usr/sbin/dmidecode -s " \
                                                  "processor-family"
 
     # This method loops through all
@@ -1161,12 +1160,14 @@ class RunCommands(object):
 def main():
     module = AnsibleModule(argument_spec=dict(name=dict(required=True),
                                               fact_names=dict(required=False)))
-    my_runner = RunCommands(module=module)
-    if my_runner == 1:
+    try:
+        my_runner = RunCommands(module=module)
+        info_dict = my_runner.execute_commands()
+        response = json.dumps(info_dict)
+    except OSError:
         response = "failed"
         module.exit_json(changed=False, meta=response)
-    info_dict = my_runner.execute_commands()
-    response = json.dumps(info_dict)
+
     module.exit_json(changed=False, meta=response)
 
 

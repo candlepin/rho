@@ -1,0 +1,16 @@
+---
+#This will grab all the core information
+
+- name: grab info
+  runCmds: name=whatever fact_names=default
+  register: facts_all
+  failed_when:
+     - "'failed' in facts_all.meta"
+  tags:
+     - default
+
+- name: record host returned dictionary
+  set_fact:
+    res={{facts_all.meta}}
+  tags:
+    - default

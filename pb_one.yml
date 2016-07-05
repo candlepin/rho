@@ -6,83 +6,26 @@
 
 - name: Collect all default facts
   hosts: alpha
-  tasks:
-   - name: grab info
-     runCmds: name=whatever fact_names=default
-     register: facts_all
-     failed_when:
-        - "'failed' in facts_all.meta"
-
-   - name: record host returned dictionary
-     set_fact:
-       res={{facts_all.meta}}
-  tags:
-    - default
+  roles:
+    - collect_default
 
 - name: Write default facts first to a variable and then to csv locally
   hosts: localhost
-  tasks:
-
-    - name: store facts from all hosts in a variable
-      set_fact: host_fact={{hostvars[item]['res']}}
-      with_items: "{{groups.alpha}}"
-      register: host_facts
-
-    - name: parse variable into a list of dictionaries
-      set_fact: host_facts="{{ host_facts.results | map(attribute='ansible_facts.host_fact') | list }}"
-
-    - name: write the list to a csv
-      spitResults: name=spit file_path=report.csv vals={{host_facts}}
-
-  tags:
-     - default
+  roles:
+    - write_default
 
 
-- name: Collect user-specifcied list of facts to all hosts(this is an example)
+- name: Collect user-specifcied list of facts to all hosts. Currently runs an example role
   hosts: alpha
-  tasks:
-   - name: Create list of facts
-     set_fact:
-       fact_list:
-         - Username_uname.hostname
-         - Username_uname.os
-         - Date_date.date
-         - Cpu_cpu.bogomips
-         - Cpu_cpu.vendor_id
-         - RedhatRelease_redhat-release.name
-         - RedhatPackages_redhat-packages.num_installed_packages
+  roles:
+    - collect_example
 
-
-   - name: grab info from list
-     runCmds: name=whatever fact_names={{fact_list}}
-     register: facts_selected
-     failed_when:
-        - "'failed' in facts_selected.meta"
-
-   - name: record host returned dictionary
-     set_fact:
-       res={{facts_selected.meta}}
-
-  tags:
-    - eg
-
-- name: Write selected facts first to a variable and then to csv locally
+- name: Write selected facts first to a variable and then to csv locally. Currently runs an example role
   hosts: localhost
-  tasks:
+  roles:
+    - write_example
 
-    - name: store facts from all hosts in a variable
-      set_fact: host_fact={{hostvars[item]['res']}}
-      with_items: "{{groups.alpha}}"
-      register: host_facts
 
-    - name: parse variable into a list of dictionaries
-      set_fact: host_facts="{{ host_facts.results | map(attribute='ansible_facts.host_fact') | list }}"
-
-    - name: write the list to a csv
-      spitResults: name=spit file_path=report_small.csv vals={{host_facts}}
-
-  tags:
-    -eg
 
 
 
