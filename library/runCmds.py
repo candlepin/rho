@@ -25,6 +25,8 @@ from ansible.module_utils.basic import AnsibleModule
 t = gettext.translation('rho', 'locale', fallback=True)
 _ = t.ugettext
 
+print_log = ""
+
 """cmds to run on machines being inventory"""
 
 
@@ -61,13 +63,14 @@ class RhoCmd(object):
     # the command strings related to those facts.
 
     def run_cmd(self, facts):
+        global print_log
 
         if not self.cmd_names:
-            print "RhoCmd has undefined 'cmd_names'"
+            print_log += "RhoCmd has undefined 'cmd_names' \n"
             return
 
         if not self.cmd_strings:
-            print "RhoCmd has undefined 'cmd_strings'"
+            print_log += "RhoCmd has undefined 'cmd_strings' \n"
             return
 
         requested_cmd_names = []
@@ -82,12 +85,12 @@ class RhoCmd(object):
             if facts == 'all':
                 requested_cmd_names = self.cmd_names.keys()
             else:
-                print "Invalid string for 'facts'. Only permitted string " \
-                      "is 'all'."
+                print_log += "Invalid string for 'facts'. Only permitted string " \
+                      "is 'all'. \n"
                 return
         else:
-            print "Invalid input for facts. Acceptable inputs are  " \
-                  "the string 'all' or a list of strings (one for each fact)"
+            print_log += "Invalid input for facts. Acceptable inputs are  " \
+                  "the string 'all' or a list of strings (one for each fact) \n"
             return
 
         for cmd_name in requested_cmd_names:
@@ -98,9 +101,9 @@ class RhoCmd(object):
                 out, err = process.communicate()
                 self.cmd_results[cmd_name] = (out, err)
             except OSError as e:
-                print "OSError > ", e.errno
-                print "OSError > ", e.strerror
-                print "OSError > ", e.filename
+                print_log += "OSError >, " + str(e.errno) + "\n"
+                print_log += "OSError > " + str(e.strerror) + "\n"
+                print_log += "OSError > " +  str(e.filename) + "\n"
 
         self.parse_data()
 
@@ -255,8 +258,9 @@ class SubmanFactsRhoCmd(RhoCmd):
         # Checks for the existence of at least
         # one .facts file in /etc/rhsm/facts
         if 'subman_has_facts' in self.cmd_results.keys():
-            if self.cmd_results['subman_has_facts'][0] \
-                    and not self.cmd_results['subman_has_facts'][1]:
+            if self.cmd_results['subman_has_facts'][1]:
+                self.data['subman.has_facts_file'] = 'error'
+            elif self.cmd_results['subman_has_facts'][0]:
                 fact_files_list = \
                     self.cmd_results['subman_has_facts'][0].strip().split('\n')
                 self.data['subman.has_facts_file'] = "Y" \
@@ -410,12 +414,10 @@ class RedhatReleaseRhoCmd(RhoCmd):
     def __init__(self):
         super(RedhatReleaseRhoCmd, self).__init__()
         self.name = "redhat-release"
-        self.cmd_strings["get_release_info"] = """rpm -q --queryformat
-                                                  "%{NAME}\n
-                                                  %{VERSION}\n
-                                                  %{RELEASE}\n"
-                                                  --whatprovides
-                                                   redhat-release"""
+        self.cmd_strings["get_release_info"] = 'rpm -q --queryformat ' \
+                                               '"%{NAME}\n%{VERSION}' \
+                                               '\n%{RELEASE}\n" --whatprovides' \
+                                               ' redhat-release'
         self.cmd_names["get_release_info"] = ["redhat-release.name",
                                               "redhat-release.version",
                                               "redhat-release.release"]
@@ -525,13 +527,15 @@ class EtcReleaseRhoCmd(RhoCmd):
     # debian or for none of the above.
 
     def run_cmd(self, facts):
+        global print_log
+
         try:
             process_set = sp.Popen(self.cmd_strings["get_release_info"],
                                    shell=True, stdout=sp.PIPE,
                                    stderr=sp.PIPE)
-            res = process_set.communicate()[0].split()
+            res = process_set.communicate()[0].split('\n')
             boolean = res[0].strip()
-            if boolean == 1:
+            if boolean == str(1):
                 rel = res[3].strip()
                 rel_list = rel.split('release')
                 rel_name = rel_list[0].strip()
@@ -547,9 +551,9 @@ class EtcReleaseRhoCmd(RhoCmd):
                 self.data['etc_release.version'] = ver
                 self.data['etc_release.release'] = release
         except OSError as e:
-            print "OSError > ", e.errno
-            print "OSError > ", e.strerror
-            print "OSError > ", e.filename
+            print_log += "OSError >, " + str(e.errno) + "\n"
+            print_log += "OSError > " + str(e.strerror) + "\n"
+            print_log += "OSError > " + str(e.filename) + "\n"
 
         # Functionality for this method included in
         # run_cmd.
@@ -686,8 +690,10 @@ class _GetFileRhoCmd(RhoCmd):
     # to access.
 
     def parse_data(self):
-        self.data["%s.contents" % self.name] = "".join(
-            self.cmd_results[self.cmd_names.keys()[0]][0])
+        self.data["%s.contents" % self.name] = '"' + \
+                                               "".join(
+            self.cmd_results[self.cmd_names.keys()[0]][0]).strip() \
+                                               + '"'
 
 
 class EtcIssueRhoCmd(_GetFileRhoCmd):
@@ -713,8 +719,10 @@ class EtcIssueRhoCmd(_GetFileRhoCmd):
 
     def parse_data(self):
         super(EtcIssueRhoCmd, self).parse_data()
-        self.data["etc-issue.etc-issue"] = string.strip(
-            self.cmd_results[self.cmd_names.keys()[0]][0])
+        self.data["etc-issue.etc-issue"] = '"' + \
+                                           self.cmd_results[
+                                               self.cmd_names.keys()[0]][0].strip()\
+                                           + '"'
 
 
 class InstnumRhoCmd(_GetFileRhoCmd):
@@ -818,8 +826,10 @@ class DmiRhoCmd(RhoCmd):
     def parse_data(self):
         for k in self.cmd_names.keys():
             if k in self.cmd_results.keys():
-                if self.cmd_results[k][0] and not self.cmd_results[k][1]:
-                    self.data[self.cmd_names[k]] = string.strip(
+                if self.cmd_results[k][1]:
+                    self.data[self.cmd_names[k][0]] = 'error'
+                elif self.cmd_results[k][0]:
+                    self.data[self.cmd_names[k][0]] = string.strip(
                         self.cmd_results[k][0])
 
 
@@ -847,8 +857,9 @@ class VirtWhatRhoCmd(RhoCmd):
     # and populates the virt-what.type field accordingly.
 
     def parse_data(self):
-        if self.cmd_results[self.cmd_names.keys()[0]][0] \
-                and not self.cmd_results[self.cmd_names.keys()[0]][1]:
+        if self.cmd_results[self.cmd_names.keys()[0]][1]:
+            self.data['virt-what.type'] = 'error'
+        elif self.cmd_results[self.cmd_names.keys()[0]][0]:
             results = [line for line in self.cmd_results[
                 self.cmd_names.keys()[0]][0].strip().split('\n')]
             error = int(results[-1:][0])
@@ -955,12 +966,17 @@ class VirtRhoCmd(CpuRhoCmd):
 
     def _check_for_dev_kvm(self):
         if "kvm" in self.cmd_results.keys():
-            dev_kvm = None
-            if self.cmd_results["kvm"][0] and not self.cmd_results["kvm"][1]:
+            if self.cmd_results["kvm"][1]:
+                self.data["virt.type"] = 'error'
+                self.data["virt.virt"] = 'error'
+            elif self.cmd_results["kvm"][0]:
                 dev_kvm = string.strip(self.cmd_results["kvm"][0])
-            if dev_kvm == "true":
-                self.data["virt.type"] = "kvm"
-                self.data["virt.virt"] = "virt-host"
+                if dev_kvm == "true":
+                    self.data["virt.type"] = "kvm"
+                    self.data["virt.virt"] = "virt-host"
+                else:
+                    self.data["virt.type"] = "error: not kvm"
+                    self.data["virt.virt"] = "error: not kvm"
 
     # look at the results of dmidecode for hints about what type of
     # virt we have. could probably also track vmware esx version with
@@ -969,30 +985,33 @@ class VirtRhoCmd(CpuRhoCmd):
 
     def _check_dmidecode(self):
         if "sys_manu" in self.cmd_results.keys():
-            manuf = None
-            if self.cmd_results["sys_manu"][0] \
-                    and not self.cmd_results["sys_manu"][1]:
+            if self.cmd_results["sys_manu"][1]:
+                self.data["virt.type"] = 'error'
+                self.data["virt.virt"] = 'error'
+            elif self.cmd_results["sys_manu"][0]:
                 manuf = string.strip(self.cmd_results["sys_manu"][0])
-            if manuf:
-                if manuf.find("VMware") > -1:
-                    self.data["virt.type"] = "vmware"
-                    self.data["virt.virt"] = "virt-guest"
+                if manuf:
+                    if manuf.find("VMware") > -1:
+                        self.data["virt.type"] = "vmware"
+                        self.data["virt.virt"] = "virt-guest"
 
-                if manuf.find("innotek GmbH") > -1:
-                    self.data["virt.type"] = "virtualbox"
-                    self.data["virt.virt"] = "virt-guest"
+                    if manuf.find("innotek GmbH") > -1:
+                        self.data["virt.type"] = "virtualbox"
+                        self.data["virt.virt"] = "virt-guest"
 
-                if manuf.find("Microsoft") > -1:
-                    self.data["virt.type"] = "virtualpc"
-                    self.data["virt.virt"] = "virt-guest"
+                    if manuf.find("Microsoft") > -1:
+                        self.data["virt.type"] = "virtualpc"
+                        self.data["virt.virt"] = "virt-guest"
 
     def _check_for_xend(self):
         # It would be way cooler if we could poke the cpuid and see if
         # is a xen guest, but that requires a util to do it, and root
         #
         if "xen_guest" in self.cmd_results.keys():
-            if self.cmd_results["xen_guest"][0] \
-                    and not self.cmd_results["xen_guest"][1]:
+            if self.cmd_results["xen_guest"][1]:
+                self.data["virt.type"] = "error"
+                self.data["virt.virt"] = "error"
+            if self.cmd_results["xen_guest"][0]:
                 # is xend running? must be a xen host
                 # ugly...
                 self.data["virt.type"] = "xen"
@@ -1003,28 +1022,35 @@ class VirtRhoCmd(CpuRhoCmd):
         # Note: xen show "qemu" as cputype as well, so we do this
         # after looking at cpuinfo
         if "privcmd" in self.cmd_results.keys():
-            if self.cmd_results["privcmd"][0] \
-                    and not self.cmd_results["privcmd"][1]:
+            if self.cmd_results["privcmd"][1]:
+                self.data["virt.type"] = 'error'
+                self.data["virt.virt"] = 'error'
+            elif self.cmd_results["privcmd"][0]:
                 if string.strip(self.cmd_results["privcmd"][0]) == "true":
                     self.data["virt.type"] = "xen"
                     self.data["virt.virt"] = "virt-guest"
+                else:
+                    self.data["virt.type"] = "error: privcmd false"
+                    self.data["virt.virt"] = "error: privcmd false"
 
     def _num_guests(self):
         if "virt_all_list" in self.cmd_results.keys():
-            if self.cmd_results["virt_all_list"][0] \
-                    and not self.cmd_results["virt_all_list"][1]:
+            if self.cmd_results["virt_all_list"][1]:
+                self.data["virt.num_guests"] = 'error'
+            elif self.cmd_results["virt_all_list"][0]:
                 # we want to remove the title and
                 # seperator lines of virsh output
                 output = self.cmd_results["virt_all_list"][0].strip().split(
                     '\n')[2:]
+                if not output:
+                    self.data["virt.num_guests"] = 0
                 self.data["virt.num_guests"] = len(output)
-            else:
-                self.data["virt.num_guests"] = 0
 
     def _num_running_guests(self):
         if "virt_running_list" in self.cmd_results.keys():
-            if self.cmd_results["virt_running_list"][0] \
-                    and not self.cmd_results["virt_running_list"][1]:
+            if self.cmd_results["virt_running_list"][1]:
+                self.data['virt.num_running_guests'] = 'error'
+            elif self.cmd_results["virt_running_list"][0]:
                 self.data['virt.num_running_guests'] = \
                     len(self.cmd_results["virt_running_list"][0].strip())
             else:
@@ -1073,6 +1099,7 @@ class RunCommands(object):
     # called 'facts_requested'.
 
     def __init__(self, module):
+        global print_log
         self.name = module.params["name"]
         self.facts_requested = {}
 
@@ -1115,10 +1142,10 @@ class RunCommands(object):
                 for def_cmd in DEFAULT_CMDS:
                     self.facts_requested[def_cmd] = "all"
             else:
-                print "FACT NOT AVAILABLE. EXITING"
+                print_log += "FACT NOT AVAILABLE. EXITING \n"
                 return
         else:
-            print "INVALID FACT TYPE. EXITING"
+            print_log += "INVALID FACT TYPE. EXITING \n"
             return
 
         # Method that creates instances of all RhoCmd subclasses
@@ -1158,17 +1185,18 @@ class RunCommands(object):
 # from the playbook about the facts that need to be collected.
 
 def main():
+    # import pydevd
+    # pydevd.settrace('192.168.121.1', port=32830, stdoutToServer=True, stderrToServer=True)
     module = AnsibleModule(argument_spec=dict(name=dict(required=True),
                                               fact_names=dict(required=False)))
+
     try:
         my_runner = RunCommands(module=module)
         info_dict = my_runner.execute_commands()
         response = json.dumps(info_dict)
-    except OSError:
-        response = "failed"
         module.exit_json(changed=False, meta=response)
-
-    module.exit_json(changed=False, meta=response)
+    except OSError:
+        module.exit_json(changed=False, meta=print_log)
 
 
 if __name__ == '__main__':

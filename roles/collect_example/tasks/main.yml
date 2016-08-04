@@ -17,8 +17,6 @@
 - name: grab info from list
   runCmds: name=whatever fact_names={{fact_list}}
   register: facts_selected
-  failed_when:
-     - "'failed' in facts_selected.meta"
   tags:
     - eg
 

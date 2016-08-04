@@ -1,1 +1,8 @@
-192.168.121.[30:130]
+[all]
+0 ansible_ssh_host=192.168.121.007
+[all:vars]
+ansible_ssh_user=vagrant
+
+
+
+

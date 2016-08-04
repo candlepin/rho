@@ -1,0 +1,97 @@
+#
+# Based on sm-photo-tool cli.py: http://github.com/jmrodri/sm-photo-tool/
+#
+# Copyright (c) 2009 Red Hat, Inc.
+#
+# This software is licensed to you under the GNU General Public License,
+# version 2 (GPLv2). There is NO WARRANTY for this software, express or
+# implied, including the implied warranties of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. You should have received a copy of GPLv2
+# along with this software; if not, see
+# http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
+#
+
+""" Rho Command Line Interface """
+
+import sys
+import os
+import rho.clicommands
+
+import gettext
+t = gettext.translation('rho', 'locale', fallback=True)
+_ = t.ugettext
+
+
+class CLI:
+
+    def __init__(self):
+        self.cli_commands = {}
+        for clazz in rho.clicommands.__dict__.values():
+            if isinstance(clazz, type) and  \
+                    issubclass(clazz, rho.clicommands.CliCommand):
+
+                cmd = clazz()
+                # ignore the base class
+                if cmd.name != "cli":
+                    self.cli_commands[cmd.name] = cmd
+
+    def _add_command(self, cmd):
+        self.cli_commands[cmd.name] = cmd
+
+    def _usage(self):
+        print _("\nUsage: %s [options] MODULENAME --help\n" %
+                (os.path.basename(sys.argv[0])))
+        print _("Supported modules:\n")
+
+        # want the output sorted
+        items = sorted(self.cli_commands.items())
+        for (name, cmd) in items:
+            print("\t%-14s %-25s" % (name, cmd.shortdesc))
+        print("")
+
+    def _find_best_match(self, args):
+        """
+        Returns the subcommand class that best matches the subcommand specified
+        in the argument list. For example, if you have two commands that start
+        with auth, 'auth show' and 'auth'. Passing in auth show will match
+        'auth show' not auth. If there is no 'auth show', it tries to find
+        'auth'.
+
+        This function ignores the arguments which begin with --
+        """
+        possiblecmd = []
+        for arg in args[1:]:
+            if not arg.startswith("-"):
+                possiblecmd.append(arg)
+
+        if not possiblecmd:
+            return None
+
+        cmd = None
+        key = " ".join(possiblecmd)
+        if " ".join(possiblecmd) in self.cli_commands:
+            cmd = self.cli_commands[key]
+
+        i = -1
+        while cmd is None:
+            key = " ".join(possiblecmd[:i])
+            if key is None or key == "":
+                break
+
+            if key in self.cli_commands:
+                cmd = self.cli_commands[key]
+            i -= 1
+
+        return cmd
+
+    def main(self):
+        if len(sys.argv) < 2 or not self._find_best_match(sys.argv):
+            self._usage()
+            sys.exit(1)
+
+        cmd = self._find_best_match(sys.argv)
+        if not cmd:
+            self._usage()
+            sys.exit(1)
+
+        cmd.main()

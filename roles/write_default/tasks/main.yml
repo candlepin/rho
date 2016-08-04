@@ -1,5 +1,11 @@
 ---
 
+- debug: var=hostvars[item]['res']
+  with_items: "{{groups.alpha}}"
+  tags:
+    - default
+
+
 - name: store facts from all hosts in a variable
   set_fact: host_fact={{hostvars[item]['res']}}
   with_items: "{{groups.alpha}}"
