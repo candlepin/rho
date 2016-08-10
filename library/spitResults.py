@@ -19,12 +19,12 @@ class Results(object):
 
     def write_to_csv(self):
         f_path = self.file_path
-        f = open(f_path, "a")
+        f = open(f_path, "w")
         file_size = os.path.getsize(f_path)
         vals = ast.literal_eval(self.vals)
         fields = vals[0].keys()
         fields.sort()
-        writer = csv.writer(f, delimiter=',', quotechar='|')
+        writer = csv.writer(f, delimiter=',')
         if file_size == 0:
             writer.writerow(fields)
         for d in vals:

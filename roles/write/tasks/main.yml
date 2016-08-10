@@ -4,15 +4,9 @@
   set_fact: host_fact={{hostvars[item]['res']}}
   with_items: "{{groups.alpha}}"
   register: host_facts
-  tags:
-    - eg
 
 - name: parse variable into a list of dictionaries
   set_fact: host_facts="{{ host_facts.results | map(attribute='ansible_facts.host_fact') | list }}"
-  tags:
-    - eg
 
 - name: write the list to a csv
-  spitResults: name=spit file_path=report_small.csv vals={{host_facts}}
-  tags:
-    - eg
+  spitResults: name=spit file_path=report.csv vals={{host_facts}}

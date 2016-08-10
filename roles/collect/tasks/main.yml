@@ -1,15 +1,9 @@
-
 ---
-#This will grab all the core information
 
-- name: grab info
+- name: Collect these facts
   runCmds: name=whatever fact_names=default
   register: facts_all
-  tags:
-     - default
 
 - name: record host returned dictionary
   set_fact:
     res={{facts_all.meta}}
-  tags:
-    - default

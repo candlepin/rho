@@ -615,7 +615,9 @@ class CpuRhoCmd(RhoCmd):
             if line.find("processor") == 0:
                 cpu_count += 1
         data["cpu.count"] = cpu_count
-        data['cpu.socket_count'] = dmidecode[1] if dmidecode[1] else \
+        data['cpu.socket_count'] = dmidecode[1].\
+            replace('\n', '').replace('\r', '') \
+            if dmidecode[1] else \
             len(re.findall('Socket Designation', dmidecode[0]))
 
         cpu_dict = {}
@@ -692,8 +694,11 @@ class _GetFileRhoCmd(RhoCmd):
     def parse_data(self):
         self.data["%s.contents" % self.name] = '"' + \
                                                "".join(
-            self.cmd_results[self.cmd_names.keys()[0]][0]).strip() \
-                                               + '"'
+            self.cmd_results[self.cmd_names.keys()[0]][0]).\
+                                                   strip().\
+                                                   replace('\n', '').\
+                                                   replace('\r', '') \
+                                                   + '"'
 
 
 class EtcIssueRhoCmd(_GetFileRhoCmd):
@@ -721,7 +726,9 @@ class EtcIssueRhoCmd(_GetFileRhoCmd):
         super(EtcIssueRhoCmd, self).parse_data()
         self.data["etc-issue.etc-issue"] = '"' + \
                                            self.cmd_results[
-                                               self.cmd_names.keys()[0]][0].strip()\
+                                           self.cmd_names.keys()[0]][0].strip().\
+                                           replace('\n', '').\
+                                           replace('\r', '') \
                                            + '"'
 
 
@@ -1185,8 +1192,6 @@ class RunCommands(object):
 # from the playbook about the facts that need to be collected.
 
 def main():
-    # import pydevd
-    # pydevd.settrace('192.168.121.1', port=32830, stdoutToServer=True, stderrToServer=True)
     module = AnsibleModule(argument_spec=dict(name=dict(required=True),
                                               fact_names=dict(required=False)))
 

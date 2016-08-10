@@ -1,72 +1,33 @@
----
-#This will grab all the core information
-
-- name: store successfull hosts
-  set_fact:
-      valid='yes'
-  tags:
-    - default
-
-- name: grab info
-  runCmds: name=whatever fact_names=default
-  register: facts_all
-  tags:
-     - default
-
-- name: record host returned dictionary
-  set_fact:
-    res={{facts_all.meta}}
-  tags:
-    - default
-
-- name: record play hosts
-  local_action: set_fact
-    all_hosts=play_hosts
-
-  tags:
-    - default
-
+# This playbook consists of four plays. The first one pulls information about all the default rho facts and the second
+# writes them to a csv with the name specified. The third one pulls information about only those facts we intend to
+# collect (as demonstrated in the example) and the fourth one writes them to a file as specified.
 
 ---
 
-- name: make localhost list
-  set_fact:
-      local_list:
-          -'localhost'
-  tags:
-    - default
-
-- name: get all hosts except localhost
-  set_fact:
-      my_hosts={{groups.all | difference(local_list)}}
-  tags:
-    - default
+- name: Collect all default facts
+  hosts: all
+  roles:
+    - collect
 
 
-- shell: "echo {{item}}"
-  with_items: "{{my_hosts}}"
-  when: hostvars[item]['valid'] == 'yes'
-  register: all_hosts
-  tags:
-    - default
-
-- debug: var={{item}}
-  with_items: "{{all_hosts.results}}"
-  when: item['changed']
-  tags:
-    - default
+- name: Write default facts first to a variable and then to csv locally
+  hosts: localhost
+  roles:
+    - write
 
 
-- name: store facts from all hosts in a variable
-  set_fact: host_fact={{hostvars[item]['res']}}
-  with_items: "{{alllist.results}}"
-  register: host_facts
+- name: Collect user-specifcied list of facts to all hosts. Currently runs an example role
+  hosts: all
+  roles:
+    - collect_example
+
+- name: Write selected facts first to a variable and then to csv locally. Currently runs an example role
+  hosts: localhost
+  roles:
+    - write_example
 
 
 
-- name: parse variable into a list of dictionaries
-  set_fact: host_facts_final="{{ host_facts.results | map(attribute='ansible_facts.host_fact') | list }}"
 
 
-- name: write the list to a csv
-  spitResults: name=spit file_path=report.csv vals={{host_facts_final}}
+

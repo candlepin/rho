@@ -5,26 +5,16 @@
 ---
 
 - name: Collect all default facts
-  hosts: alpha
+  hosts: all
   roles:
-    - collect_default
+    - collect
 
 
 - name: Write default facts first to a variable and then to csv locally
   hosts: localhost
   roles:
-    - write_default
+    - write
 
-
-- name: Collect user-specifcied list of facts to all hosts. Currently runs an example role
-  hosts: all
-  roles:
-    - collect_example
-
-- name: Write selected facts first to a variable and then to csv locally. Currently runs an example role
-  hosts: localhost
-  roles:
-    - write_example
 
 
 

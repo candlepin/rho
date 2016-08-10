@@ -18,6 +18,7 @@ import sys
 import uuid
 import re
 import subprocess as sp
+from collections import defaultdict
 from collections import OrderedDict
 from copy import copy
 
@@ -55,12 +56,14 @@ def multi_arg(option, opt_str, value, parser):
         args.extend(getattr(parser.values, option.dest))
     setattr(parser.values, option.dest, args)
 
+
 def _read_key_file(filename):
     keyfile = open(os.path.expanduser(
         os.path.expandvars(filename)), "r")
     sshkey = keyfile.read()
     keyfile.close()
     return sshkey
+
 
 def _read_hosts_file(filename):
     result = None
@@ -74,28 +77,161 @@ def _read_hosts_file(filename):
     return result
 
 
+def _edit_playbook(facts):
+    string_to_write = "---\n\n- name: Collect these facts\n" \
+                      "  runCmds: name=whatever fact_names=default\n" \
+                      "  register: facts_all\n\n" \
+                      "- name: record host returned dictionary\n" \
+                      "  set_fact:\n    res={{facts_all.meta}}\n"
+    if os.path.isfile(facts[0]):
+        my_facts = _read_hosts_file(facts[0])
+        string_to_write = "---\n\n- name: Collect these facts\n" \
+                          "  set_fact:\n    fact_list:\n"
+        string_to_write = _stringify_facts(string_to_write, my_facts)
+    elif type(facts) == list and len(facts) > 1:
+        string_to_write = "---\n\n- name: Collect these facts\n" \
+                          "  set_fact:\n    fact_list:\n"
+        string_to_write = _stringify_facts(string_to_write, facts)
+    elif not facts == ['default']:
+        print _("facts can be a file, list or 'default' only")
+        sys.exit(1)
 
-class ProfilePrinter(object):
+    with open('roles/collect/tasks/main.yml', 'w') as f:
+        f.write(string_to_write)
 
-    def __init__(self, profiles):
-        self.profiles = profiles
 
-    def write(self):
-        for p in self.profiles:
-            print("\nname: %s" % p.name)
+def _stringify_facts(string_to_write, facts):
+    for f in facts:
+        string_to_write += "      - " + f + "\n"
 
-            print("    auths:")
-            for auth in p.auth_names:
-                print("        %s" % auth)
+    string_to_write += "\n- name: grab info from list\n" \
+                       "  runCmds: name=list_facts fact_names={{fact_list}}\n" \
+                       "  register: facts_selected\n\n" \
+                       "- name: record host returned dictionary\n" \
+                       "  set_fact:\n" \
+                       "    res={{facts_selected.meta}}\n"
 
-            print("    ports:")
-            for port in p.ports:
-                print("        %s" % port)
+    return string_to_write
 
-            print("    ranges:")
-            for ip_range in p.ranges:
-                print("        %s" % ip_range)
 
+def _create_ping_inventory(profile_ranges, profile_auth_list, forks):
+    success_auths = set()
+    success_hosts = set()
+    success_map = defaultdict(list)
+    best_map = defaultdict(list)
+    mapped_hosts = []
+
+    string_to_write = "[all]\n"
+    for r in profile_ranges:
+        reg = "[0-9]*.[0-9]*.[0-9]*.\[[0-9]*:[0-9]*\]"
+        r = r.strip(',').strip()
+        if not re.match(reg, r):
+            string_to_write += r + \
+                               ' ansible_ssh_host=' \
+                               + r + "\n"
+        else:
+            string_to_write += r + "\n"
+
+    string_to_write += '\n'
+
+    string_header = copy(string_to_write)
+
+    for a in profile_auth_list:
+        f = open('ping-inventory', 'w')
+        string_to_write = \
+            string_header + \
+            "[all:vars]\n" + \
+            "ansible_ssh_user=" + \
+            a[2]
+
+        if (not a[3] == 'empty') and a[3]:
+            auth_pass_or_key = '\nansible_ssh_pass=' + a[3]
+        elif a[3] == 'empty':
+            auth_pass_or_key = '\n'
+        else:
+            auth_pass_or_key = "\nansible_ssh_private_key_file=" + a[5] + '\n'
+
+        string_to_write += auth_pass_or_key
+
+        f.write(string_to_write)
+
+        f.close()
+
+        cmd_string = 'ansible all -m' \
+                     ' ping  -i ping-inventory -f ' + forks
+
+        my_env = os.environ.copy()
+        my_env["ANSIBLE_HOST_KEY_CHECKING"] = "False"
+
+        process = sp.Popen(cmd_string,
+                           shell=True,
+                           stdout=sp.PIPE,
+                           stderr=sp.PIPE,
+                           env=my_env)
+
+        out = process.communicate()[0].split('\n')
+
+        for l in range(len(out)):
+            if 'pong' in out[l]:
+                tup_a = tuple(a)
+                success_auths.add(tup_a)
+                host_line = out[l - 2]
+                host_ip = host_line.split('|')[0].strip()
+                success_hosts.add(host_ip)
+                if host_ip not in mapped_hosts:
+                    best_map[tup_a].append(host_ip)
+                    mapped_hosts.append(host_ip)
+                success_map[host_ip].append(tup_a)
+
+    success_auths = list(success_auths)
+    success_hosts = list(success_hosts)
+
+    return success_auths, success_hosts, best_map, success_map
+
+
+def _create_hosts_auths_file(success_map):
+    with open('host_auth_mapping', 'w') as f:
+        string_to_write = ""
+        for h, l in success_map.iteritems():
+            string_to_write += h + '\n----------------------\n'
+            for a in l:
+                string_to_write += a[1] + '\n'
+            string_to_write += '\n\n'
+        f.write(string_to_write)
+
+
+def _create_main_inventory(success_hosts, best_map, profile):
+    string_to_write = "[alpha]\n"
+
+    for h in success_hosts:
+        string_to_write += h + ' ansible_ssh_host=' \
+                           + h + '\n'
+
+    with open(profile + '_hosts', 'w') as f:
+        for a in best_map.keys():
+            auth_name = a[1]
+            auth_user = a[2]
+            auth_pass = a[3]
+            auth_key = a[5]
+
+            string_to_write += '\n[' \
+                               + auth_name \
+                               + ']\n'
+
+            for h in best_map[a]:
+                string_to_write += h + ' ansible_ssh_host=' \
+                                   + h + " ansible_ssh_user=" \
+                                   + auth_user
+                if (not auth_pass == 'empty') and auth_pass:
+                    auth_pass_or_key = ' ansible_ssh_pass=' + auth_pass + '\n'
+                elif auth_pass == 'empty':
+                    auth_pass_or_key = '\n'
+                else:
+                    auth_pass_or_key = " ansible_ssh_private_key_file=" + auth_key + '\n'
+
+                string_to_write += auth_pass_or_key
+
+        f.write(string_to_write)
 
 
 class CliCommand(object):
@@ -120,7 +256,6 @@ class CliCommand(object):
         if int(port) < 1 or int(port) > 65535:
             return False
         return True
-
 
     def _validate_options(self):
         """
@@ -186,6 +321,13 @@ class ScanCommand(CliCommand):
         self.parser.add_option("--profile", dest="profile", metavar="PROFILE",
                                help=_("NAME of the profile - REQUIRED"))
 
+        self.parser.add_option("--facts", dest="facts", metavar="FACTS",
+                               action="callback", callback=multi_arg, default=[],
+                               help=_("'default' or list"))
+
+        self.parser.add_option("--ansible_forks", dest="ansible_forks", metavar="FORKS",
+                               help=_("number of ansible forks"))
+
     def _validate_options(self):
         CliCommand._validate_options(self)
 
@@ -197,9 +339,26 @@ class ScanCommand(CliCommand):
             print _("No profile specified.")
             sys.exit(1)
 
+        if not self.options.facts:
+            print _("No facts specified.")
+            sys.exit(1)
+
+        if self.options.ansible_forks:
+            try:
+                if int(self.options.ansible_forks) <= 0:
+                    print _("ansible_forks can only be a positive integer.")
+                    sys.exit(1)
+            except ValueError:
+                print _("ansible_forks can only be a positive integer.")
+                sys.exit(1)
+
     def _do_command(self):
 
         profile = self.options.profile
+
+        facts = self.options.facts
+
+        forks = self.options.ansible_forks if self.options.ansible_forks else '50'
 
         profile_exists = False
 
@@ -212,9 +371,10 @@ class ScanCommand(CliCommand):
                 line_list = line.split(',____,')
                 if line_list[0] == profile:
                     profile_exists = True
-                    profile_ranges = line_list[1].strip().split(',')
-                    profile_auths = line_list[2].strip().split(',')
+                    profile_ranges = line_list[1].strip().strip(',').split(',')
+                    profile_auths = line_list[2].strip().strip(',').split(',')
                     for a in profile_auths:
+                        a = a.strip(',').strip()
                         with open('credentials', 'r') as g:
                             auth_lines = g.readlines()
                             for auth_line in auth_lines:
@@ -227,115 +387,26 @@ class ScanCommand(CliCommand):
             print _("Invalid profile. Create profile first")
             sys.exit(1)
 
+        _edit_playbook(facts)
+
         if self.options.reset:
 
-            success_auths = set()
-            success_hosts = set()
-
-            string_to_write = "[all]\n"
-            for r in profile_ranges:
-                reg = "[0-9]*.[0-9]*.[0-9]*.\[[0-9]*:[0-9]*\]"
-                if not re.match(reg, r):
-                    string_to_write += r + \
-                                       ' ansible_ssh_host='\
-                                       + r + "\n"
-                else:
-                    string_to_write += r + "\n"
-
-            string_to_write += '\n'
-
-            string_header = copy(string_to_write)
-
-            for a in profile_auth_list:
-                f = open('ping-inventory', 'w')
-                string_to_write = \
-                    string_header + \
-                    "[all:vars]\n" +\
-                    "ansible_ssh_user=" +\
-                    a[2]
-
-                if (not a[3] == 'empty') and a[3]:
-                    auth_pass_or_key = '\nansible_ssh_password=' + a[3]
-                elif a[3] == 'empty':
-                    auth_pass_or_key = '\n'
-                else:
-                    auth_pass_or_key = "\nansible_ssh_private_key_file=" + a[5] + '\n'
-
-                string_to_write += auth_pass_or_key
-
-                f.write(string_to_write)
-
-                cmd_string = 'ansible all -m' \
-                             ' ping  -i ping-inventory'
-
-                f.close()
-
-                my_env = os.environ.copy()
-                my_env["ANSIBLE_HOST_KEY_CHECKING"] = "False"
-
-                process = sp.Popen(cmd_string,
-                                   shell=True,
-                                   stdout=sp.PIPE,
-                                   stderr=sp.PIPE,
-                                   env=my_env)
-
-                out = process.communicate()[0].split('\n')
-
-                for l in range(len(out)):
-                    if 'pong' in out[l]:
-                        success_auths.add(tuple(a))
-                        host_line = out[l-2]
-                        host_ip = host_line.split('|')[0].strip()
-                        success_hosts.add(host_ip)
-
-            success_auths = list(success_auths)
-            success_hosts = list(success_hosts)
+            success_auths, success_hosts, best_map, success_map =\
+                _create_ping_inventory(profile_ranges, profile_auth_list, forks)
 
             if not len(success_auths):
                 print _('All auths are invalid for this profile')
                 sys.exit(1)
 
-            string_to_write = "[alpha]\n"
+            _create_hosts_auths_file(success_map)
 
-            for h in success_hosts:
-                string_to_write += h + ' ansible_ssh_host=' \
-                                   + h + '\n'
-
-            for a in success_auths:
-                with open(profile + '_hosts', 'w') as f:
-                    auth_name = a[1]
-                    auth_user = a[2]
-                    auth_pass = a[3]
-                    auth_key = a[5]
-
-                    string_to_write += '\n[' \
-                                       + auth_name \
-                                       + ']\n'
-
-                    for h in success_hosts:
-                        string_to_write += h + ' ansible_ssh_host=' \
-                                           + h + '\n'
-
-                    string_to_write += '\n[' \
-                                       + auth_name + ':vars'\
-                                       + ']\n' \
-                                       + "ansible_ssh_user="\
-                                       + auth_user
-                    if (not auth_pass == 'empty') and auth_pass:
-                        auth_pass_or_key = '\nansible_ssh_password=' + auth_pass
-                    elif auth_pass == 'empty':
-                        auth_pass_or_key = '\n'
-                    else:
-                        auth_pass_or_key = "\nansible_ssh_private_key_file=" + auth_key + '\n'
-
-                    string_to_write += auth_pass_or_key
-                    f.write(string_to_write)
+            _create_main_inventory(success_hosts, best_map, profile)
 
         elif not os.path.isfile(profile + '_hosts'):
             print (_("Profile %s has not processed.Please use --reset with profile first.") % profile)
             sys.exit(1)
 
-        cmd_string = 'ansible-playbook ~/devel/rho2/pb_one.yml -i ~/devel/rho2/' + profile + '_hosts' + ' --tag default -v'
+        cmd_string = 'ansible-playbook pb_one.yml -i ' + profile + '_hosts ' + '-v -f ' + forks
 
         process = sp.Popen(cmd_string,
                            shell=True,
@@ -345,6 +416,10 @@ class ScanCommand(CliCommand):
         out = process.communicate()[0]
 
         print out
+
+        print _("Scanning has completed. The mapping has been"
+                " stored in file 'host_auth_map'. The"
+                " facts have been stored in 'report.csv' ")
 
 
 class ProfileShowCommand(CliCommand):
@@ -374,7 +449,7 @@ class ProfileShowCommand(CliCommand):
                 line_list = line.strip().split(',____,')
                 if line_list[0] == self.options.name:
                     profile_exists = True
-                    profile_str = ''.join(line_list)
+                    profile_str = ', '.join(line_list[0:2] + [line_list[3]])
                     print profile_str
 
         if not profile_exists:
@@ -410,7 +485,8 @@ class ProfileEditCommand(CliCommand):
 
         self.parser.add_option("--name", dest="name", metavar="NAME",
                                help=_("NAME of the profile - REQUIRED"))
-        self.parser.add_option("--range", dest="ranges", action="append",
+        self.parser.add_option("--range", dest="ranges", action="callback",
+                               callback=multi_arg,
                                metavar="RANGE", default=[],
                                help=_("IP range to scan. See 'man rho' for supported formats."))
         self.parser.add_option("--hosts", dest="hosts", action="store",
@@ -420,7 +496,6 @@ class ProfileEditCommand(CliCommand):
         self.parser.add_option("--auth", dest="auth", metavar="AUTH",
                                action="callback", callback=multi_arg, default=[],
                                help=_("auth class to associate with profile"))
-
 
     def _validate_options(self):
         CliCommand._validate_options(self)
@@ -440,41 +515,46 @@ class ProfileEditCommand(CliCommand):
         with open('profiles', 'w') as f:
             for line in lines:
                 line_list = line.strip().split(',____,')
+                string_id_one = line_list[1]
+
                 if line_list[0] \
                         == self.options.name:
+                    string_id_one = ''
                     profile_exists = True
-                    if self.options.ranges:
-                        range_list = self.options.ranges.split()
 
-                        for r in range_list:
-                            line_list[1] += ', ' + r
+                    range_list = self.options.ranges
 
                     if self.options.hosts:
-                        range_list = _read_hosts_file(self.options.hosts)
+                        range_list += _read_hosts_file(self.options.hosts)
 
-                        for r in range_list:
-                            line_list[1] += ', ' + r
+                    for r in range_list:
+                        string_id_one += ', ' + r
+
+                    string_id_one = string_id_one.strip(',')
 
                 with open('credentials', 'r') as g:
                     auth_lines = g.readlines()
 
                 if self.options.auth:
-                    line_list[3] = ''
-                    auth_list = self.options.auth.split()
+                    string_id_two = ''
+                    string_id_three = ''
+                    auth_list = self.options.auth
                     for a in auth_list:
-                        with open('credentials', 'w') as g:
-                            for auth_line in auth_lines:
-                                line_auth_list = auth_line.strip().split(',')
-                                if line_auth_list[0] == a:
-                                    auth_exists = True
-                                    line_list[3] += a + ', '
+                        for auth_line in auth_lines:
+                            line_auth_list = auth_line.strip().split(',')
+                            if line_auth_list[1] == a:
+                                auth_exists = True
+                                string_id_two += line_auth_list[0] + ', '
+                                string_id_three += a + ', '
 
-                    line_list[3] = line_list[3].strip(',')
-                    line_string = ', '.join(line_list)
-                    f.write(line_string + '\n')
+                    line_list[1] = string_id_one.rstrip(',').rstrip(' ')
+                    line_list[2] = string_id_two.rstrip(',').rstrip(' ')
+                    line_list[3] = string_id_three.rstrip(',').rstrip(' ')
+                line_string = ',____,'.join(line_list)
+                f.write(line_string + '\n')
 
                 if not auth_exists:
-                    print(_("Auth %s does not exist.") % self.options.name)
+                    print _("Some auths do not exist.")
                     sys.exit(1)
 
         if not profile_exists:
@@ -547,7 +627,8 @@ class ProfileAddCommand(CliCommand):
 
         self.parser.add_option("--name", dest="name", metavar="NAME",
                                help=_("NAME of the profile - REQUIRED"))
-        self.parser.add_option("--range", dest="ranges", action="append",
+        self.parser.add_option("--range", dest="ranges", action="callback",
+                               callback=multi_arg,
                                metavar="RANGE", default=[],
                                help=_("IP range to scan. See 'man rho' for supported formats."))
         self.parser.add_option("--hosts", dest="hosts", action="store",
@@ -594,8 +675,7 @@ class ProfileAddCommand(CliCommand):
                       '*.\[[0-9]*:[0-9]*\]',
                       '^(([0-9]|[1-9][0-9]|1[0-9]'
                       '{2}|2[0-4][0-9]|25[0-5])\.)'
-                      '{3}([0-9]|[1-9][0-9]|1[0-9]{2}'
-                      '|2[0-4][0-9]|25[0-5])']
+                      '{3}']
 
         range_list = self.options.ranges
 
@@ -608,8 +688,8 @@ class ProfileAddCommand(CliCommand):
                 print _("Bad host name/range : %s") % r
                 sys.exit(1)
 
-
         creds = []
+        cred_names = []
         for auth in self.options.auth:
             for a in auth.strip().split(","):
                 valid = False
@@ -621,16 +701,17 @@ class ProfileAddCommand(CliCommand):
                             valid = True
                             # add the uuids of credentials
                             creds.append(line_list[0])
+                            cred_names.append(line_list[1])
 
                 if not valid:
                     print _("Auth %s does not exist") % a
                     sys.exit(1)
 
-
         with open('profiles', 'a') as f:
             profile_list = [self.options.name]\
                            + ['____'] + range_list \
-                           + ['____'] + creds
+                           + ['____'] + creds \
+                           + ['____'] + cred_names
             csv_w = csv.writer(f)
             csv_w.writerow(profile_list)
 
@@ -647,7 +728,7 @@ class AuthEditCommand(CliCommand):
         self.parser.add_option("--name", dest="name", metavar="NAME",
                                help=_("NAME of the auth - REQUIRED"))
 
-        self.parser.add_option("--file", dest="filename", metavar="FILENAME",
+        self.parser.add_option("--sshkeyfile", dest="filename", metavar="FILENAME",
                                help=_("file containing SSH key"))
         self.parser.add_option("--username", dest="username",
                                metavar="USERNAME",
@@ -724,15 +805,20 @@ class AuthClearCommand(CliCommand):
 
     def _do_command(self):
         if self.options.name:
-            with open('credentials', 'r') as f:
-                lines = f.readlines()
+            with open('credentials', 'r') as fr:
+                with open('cred-temp', 'w') as tw:
+                    for line in fr:
+                        tw.write(line)
 
-            with open('credentials', 'w+') as f:
-                f.seek(0)
-                for line in lines:
-                    if not line.strip().split(',')[1]\
-                            == self.options.name:
-                        f.write(line + '\n')
+            with open('cred-temp', 'r') as tr:
+                with open('credentials', 'w') as fw:
+                    for line in tr:
+                        if not line.strip().split(',')[1] \
+                                == self.options.name:
+                            fw.write(line)
+
+            os.remove('cred-temp')
+
         elif self.options.all:
             os.remove('credentials')
 
@@ -825,7 +911,7 @@ class AuthAddCommand(CliCommand):
 
         self.parser.add_option("--name", dest="name", metavar="NAME",
                                help=_("auth credential name - REQUIRED"))
-        self.parser.add_option("--file", dest="filename", metavar="FILENAME",
+        self.parser.add_option("--sshkeyfile", dest="filename", metavar="FILENAME",
                                help=_("file containing SSH key"))
         self.parser.add_option("--username", dest="username",
                                metavar="USERNAME",
@@ -858,10 +944,12 @@ class AuthAddCommand(CliCommand):
                     if line['name'] == self.options.name:
                         print(_("Auth with name exists"))
                         sys.exit(1)
+                f.seek(0)
 
         with open("credentials", 'a') as f:
             dict_writer = csv.DictWriter(f, cred.keys())
             dict_writer.writerow(cred)
+            f.seek(0)
 
     def _do_command(self):
         cred = {}
