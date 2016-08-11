@@ -629,17 +629,21 @@ class ProfileEditCommand(CliCommand):
 
         profile_exists = False
         auth_exists = False
-        hosts_list = self.options.hosts
 
-        range_list = hosts_list
+        range_list = []
 
-        if len(hosts_list) > 0 and os.path.isfile(hosts_list[0]):
-            range_list = _read_in_file(hosts_list[0])
+        if self.options.hosts:
+            hosts_list = self.options.hosts
+
+            range_list = hosts_list
+
+            if len(hosts_list) > 0 and os.path.isfile(hosts_list[0]):
+                range_list = _read_in_file(hosts_list[0])
 
         # makes sure the hosts passed in are in a format Ansible
         # understands.
 
-        _check_range_validity(range_list)
+            _check_range_validity(range_list)
 
         with open('data/profiles', 'r') as f:
             lines = f.readlines()
@@ -649,42 +653,52 @@ class ProfileEditCommand(CliCommand):
 
         with open('data/profiles', 'w') as f:
             for line in lines:
+                range_change = False
+                auth_change = False
                 line_list = line.strip().split(',____,')
-                string_id_one = line_list[1]
+                old_line_list = copy(line_list)
 
                 if line_list[0] \
                         == self.options.name:
+                    range_change = True
                     string_id_one = ''
                     profile_exists = True
 
-                    for r in range_list:
-                        string_id_one += ', ' + r
+                    if self.options.hosts:
 
-                    string_id_one = string_id_one.strip(',')
+                        for r in range_list:
+                            string_id_one += ', ' + r
 
-                if self.options.auth:
-                    string_id_two = ''
-                    string_id_three = ''
-                    auth_list = self.options.auth
-                    for a in auth_list:
-                        for auth_line in auth_lines:
-                            line_auth_list = auth_line.strip().split(',')
-                            if line_auth_list[1] == a:
-                                auth_exists = True
-                                string_id_two += line_auth_list[0] + ', '
-                                string_id_three += a + ', '
+                        string_id_one = string_id_one.strip(',')
+                        line_list[1] = string_id_one.rstrip(',').rstrip(' ')
 
-                    line_list[1] = string_id_one.rstrip(',').rstrip(' ')
-                    line_list[2] = string_id_two.rstrip(',').rstrip(' ')
-                    line_list[3] = string_id_three.rstrip(',').rstrip(' ')
+                    if self.options.auth:
+                        string_id_two = ''
+                        string_id_three = ''
+                        auth_list = self.options.auth
+                        for a in auth_list:
+                            for auth_line in auth_lines:
+                                line_auth_list = auth_line.strip().split(',')
+                                if line_auth_list[1] == a:
+                                    auth_change = True
+                                    auth_exists = True
+                                    string_id_two += line_auth_list[0] + ', '
+                                    string_id_three += a + ', '
 
-                line_string = ',____,'.join(line_list)
+                        if auth_change:
+                            line_list[2] = string_id_two.rstrip(',').rstrip(' ')
+                            line_list[3] = string_id_three.rstrip(',').rstrip(' ')
+
+                if range_change or auth_change:
+                    line_string = ',____,'.join(line_list)
+                else:
+                    line_string = ',____,'.join(old_line_list)
+
                 f.write(line_string + '\n')
 
-                if not auth_exists:
-                    print _("Some auths do not exist.")
-                    f.close()
-                    sys.exit(1)
+        if not auth_exists:
+            print _("Auths do not exist.")
+            sys.exit(1)
 
         if not profile_exists:
             print(_("Profile '%s' does not exist.") % self.options.name)
@@ -747,7 +761,9 @@ class ProfileClearCommand(CliCommand):
                 sys.exit(1)
 
             # removes inventory associated with the profile
-            os.remove('data/' + profile + "_hosts")
+            if os.path.isfile('data/' + profile + "_hosts"):
+                os.remove('data/' + profile + "_hosts")
+
             profile_mapping = 'data/' + profile + '_host_auth_mapping'
 
             # when a profile is removed, it 'archives' the host auth mapping
@@ -808,7 +824,7 @@ class ProfileAddCommand(CliCommand):
             self.parser.print_help()
             sys.exit(1)
 
-        if not self.options.auths:
+        if not self.options.auth:
             self.parser.print_help()
             sys.exit(1)
 

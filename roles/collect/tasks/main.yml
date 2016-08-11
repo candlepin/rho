@@ -1,20 +1,9 @@
 ---
 
 - name: Collect these facts
-  set_fact:
-    fact_list:
-      - Username_uname.hostname
-      - Username_uname.os
-      - Date_date.date
-      - Cpu_cpu.bogomips
-      - Cpu_cpu.vendor_id
-      - RedhatRelease_redhat-release.name
-      - RedhatPackages_redhat-packages.num_installed_packages
-
-- name: grab info from list
-  runCmds: name=list_facts fact_names={{fact_list}}
-  register: facts_selected
+  runCmds: name=whatever fact_names=default
+  register: facts_all
 
 - name: record host returned dictionary
   set_fact:
-    res={{facts_selected.meta}}
+    res={{facts_all.meta}}
