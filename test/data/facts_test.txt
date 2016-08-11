@@ -1,0 +1,7 @@
+Username_uname.hostname
+Username_uname.os
+Date_date.date
+Cpu_cpu.bogomips
+Cpu_cpu.vendor_id
+RedhatRelease_redhat-release.name
+RedhatPackages_redhat-packages.num_installed_packages

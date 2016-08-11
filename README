@@ -250,7 +250,7 @@ of 'default' will get all the information listed above.
         Instnum_instnum.x (for facts of the form instnum.x)
         EtcRelease_etc-release.x (for facts of the form etc-release.x)
         Dmi_dmi.x (for facts of the form dmi.x)
-        Cpu_cpu.x (for facrs of the form cpu.x)
+        Cpu_cpu.x (for facts of the form cpu.x)
 
 As hinted at previously, the auths that have been used in a particular scan are
 the first valid auths in the list passed in order to the profile. All the valid

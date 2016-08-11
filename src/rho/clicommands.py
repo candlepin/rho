@@ -120,12 +120,13 @@ def _edit_playbook(facts, report_path):
                       "  register: facts_all\n\n" \
                       "- name: record host returned dictionary\n" \
                       "  set_fact:\n    res={{facts_all.meta}}\n"
-    if os.path.isfile(facts[0]):
+    if os.path.isfile(facts[0]) and not facts == ['default']:
         my_facts = _read_in_file(facts[0])
         string_to_write = "---\n\n- name: Collect these facts\n" \
                           "  set_fact:\n    fact_list:\n"
         string_to_write = _stringify_facts(string_to_write, my_facts)
-    elif type(facts) == list and len(facts) > 1:
+    elif type(facts) == list and len(facts) >= 1 and\
+            not facts == ['default']:
         string_to_write = "---\n\n- name: Collect these facts\n" \
                           "  set_fact:\n    fact_list:\n"
         string_to_write = _stringify_facts(string_to_write, facts)

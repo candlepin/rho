@@ -1,4 +1,8 @@
-2.1.3.4 | UNREACHABLE! => {
+192.168.124.174 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+1.2.3.4 | UNREACHABLE! => {
     "changed": false, 
     "msg": "Failed to connect to the host via ssh.", 
     "unreachable": true
