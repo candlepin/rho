@@ -37,8 +37,6 @@ class Results(object):
 
 
 def main():
-    # import pydevd
-    # pydevd.settrace('192.168.121.1', port=33084, stdoutToServer=True, stderrToServer=True)
     module = AnsibleModule(argument_spec=dict(name=dict(required=True),
                                               file_path=dict(required=True),
                                               vals=dict(required=True)))

@@ -1,0 +1,11 @@
+[all]
+192.168.124.[1:40]
+192.168.121.007 ansible_ssh_host=192.168.121.007
+192.168.121.140 ansible_ssh_host=192.168.121.140
+192.168.124.153 ansible_ssh_host=192.168.124.153
+192.168.124.[150:200]
+
+[all:vars]
+ansible_ssh_user=t_4
+ansible_ssh_pass=fourthpass1
+ansible_ssh_private_key_file=empty

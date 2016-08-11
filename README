@@ -2,7 +2,7 @@
    rho - FLOSS tool for discovering RHEL, Linux, and Unix Servers  
 ~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~
 
-This is README is for rho version 0.2, released November 20, 2009. rho is a tool 
+This is README is for rho version 2.0. rho is a tool
 for scanning a network, logging into systems using SSH, and retrieving 
 information about available Unix and Linux servers. 
 
@@ -14,103 +14,71 @@ command and command options with rho, see the manpage.
 *~*~*~*~*~*~
 INTRO TO RHO
 ~*~*~*~*~*~*
-rho is an SSH-based network inventory tool. rho scans a user-defined range of 
+rho is an ansible-based network inventory tool. rho scans a user-defined range of
 machines and then reports basic information about the operating system and 
 hardware about each server. rho simplifies some basic sysadmin tasks, like 
 managing licensing renewals and new deployments.
 
 rho only has to be installed on a single central server to scan all of the 
-servers on a network or subnet. rho uses SSH, which is commonly available for 
+servers on a network or subnet. Ansible uses SSH, which is commonly available for
 server, on both the scanning server and the target machines. rho is an 
-agentless discovery tool, so there is no need to install anything on any server 
-but the one which will run the scans. 
+agent-less discovery tool, much like Ansible so there is no need to install
+anything on any server but the one which will run the scans.
 
 The rho tool itself is set up through two configuration items: 
 
  * auth entries, which contain the username and password or SSH key to access 
    each server
 
- * profile entries, which contain IP address ranges, auth credentials to use, and the 
-   SSH ports to try
+ * profile entries, which contain IP address ranges, and the auth credentials to use.
 
-There can be multiple auth entries in each profile, and multiple profiles 
-loaded for each scan.
+There can be multiple auth entries in each profile. A profile contains
+all the hosts and ranges that are to be tested against the auths.
 
 The rho tool configuration is created using rho itself. There are subcommands 
 to create and edit auth and profile items in the configuration. For example:
 
-    rho auth add --name server1auth --username rho-user --file 
-    /etc/ssh/ssh_host_rsa_key
+    rho auth add --name server1auth --username rho-user --sshkeyfile
+    /etc/ssh/ssh_host_rsa_key --password
 
 This creates a new auth item named server1auth, which uses the SSH user 
-rho-user with a key stored in the key file.
+rho-user with a key stored in the key file. The password is input as
+a CL prompt.
 
 (The different rho commands are covered more in the "Syntax" section.)
 
-The configuration entries are stored in an AES-128 encrypted configuration 
-file, $HOME/.rho.conf by default. The .rho.conf file is created by the rho tool 
-the first time rho is run. The .rho.conf file is in simple JSON format with two 
-configuration items, for the auth entries and profiles. The attributes for each 
-item correspond to the options for creating a profile or auth item. (E.g., a 
-profile item has parameters for name, auth, ports, and range.) For example:
-{
-    "auths": [
-        {
-            "name": "server1auth", 
-            "password": "secret", 
-            "type": "ssh", 
-            "username": "rho-user"
-        }
-    ], 
-    "profiles": [
-        {
-            "auths": [
-                "server1auth"
-            ], 
-            "name": "colo-net", 
-            "ports": [
-                22
-            ], 
-            "range": [
-                "192.168.123.1 - 192.168.123.200"
-            ]
-        }
-    ],
-    "reports": [
-        {
-            "name": "basic",
-            "output_filename": "basic.csv",
-            "report_format": [
-                "date.date",
-                "uname.os"
-            ]
-        },
-    ] 
-    "version": 3
-}
+All the information that rho needs is stored in the data folder in
+the installed directory. All the auths are stored in the 'credentials'
+file. All the profiles are stored in the 'profiles' file. The ansible
+playbook is called 'rho_playbook.yml' stored in the installed directory.
+The roles created during the scan are stored in the roles folder. These
+roles are used by 'rho_playbook.yml' to perform the fact collection.
 
-Running the scan is simple. Just point the rho tool to the profile (or 
-profiles) to use and print the results to a CSV output file.
+Running the scan is simple. Just point the rho tool to the profile
+to use, the facts to collect and print the results to a CSV output file.
+Optional parameters are the number of forks ansible should use and whether
+or not to process the profile using '--reset'. A newly created or
+freshly edited profile has to be processed using reset so that it creates
+an ansible inventory called '<profile name>_hosts' that includes the working
+hosts matched with an auth each (the auths are chosen in the order passed in
+to the profile add or edit command as will be explained later).
 
-     rho scan --profile colo-net --output /tmp/myrho.csv
+    rho scan --reset --profile big_test --facts data/facts_eg --ansible_forks 100 --reportfile rep.csv
 
-The output is simple CSV format. The exact data can be configured as part of 
-the scan, but by default, it contains the following information in the output:
+The output is simple CSV format. If 'default' is the argument for --facts,
+the csv output contains the following information:
  
-     ip,port,OS,kernel,processor,platform,release name,release version,release 
+     OS,kernel,processor,platform,release name,release version,release
      number,system ID,username,instnum,release,CPU count,CPU vendor,CPU model,
-     BIOS vendor,virtual guest/host,virtual type,auth type,auth username,auth 
-     name,error
+     BIOS vendor,virtual guest/host,virtual type
 
 For example:
 
-     192.168.123.116,22,Linux,i686,i386,redhat-release,5Client,5.3.0.3,ID-1000015943,
+     Linux,i686,i386,redhat-release,5Client,5.3.0.3,ID-1000015943,
      jsmith,da3122afdb7edd23,Red Hat Enterprise Linux Client release 5.3 
      (Tikanga),2,GenuineIntel,Intel(R) Core(TM)2 Duo CPU,Award Software, Inc.,host,
-     xen,ssh,rho-user,server1auth,none
+     xen
 
-The available output fields can be listed using 'rho scan --show-fields' and 
-can be set using 'rho scan --report-format <fields>'.
 
 As implied by the report output, rho differentiates between baremetal machines, 
 virtual hosts, and virtual guests, and identifies several major virtual types 
@@ -125,7 +93,7 @@ REQUIREMENTS & ASSUMPTIONS
 Before installing rho, there are some guidelines about which machine it should 
 be installed on:
 
- * rho is written to run on a RHEL or Fedora servers.
+ * rho is written to run on RHEL or Fedora servers.
 
  * The machine that rho is installed on must be able to access the machines to 
    be scanned, so it must be on the network and the machines must be running.
@@ -140,10 +108,11 @@ be installed on:
 
 These python packages are required for the rho install machine to run rho:
  * python
- * python-paramiko
- * python-netaddr < 0.7
- * python-simplejson
- * python-crypto
+ * gettext
+ * json
+ * subprocess
+ * xmlrpclib
+ * ansible.module_utils.basic
 
 The following python packages are required to build rho from source:
  * python-devel
@@ -178,11 +147,9 @@ There are four rho commands:
 
  * profile, for managing profile entries
 
- * report, for managing report entries
-
  * scan, for running scans
 
-auth, profile, and report both have three subcommands:
+auth, and profile both have three subcommands:
 
  * add to create a new entry
 
@@ -190,99 +157,64 @@ auth, profile, and report both have three subcommands:
 
  * clear to remove any or all entries
 
+ * show and list to display one or more entries
+
 The complete list of options for each command and subcommand are listed in the 
 rho manpage with other usage examples. The common options are listed with the 
 examples in this README.
-
-
-PASSWORDS
-Every time the rho tool is run, the command prompts for the config file password. 
-(The configuration file is encrypted and required a password to access it.) The 
-first time rho is run, the prompt sets the password as it created the file. Every 
-time after, it uses the password to decrypt the file.
-
-     [me@example rho]$ bin/rho auth list
-     Config Encryption Password:
-
-When running a scan, the tool prompts for the config encryption password and 
-for the SSH password, if required.
-
-Although there is a significant security risk, it is possible to set environment 
-variables for both of these passwords:
-
- * RHO_PASSWORD for the rho configuration file password
-
- * RHO_AUTH_PASSWORD for the SSH password
 
 
 AUTH ENTRIES
 The first step to configuring rho is adding auth credentials to use to connect 
 over SSH. Each authentication identity requires its own auth entry.
 
-    rho auth add --name server1creds --username rho-user --file 
-    /etc/ssh/ssh_host_rsa_key 
+    rho auth add --name server1creds --username rho-user --sshkeyfile
+    /etc/ssh/ssh_host_rsa_key
+
+--password not being passed or passed as empty are considered the same thing.
 
 
 PROFILES
 Then, create the profile to use for the scan. This should include a list of IP 
-addresses or ranges, the auth identity to use, and the SSH ports to try.
+addresses or ranges, and the auth identity to use.
 
-    rho profile edit --name profile1 --range "1.2.3.0 - 1.2.3.255" --auth 
-    server1creds --auth server2creds --ports 22,318,415
+    rho profile edit --name profile1 --hosts "1.2.3.0 - 1.2.3.255" --auth
+    server1creds server2creds
 
-REPORTS
-Optionally, create a report to save report-formats for the scan. This should include a list of fields that constitute the report along with an optional output filename to always write this report to. The provided fields should be from the list reported by 'rho scan --show-fields'
-   
-    rho report add --name basic --fields date.date,uname.os
-
-With no output filename specified the output file name defaults to NAME.csv where NAME is the provided name of the report.
-
+The hosts can be passed in as a file with all the ranges listed in new lines.
 
 SCANNING
-The only argument required for a scan is a profile to use. In that case, 
-the output is printed to stdout. 
+The arguments required for a scan are the profile to use, the file path for the report
+and the facts to be collected. Optionally we can pass the number of ansible forks.
+Finally an important argument is 'reset'. This tells rho that the profile you are
+passing in is either new or has been updated with changes in either the hosts or
+auths or both and that rho has to process it afresh.
 
-    rho scan --profile myprofile
+    rho scan --reset --profile myprofile --facts default --reportfile report.csv
 
-There is another option to use to specify an output file (which is in CSV format):
+Since rho collects the successful host auth mappings from a full scan with reset
+the user doesn't have to worry about iterating through multiple auths and hosts
+again and again in the same profile as long as the profile hasn't changed.
+For purposes of record keeping the host mapping files are always written to whenever
+a scan is done using a profile. When profiles are deleted the host auth mappings
+corresponding to the profile are renamed with prefix '(DELETED PROFILE)' so that
+they are recognizable. Every scan has a time stap in the mappings.
 
-    rho scan --profile myprofile --output /home/jsmith/Desktop/output.csv 
+As far as the auths used by the inventory of a particular scan is concerned, it
+is important to note that the order of the auths passed into a profile matters!
+A profile by definition takes in one ordering of auths and all the hosts in
+the profile are tested in that order with the auths before the first auths to
+work are picked to run the fact collection. Therefore, it's up to the user
+to pass in auths as per the priority they deem fit for a profile. If a non root
+auth is better tried first and then the root auth then the user has to pass in the
+auths in the order as '--auth <nonroot_1> <nonroot_2> <root_1> <root_2>' etc.
 
-It's also possible to run a scan without a profile, by passing the required 
-information with the scan command.
-
-    rho scan --range "1.2.3.0 - 1.2.3.255" --username rho-user --port 122 
-    --output /home/jsmith/Desktop/output.csv 
-
-One nifty alternative is using the output from an older scan to pass 
-information for a new scan. There can be multiple SSH ports and auth 
-credentials for each profile, which means that the scan has to iterate through 
-multiple attempts to connect to a server. The output contains the SSH ports and 
-IDs used to connect successfully to each server, by its IP address. Using the 
-output of a previous scan makes the new scan run much faster, and if the old 
-connection information fails, the tool can simply fall back on the options in 
-the profile.
-
-     rho scan --cache /home/me/cache.csv --profile profile1 --output 
-     /home/me/newoutput.csv
-
-It's also possible to run a scan for a saved report, by passing in the report
-name created by 'rho report add'. 
-
-     rho scan --profile myprofile --report basic
-
-In the above example, rho will scan the machines specified in the myprofile
-profile and output the values into basic.csv.
 
 OUTPUT
 The important part about a scan is, obviously, the results report. By default, 
 this contains a large amount of information about the operating system, 
-hardware, and platform. The 'rho scan --show-fields' command lists all of the 
-available report fields (which may change with every version).
+hardware, and platform.
 
-     auth.name:name of authentication class
-     auth.type:type of ssh authentication used
-     auth.username:username ssh
      cpu.count:number of processors
      cpu.cpu_family:cpu family
      cpu.model_name:cpu model name
@@ -291,8 +223,6 @@ available report fields (which may change with every version).
      error:any errors that are found
      etc-release.etc-release:contents of /etc/release (or equivalent)
      instnum.instnum:installation number
-     ip:ip address
-     port:ssh port
      redhat-release.name:name of package that provides 'redhat-release'
      redhat-release.release:release of package that provides 'redhat-release'
      redhat-release.version:version of package that provides 'redhat-release'
@@ -307,70 +237,143 @@ available report fields (which may change with every version).
      uname.os:uname -s (os)
      uname.processor:uname -p (processor)
 
-The output can then be configured to contain any combination of these fields in 
-the --report-format option or by defining a report using the report command. The only three required fields are 
-ip,port,authname. For example:
+The output can then be configured to contain any combination of these fields by using the
+--facts argument. The following is the format rho understands for all the facts. Some or all
+of these facts can be requested by either as a CLI list i.e. --facts <fact_1> <fact_2> etc
+or by passing in a file with a new fact on every line in the format as follows. A value
+of 'default' will get all the information listed above.
 
-     rho scan --profile myprofile --output /home/me/custom.csv --report-format 
-     ip,port,authname,etc-release,cpucount,error
+        Username_uname.x (for facts of the form uname.x)
+        VirtWhat_virt.x (for facts of the form virt.x)
+        SysId_systemid.x (for facts of the form systemid.x)
+        RedhatRelease_redhat-release.x (for facts of the form redhat-release.x)
+        Instnum_instnum.x (for facts of the form instnum.x)
+        EtcRelease_etc-release.x (for facts of the form etc-release.x)
+        Dmi_dmi.x (for facts of the form dmi.x)
+        Cpu_cpu.x (for facrs of the form cpu.x)
+
+As hinted at previously, the auths that have been used in a particular scan are
+the first valid auths in the list passed in order to the profile. All the valid
+auths are of course listed in the host auth mapping file for the profile for that
+scan identified by the time stamp.
+
+Following is the results of an example rho scan.
+
+This is the example of the profile called 'big_test' and it's host auth mapping
+after the original reset.
+
+This is for the scan performed on Wed Aug 10 23:33:17 2016.
+
+                    Host auth mapping file
+******************************************************************************
+
+Wed Aug 10 23:33:17 2016
+-------------------------------
+192.168.124.153
+----------------------
+seven, root, ********, empty
+eight, t_4, ********, empty
 
 
-*~*~*~*~*~*~*~
-BEST PRACTICES
-~*~*~*~*~*~*~*
+192.168.124.162
+----------------------
+two, t_2, ********, empty
 
-SSH USER IDENTITY
-*****************
-The rho tool does not need to connect to a target machine or be run as root. In 
-fact, it's better if you run the tool as a regular user account.
 
-If your organization already has tools for distributing SSH keys to users, then 
-create a rho-specific user account and assign it its own SSH keys. This limits 
-any potential damage or security problems. 
+192.168.124.174
+----------------------
+one, root, ********, empty
+five, root, ********, empty
+seven, root, ********, empty
 
-The rho user should have read permissions to things like install-num and the 
-RHN systemid files, which are normally only readable by root.
 
-INITIALIZING CONFIG
-*******************
-The rho tool can generate a config with a few default items to help get started (at this time this includes only pre-defined reports). 
-To do this run:
-    rho initconfig
+192.168.124.15
+----------------------
+five, root, ********, empty
+seven, root, ********, empty
 
-Note: if a new config file is not specified with --config this will overwrite the default config: ~/.rho.conf
 
-SCHEDULING SCANS
-****************
-It is possible to schedule rho scans as cron jobs, to run routinely. BE VERY 
-CAREFUL about using cron to run scans. There are inherent security risks. The 
-SSH passwords are stored on disk, so there are lots of ways a hacker could 
-access the passwords and abuse the system.
+192.168.121.007
+----------------------
+six, vagrant, ********, empty
 
-If you want to schedule a rho scan, then the best practice is:  
 
- 1. Write a small script like this:
+                Example inventory used for this scan:
+******************************************************************************
 
-#!/bin/sh
-RHO_PASSWORD=password /usr/bin/rho scan --profile=myprofile
+[alpha]
+192.168.124.153 ansible_ssh_host=192.168.124.153
+192.168.124.162 ansible_ssh_host=192.168.124.162
+192.168.124.174 ansible_ssh_host=192.168.124.174
+192.168.124.15 ansible_ssh_host=192.168.124.15
+192.168.121.007 ansible_ssh_host=192.168.121.007
 
- 2. Protect that script with the most secure Unix permissions that will work, 
-    like 700 (for a single user).
+[five]
+192.168.124.15 ansible_ssh_host=192.168.124.15 ansible_ssh_user=root ansible_ssh_pass=thirdpass ansible_ssh_private_key_file=empty
 
- 3. Run that script using cron.
 
-USING MULTIPLE SSH CREDENTIALS
-******************************
-Do not associate too many authorizations or SSH ports with a single profile. 
-Iterating through all the credentials and ports, with numerous expected 
-failures, slows down the scanner substantially.
+[six]
+192.168.121.007 ansible_ssh_host=192.168.121.007 ansible_ssh_user=vagrant ansible_ssh_private_key_file=empty
 
-SSH LOGIN FAILURES
-******************
-Some networks may be configured to lock systems with a certain number of SSH 
-login failures. Check the security measures in the organization and do some 
-test runs to make sure that the current profile configuration won't lock any 
-systems.
 
+[one]
+192.168.124.174 ansible_ssh_host=192.168.124.174 ansible_ssh_user=root ansible_ssh_pass=firstpass ansible_ssh_private_key_file=empty
+
+
+[two]
+192.168.124.162 ansible_ssh_host=192.168.124.162 ansible_ssh_user=t_2 ansible_ssh_pass=secondpass1 ansible_ssh_private_key_file=empty
+
+
+[seven]
+192.168.124.153 ansible_ssh_host=192.168.124.153 ansible_ssh_user=root ansible_ssh_pass=fourthpass ansible_ssh_private_key_file=empty
+
+
+*************************************************************************************
+
+The profile used for this scan was
+
+big_test, 192.168.124.[1:40],192.168.121.007,192.168.121.140,192.168.124.153,192.168.124.[150:200], test_first,test_second,test_third,one,two,three,four,five,six,seven,eight
+
+The auths used for this scan were
+
+c54de740-6e03-436f-ab46-901a3a07c271, test_first, root, ********, /home/kbattula/.ssh/id_rsa
+ecdda349-f7f3-432f-ac45-84aff1182f98, test_second, root, ********, /home/kbattula/.ssh/id_rsa
+e2b70d19-6c96-426b-962a-c773c0eb9125, test_third, root, ********, /home/kbattula/.ssh/id_rsa
+d2aa29b5-4f90-4da6-adfc-1163d7007568, one, root, ********, empty
+de7ae67b-8880-4b3a-ab3d-365d58da0d69, two, t_2, ********, empty
+55bc67f3-fc64-427c-8b2f-7aa7ceccf59b, three, blippy, ********, empty
+af05cdce-08f7-4e7f-b375-981ad1935c2e, four, foobar, ********, empty
+dc759edd-e43f-4a62-9459-eda6bc0efff8, five, root, ********, empty
+dc72b6e1-f486-4b15-8e25-8c3b2ab395b8, six, vagrant, ********, empty
+f37ce000-dc2a-4a3d-9988-e21caa8cec2b, seven, root, ********, empty
+b11e014b-da64-4c0d-a45d-c81d12419882, eight, t_4, ********, empty
+
+Where the first column is the unique id that rho assigns to every auth.
+
+This is the order in which the profile was associated to auths:
+
+test_first test_second test_third one two three four five six seven eight
+
+The facts collected were
+Username_uname.hostname
+Username_uname.os
+Date_date.date
+Cpu_cpu.bogomips
+Cpu_cpu.vendor_id
+RedhatRelease_redhat-release.name
+RedhatPackages_redhat-packages.num_installed_packages
+
+The output was
+
+cpu.bogomips,cpu.vendor_id,date.date,redhat-packages.num_installed_packages,redhat-release.name,uname.hostname,uname.os
+5587.07,GenuineIntel,Thu Aug 11 14:55:46 EDT 2016,324,redhat-release-server,localhost.localdomain,Linux
+5587.07,GenuineIntel,Thu Aug 11 14:55:46 EDT 2016,328,redhat-release-server,localhost.localdomain,Linux
+5587.07,GenuineIntel,Thu Aug 11 14:55:46 EDT 2016,324,redhat-release-server,localhost.localdomain,Linux
+5587.07,GenuineIntel,Thu Aug 11 14:55:46 EDT 2016,324,redhat-release-server,localhost.localdomain,Linux
+5587.07,GenuineIntel,Thu Aug 11 14:55:46 EDT 2016,379,centos-release,rho-dev.example.com,Linux
+
+
+*************************************************************************************
 
 *~*~*~*~*~*~
 KNOWN ISSUES
@@ -378,18 +381,14 @@ KNOWN ISSUES
 To report bugs for rho, select the Fedora product and rho component in the Red 
 Hat bug tracking system, http://bugzilla.redhat.com.
 
-version 0.1
- * Adding or editing a profile to use a non-existent auth entry returns an 
-exception error and breaks the rho configuration.
- * Editing a non-existent profile returns an exception error.
- * Adding a malformed range to a profile causes a python trace.
- * 'rho scan --range' prompts for a decryption password, when it shouldn't be 
-necessary
-
+version 2.0
 
 *~*~*~*~*~*~*~*
 VERSION HISTORY
 ~*~*~*~*~*~*~*~
+version 2.0
+ * Made rho rely on Ansible for all of it's scanning needs.
+
 version 0.2
  * Added ability to detect and correctly categorize virtual hosts and guests.
 
@@ -409,9 +408,11 @@ CONTACT
 rho was written by Adrian Likins <alikins@redhat.com>, Devan Goodwin 
 <dgoodwin@redhat.com>, and Jesus M. Rodriguez <jesusr@redhat.com>.
 
+rho 2.0 was written by Karthik Harihar Reddy Battula <karthikhhr@gmail.com>
+
 COPYRIGHT & LICENSE
-Copyright 2009, Red Hat, Inc.
+Copyright 2009-2016, Red Hat, Inc.
 
 rho is released under the GNU Public License version 2.
 
-(README v1.0, last updated November 13, 2009.)
+(README v2.0, last updated August 11, 2016.)

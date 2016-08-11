@@ -1,0 +1,26 @@
+[alpha]
+192.168.124.153 ansible_ssh_host=192.168.124.153
+192.168.124.162 ansible_ssh_host=192.168.124.162
+192.168.124.174 ansible_ssh_host=192.168.124.174
+192.168.124.15 ansible_ssh_host=192.168.124.15
+192.168.121.007 ansible_ssh_host=192.168.121.007
+
+[five]
+192.168.124.15 ansible_ssh_host=192.168.124.15 ansible_ssh_user=root ansible_ssh_pass=thirdpass ansible_ssh_private_key_file=empty
+
+
+[six]
+192.168.121.007 ansible_ssh_host=192.168.121.007 ansible_ssh_user=vagrant ansible_ssh_private_key_file=empty
+
+
+[one]
+192.168.124.174 ansible_ssh_host=192.168.124.174 ansible_ssh_user=root ansible_ssh_pass=firstpass ansible_ssh_private_key_file=empty
+
+
+[two]
+192.168.124.162 ansible_ssh_host=192.168.124.162 ansible_ssh_user=t_2 ansible_ssh_pass=secondpass1 ansible_ssh_private_key_file=empty
+
+
+[seven]
+192.168.124.153 ansible_ssh_host=192.168.124.153 ansible_ssh_user=root ansible_ssh_pass=fourthpass ansible_ssh_private_key_file=empty
+

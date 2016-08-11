@@ -85,12 +85,14 @@ class RhoCmd(object):
             if facts == 'all':
                 requested_cmd_names = self.cmd_names.keys()
             else:
-                print_log += "Invalid string for 'facts'. Only permitted string " \
-                      "is 'all'. \n"
+                print_log += "Invalid string for 'facts'." \
+                             " Only permitted string " \
+                             "is 'all'. \n"
                 return
         else:
-            print_log += "Invalid input for facts. Acceptable inputs are  " \
-                  "the string 'all' or a list of strings (one for each fact) \n"
+            print_log += "Invalid input for facts. Acceptable" \
+                         " inputs are the string 'all' or a " \
+                         "list of strings (one for each fact) \n"
             return
 
         for cmd_name in requested_cmd_names:
@@ -103,7 +105,7 @@ class RhoCmd(object):
             except OSError as e:
                 print_log += "OSError >, " + str(e.errno) + "\n"
                 print_log += "OSError > " + str(e.strerror) + "\n"
-                print_log += "OSError > " +  str(e.filename) + "\n"
+                print_log += "OSError > " + str(e.filename) + "\n"
 
         self.parse_data()
 
@@ -416,7 +418,8 @@ class RedhatReleaseRhoCmd(RhoCmd):
         self.name = "redhat-release"
         self.cmd_strings["get_release_info"] = 'rpm -q --queryformat ' \
                                                '"%{NAME}\n%{VERSION}' \
-                                               '\n%{RELEASE}\n" --whatprovides' \
+                                               '\n%{RELEASE}\n" ' \
+                                               '--whatprovides' \
                                                ' redhat-release'
         self.cmd_names["get_release_info"] = ["redhat-release.name",
                                               "redhat-release.version",
@@ -726,7 +729,8 @@ class EtcIssueRhoCmd(_GetFileRhoCmd):
         super(EtcIssueRhoCmd, self).parse_data()
         self.data["etc-issue.etc-issue"] = '"' + \
                                            self.cmd_results[
-                                           self.cmd_names.keys()[0]][0].strip().\
+                                           self.cmd_names.keys()[
+                                               0]][0].strip().\
                                            replace('\n', '').\
                                            replace('\r', '') \
                                            + '"'
@@ -820,8 +824,10 @@ class DmiRhoCmd(RhoCmd):
         self.cmd_names["bios_processor_fam"] = ['dmi.processor-family']
 
         self.cmd_strings["bios_vendor"] = "/usr/sbin/dmidecode -s bios-vendor"
-        self.cmd_strings["bios_version"] = "/usr/sbin/dmidecode -s bios-version"
-        self.cmd_strings["bios_sys_manu"] = "/usr/sbin/dmidecode -s system-manufacturer"
+        self.cmd_strings["bios_version"] = "/usr/sbin/dmidecode " \
+                                           "-s bios-version"
+        self.cmd_strings["bios_sys_manu"] = "/usr/sbin/dmidecode " \
+                                            "-s system-manufacturer"
         self.cmd_strings["bios_processor_fam"] = "usr/sbin/dmidecode -s " \
                                                  "processor-family"
 

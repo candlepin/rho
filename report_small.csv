@@ -1,6 +1,0 @@
-cpu.bogomips,cpu.vendor_id,date.date,redhat-packages.num_installed_packages,redhat-release.name,uname.hostname,uname.os
-5587.08,GenuineIntel,Mon Aug  8 20:07:26 EDT 2016,324,redhat-release-server,localhost.localdomain,Linux
-5587.08,GenuineIntel,Mon Aug  8 20:07:26 EDT 2016,328,redhat-release-server,localhost.localdomain,Linux
-5587.08,GenuineIntel,Mon Aug  8 20:07:25 EDT 2016,324,redhat-release-server,localhost.localdomain,Linux
-5587.08,GenuineIntel,Mon Aug  8 20:07:26 EDT 2016,324,redhat-release-server,localhost.localdomain,Linux
-5587.08,GenuineIntel,Mon Aug  8 20:07:26 EDT 2016,379,centos-release,rho-dev.example.com,Linux
