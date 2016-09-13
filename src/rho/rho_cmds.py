@@ -239,7 +239,7 @@ class CpuRhoCmd(RhoCmd):
               'cpu.model_ver': _("cpu model version")}
 
     def __init__(self):
-        self.cmd_strings = ["cat /proc/cpuinfo", "dmidecode -t 4"]
+        self.cmd_strings = ["cat /proc/cpuinfo", "dmidecode | grep -A1000 'DMI type 4' | sed -n '1,/DMI type [0-3 5-9]/ p'"]
         RhoCmd.__init__(self)
 
     def parse_data(self):
@@ -365,7 +365,7 @@ class DmiRhoCmd(RhoCmd):
     def __init__(self):
         self.cmd_strings = ["dmidecode -s bios-vendor",
                             "dmidecode -s bios-version",
-                            "dmidecode -s system-manufacturer",
+                            "dmidecode | grep -A4 'System Information' | grep 'Manufacturer' | sed -n -e 's/^.*Manufacturer:\s//p'",
                             "dmidecode -s processor-family"]
         RhoCmd.__init__(self)
 
@@ -413,7 +413,7 @@ class VirtRhoCmd(CpuRhoCmd):
     def __init__(self):
         CpuRhoCmd.__init__(self)
         cmd_template = "if [ -e %s ] ; then echo \"true\"; else echo \"false\"; fi"
-        self.cmd_strings.extend(["dmidecode -s system-manufacturer",
+        self.cmd_strings.extend(["dmidecode | grep -A4 'System Information' | grep 'Manufacturer' | sed -n -e 's/^.*Manufacturer:\s//p'",
                                  "ps aux | grep xend | grep -v grep",
                                  cmd_template % "/proc/xen/privcmd",
                                  cmd_template % "/dev/kvm",
@@ -492,6 +492,10 @@ class VirtRhoCmd(CpuRhoCmd):
 
             if manuf.find("Microsoft") > -1:
                 self.data["virt.type"] = "virtualpc"
+                self.data["virt.virt"] = "virt-guest"
+
+            if manuf.find("QEMU") > -1:
+                self.data["virt.type"] = "kvm"
                 self.data["virt.virt"] = "virt-guest"
 
     def _check_for_xend(self):

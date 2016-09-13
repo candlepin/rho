@@ -361,7 +361,12 @@ class InitConfigCommand(CliCommand):
                                         'redhat-packages.last_built',
                                         'virt-what.type', 'virt.virt',
                                         'virt.num_guests', 'virt.num_running_guests',
-                                        'cpu.count', 'cpu.socket_count', 'ip', 'port']),
+                                        'cpu.count', 'cpu.socket_count', 'ip', 'port',
+                                        'auth.name', 'auth.type', 'auth.username', 'error',
+                                        'dmi.system-manufacturer', 'etc-release.etc-release',
+                                        'instnum.instnum', 'redhat-release.version',
+                                        'subman.virt.host_type', 'systemid.system_id',
+                                        'subman.virt.is_guest', 'uname.hardware_platform']),
         ]
         new_config = config.Config(auths=auths, profiles=profiles, reports=reports)
         print (_("Creating new config with defaults: %s") % self.options.config)
