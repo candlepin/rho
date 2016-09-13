@@ -90,7 +90,7 @@ def get_data_files():
 
 setup(
     name="rho",
-    version='0.0.25',
+    version='0.0.26',
     description='Network scanner to identify operating systems and versions.',
     author='Red Hat',
     author_email='',
