@@ -359,6 +359,8 @@ class InitConfigCommand(CliCommand):
                                         'redhat-packages.num_installed_packages',
                                         'redhat-packages.last_installed',
                                         'redhat-packages.last_built',
+                                        'date.anaconda_log', 'date.machine_id',
+                                        'date.filesystem_create', 'date.yum_history',
                                         'virt-what.type', 'virt.virt',
                                         'virt.num_guests', 'virt.num_running_guests',
                                         'cpu.count', 'cpu.socket_count', 'ip', 'port',

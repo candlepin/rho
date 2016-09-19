@@ -72,14 +72,27 @@ class RhoCmd(object):
 
 class DateRhoCmd(RhoCmd):
     name = "date"
-    cmd_strings = ['date']
+    cmd_strings = ['date',
+                   "ls --full-time /root/anaconda-ks.cfg | grep -o '[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}'",
+                   "ls --full-time /etc/machine-id | grep -o '[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}'",
+                   "fs_date=$(tune2fs -l $(mount | egrep '/ type' | grep -o '/dev.* on' "
+                   "| sed -e 's/\on//g') | grep 'Filesystem created' | sed 's/Filesystem created:\s*//g'); "
+                   "if [[ $fs_date ]]; then date +'%F' -d \"$fs_date\"; else echo "" ; fi",
+                   "yum history | tail -n 4 | grep -o '[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}'"]
 
-    fields = {'date.date': _('date')}
+    fields = {'date.date': _('date'),
+              'date.anaconda_log': _("/root/anaconda-ks.cfg modified time"),
+              'date.machine_id': _("/etc/machine-id modified time'"),
+              'date.filesystem_create': _("uses tune2fs -l on the / filesystem dev found using mount"),
+              'date.yum_history': _("dates from yum history")}
 
     def parse_data(self):
 
         self.data['date.date'] = self.cmd_results[0][0].strip()
-
+        self.data['date.anaconda_log'] = self.cmd_results[1][0].strip()
+        self.data['date.machine_id'] = self.cmd_results[2][0].strip()
+        self.data['date.filesystem_create'] = self.cmd_results[3][0].strip()
+        self.data['date.yum_history'] = self.cmd_results[4][0].strip()
 
 class UnameRhoCmd(RhoCmd):
     name = "uname"
