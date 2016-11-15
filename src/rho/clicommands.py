@@ -583,6 +583,51 @@ class ScanCommand(CliCommand):
 
         if self.options.report:
             reportobj = self.config.get_report(self.options.report)
+
+            # if report doesn't exist exit gracefully. If it is pack-scan, the
+            # default report, the user didn't run initconfig. Instead of
+            # exiting we simply add it to the in-memory config before running
+            # the scan. While it seems like a good idea to write the report to
+            # the config, we modify the config with other temporary runtime
+            # options which would pollute the config if written. For now, we
+            # are opting to simply add the report in-memory.
+            if reportobj is None:
+                if self.options.report == 'pack-scan':
+                    # automatically add pack-scan to the config
+                    reportobj = config.Report(
+                       name="pack-scan",
+                       report_format=['date.date',
+                                      'uname.hostname',
+                                      'redhat-release.release',
+                                      'redhat-packages.is_redhat',
+                                      'redhat-packages.num_rh_packages',
+                                      'redhat-packages.num_installed_packages',
+                                      'redhat-packages.last_installed',
+                                      'redhat-packages.last_built',
+                                      'date.anaconda_log', 'date.machine_id',
+                                      'date.filesystem_create',
+                                      'date.yum_history', 'virt-what.type',
+                                      'virt.virt', 'virt.num_guests',
+                                      'virt.num_running_guests', 'cpu.count',
+                                      'cpu.socket_count', 'ip', 'port',
+                                      'auth.name', 'auth.type',
+                                      'auth.username', 'error',
+                                      'dmi.system-manufacturer',
+                                      'etc-release.etc-release',
+                                      'instnum.instnum',
+                                      'redhat-release.version',
+                                      'subman.virt.host_type',
+                                      'systemid.system_id',
+                                      'subman.virt.is_guest',
+                                      'uname.hardware_platform'],
+                       output_filename="pack-scan.csv")
+
+                    self.config.add_report(reportobj)
+                else:
+                    print(_("ERROR: Report %s was not found.") %
+                          self.options.report)
+                    sys.exit(1)
+
             fileobj = open(os.path.expanduser(os.path.expandvars(
                 reportobj.output_filename)), "w")
             fields = reportobj.report_format
